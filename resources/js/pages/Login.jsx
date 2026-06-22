@@ -238,7 +238,14 @@ export default function Login() {
 
                     <div className="bg-white rounded-3xl shadow-2xl shadow-green-900/10 p-9 border border-green-100/60">
 
-                        <div className="mb-8">
+                        <div className="mb-8 text-center">
+                            <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white shadow-xl shadow-green-900/10 ring-4 ring-green-50">
+                                <img
+                                    src="/images/logofupro.png"
+                                    alt="FUPRO"
+                                    className="h-full w-full object-contain p-3"
+                                />
+                            </div>
                             <h2 className="text-2xl font-black" style={{ color: '#1B4332' }}>Connexion</h2>
                             <p className="text-gray-400 text-sm mt-1.5 leading-relaxed">
                                 Espace réservé aux conseillers CEP<br/>et facilitateurs de terrain
