@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Toast from '../components/Toast';
 
 /* ─── SVG Icons ─── */
 const MailIcon = () => (
@@ -61,18 +62,23 @@ function Field({ label, icon, type, name, value, onChange, placeholder, error, s
                 {label}
             </label>
             <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none
-                                text-gray-400 group-focus-within:text-green-600 transition-colors duration-200">
+                <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none
+                                transition-colors duration-200 ${
+                                    error
+                                        ? 'text-red-500'
+                                        : 'text-gray-400 group-focus-within:text-green-600'
+                                }`}>
                     {icon}
                 </div>
                 <input
                     type={type} name={name} value={value}
                     onChange={onChange} required placeholder={placeholder}
                     className={`w-full pl-12 ${suffix ? 'pr-12' : 'pr-4'} py-4 rounded-2xl
-                               border-2 border-transparent bg-gray-100/80
-                               focus:outline-none focus:border-green-500 focus:bg-white focus:shadow-lg focus:shadow-green-500/10
-                               text-sm text-gray-800 placeholder-gray-400
-                               transition-all duration-200`}
+                               border-2 transition-all duration-200 text-sm text-gray-800 placeholder-gray-400
+                               ${error
+                                   ? 'border-red-300 bg-red-50/50 focus:border-red-500 focus:bg-red-50/80 focus:shadow-lg focus:shadow-red-500/10'
+                                   : 'border-transparent bg-gray-100/80 focus:border-green-500 focus:bg-white focus:shadow-lg focus:shadow-green-500/10'
+                               } focus:outline-none`}
                 />
                 {suffix && (
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -81,8 +87,11 @@ function Field({ label, icon, type, name, value, onChange, placeholder, error, s
                 )}
             </div>
             {error && (
-                <p className="mt-2 text-xs text-red-500 flex items-center gap-1.5 pl-1">
-                    <span>⚠</span> {error}
+                <p className="mt-2 text-xs text-red-600 flex items-center gap-1.5 pl-1 font-medium animate-shake">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    {error}
                 </p>
             )}
         </div>
@@ -94,6 +103,9 @@ export default function Login() {
     const [showPwd,     setShowPwd]     = useState(false);
     const [loading,     setLoading]     = useState(false);
     const [globalError, setGlobalError] = useState('');
+    const [successMsg,  setSuccessMsg]  = useState('');
+    const [showToast,   setShowToast]   = useState(false);
+    const [toastType,   setToastType]   = useState('error');
     const { login, errors } = useAuth();
     const navigate = useNavigate();
 
@@ -104,9 +116,27 @@ export default function Login() {
         e.preventDefault();
         setLoading(true);
         setGlobalError('');
-        const res = await login(form);
-        setLoading(false);
-        res.success ? navigate('/dashboard') : setGlobalError(res.message);
+        setSuccessMsg('');
+        setShowToast(false);
+        try {
+            const res = await login(form);
+            if (res.success) {
+                setToastType('success');
+                setSuccessMsg('Connexion réussie. Redirection vers le tableau de bord...');
+                setShowToast(true);
+                window.setTimeout(() => navigate('/dashboard'), 700);
+            } else {
+                setToastType('error');
+                setGlobalError(res.message || 'Identifiants incorrects.');
+                setShowToast(true);
+            }
+        } catch {
+            setToastType('error');
+            setGlobalError('Une erreur réseau est survenue. Vérifiez votre connexion.');
+            setShowToast(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const features = [
@@ -131,9 +161,12 @@ export default function Login() {
 
                 {/* Logo */}
                 <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl"
-                        style={{ background: 'linear-gradient(135deg, #D4A017, #F59E0B)' }}>
-                        <span className="text-2xl">🌾</span>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl bg-white/95 ring-1 ring-white/60 overflow-hidden">
+                        <img
+                            src="/images/ceplogo.png"
+                            alt="AgriSuivi CEP"
+                            className="h-full w-full object-contain p-1.5"
+                        />
                     </div>
                     <div>
                         <h1 className="text-2xl font-black text-white tracking-tight leading-none">AgriSuivi CEP</h1>
@@ -190,9 +223,12 @@ export default function Login() {
 
                     {/* Logo mobile */}
                     <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-                        <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
-                            style={{ background: 'linear-gradient(135deg, #1B4332, #40916C)' }}>
-                            <span className="text-xl">🌾</span>
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-white ring-1 ring-green-100 overflow-hidden">
+                            <img
+                                src="/images/ceplogo.png"
+                                alt="AgriSuivi CEP"
+                                className="h-full w-full object-contain p-1.5"
+                            />
                         </div>
                         <div>
                             <p className="text-xl font-black" style={{ color: '#1B4332' }}>AgriSuivi CEP</p>
@@ -208,13 +244,6 @@ export default function Login() {
                                 Espace réservé aux conseillers CEP<br/>et facilitateurs de terrain
                             </p>
                         </div>
-
-                        {globalError && (
-                            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-3">
-                                <span className="text-lg">⚠️</span>
-                                <p className="text-red-600 text-sm leading-relaxed">{globalError}</p>
-                            </div>
-                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -285,6 +314,16 @@ export default function Login() {
                     </p>
                 </div>
             </div>
+
+            {/* Toast notification */}
+            <Toast
+                message={toastType === 'success' ? successMsg : globalError}
+                title={toastType === 'success' ? 'Connexion réussie' : 'Échec de connexion'}
+                type={toastType}
+                show={showToast}
+                onClose={() => setShowToast(false)}
+                duration={toastType === 'success' ? 3000 : 0}
+            />
 
         </div>
     );

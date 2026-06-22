@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, { getCsrfCookie } from '../services/api';
+import Toast from '../components/Toast';
+import { getApiErrorMessage, translateApiMessage } from '../utils/apiMessages';
 
 export default function ForgotPassword() {
-    const [email,   setEmail]   = useState('');
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
-    const [error,   setError]   = useState('');
+    const [email,     setEmail]     = useState('');
+    const [loading,   setLoading]   = useState(false);
+    const [success,   setSuccess]   = useState(false);
+    const [message,   setMessage]   = useState('');
+    const [showToast, setShowToast] = useState(false);
+    const [toastType, setToastType] = useState('error');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
+        setMessage('');
+        setShowToast(false);
         try {
             await getCsrfCookie();
-            await api.post('/forgot-password', { email });
+            const { data } = await api.post('/forgot-password', { email });
+            setToastType('success');
+            setMessage(
+                translateApiMessage(
+                    data?.message,
+                    'Nous vous avons envoyé le lien de réinitialisation du mot de passe par email.'
+                )
+            );
             setSuccess(true);
+            setShowToast(true);
         } catch (err) {
-            setError(err.response?.data?.message ?? 'Une erreur est survenue.');
+            setToastType('error');
+            setMessage(getApiErrorMessage(err, "Impossible d'envoyer le lien de réinitialisation."));
+            setShowToast(true);
         } finally {
             setLoading(false);
         }
@@ -60,13 +75,6 @@ export default function ForgotPassword() {
                                 </p>
                             </div>
 
-                            {error && (
-                                <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2">
-                                    <span>⚠️</span>
-                                    <p className="text-red-600 text-sm">{error}</p>
-                                </div>
-                            )}
-
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -101,6 +109,17 @@ export default function ForgotPassword() {
                     )}
                 </div>
             </div>
+
+            {/* Toast notification */}
+            <Toast
+                message={message}
+                title={toastType === 'success' ? 'Email envoyé' : 'Erreur de réinitialisation'}
+                type={toastType}
+                show={showToast}
+                onClose={() => setShowToast(false)}
+                duration={toastType === 'success' ? 6000 : 0}
+            />
+
         </div>
     );
 }

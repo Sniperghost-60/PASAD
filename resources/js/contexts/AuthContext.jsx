@@ -6,6 +6,7 @@ import {
     logout as apiLogout,
     register as apiRegister,
 } from '../services/api';
+import { getApiErrorMessage, translateApiErrors } from '../utils/apiMessages';
 
 const AuthContext = createContext({});
 
@@ -18,8 +19,10 @@ export function AuthProvider({ children }) {
         try {
             const { data } = await getUser();
             setUser(data);
+            return data;
         } catch {
             setUser(null);
+            return null;
         } finally {
             setLoading(false);
         }
@@ -29,27 +32,55 @@ export function AuthProvider({ children }) {
 
     const login = async (credentials) => {
         setErrors({});
-        await getCsrfCookie();
         try {
+            await getCsrfCookie();
             await apiLogin(credentials);
-            await fetchUser();
+            const authenticatedUser = await fetchUser();
+
+            if (!authenticatedUser) {
+                return {
+                    success: false,
+                    message: 'Identifiants incorrects. Vérifiez votre email et mot de passe.',
+                };
+            }
+
             return { success: true };
         } catch (err) {
-            if (err.response?.status === 422) setErrors(err.response.data.errors ?? {});
-            return { success: false, message: err.response?.data?.message ?? 'Identifiants incorrects.' };
+            if (err.response?.status === 422) {
+                setErrors(translateApiErrors(err.response.data.errors ?? {}));
+            }
+
+            return {
+                success: false,
+                message: getApiErrorMessage(err, 'Identifiants incorrects. Vérifiez votre email et mot de passe.'),
+            };
         }
     };
 
     const register = async (data) => {
         setErrors({});
-        await getCsrfCookie();
         try {
+            await getCsrfCookie();
             await apiRegister(data);
-            await fetchUser();
+            const authenticatedUser = await fetchUser();
+
+            if (!authenticatedUser) {
+                return {
+                    success: false,
+                    message: "Le compte a peut-être été créé, mais la connexion automatique a échoué.",
+                };
+            }
+
             return { success: true };
         } catch (err) {
-            if (err.response?.status === 422) setErrors(err.response.data.errors ?? {});
-            return { success: false, message: err.response?.data?.message ?? "Erreur lors de l'inscription." };
+            if (err.response?.status === 422) {
+                setErrors(translateApiErrors(err.response.data.errors ?? {}));
+            }
+
+            return {
+                success: false,
+                message: getApiErrorMessage(err, "Une erreur est survenue lors de l'inscription."),
+            };
         }
     };
 
