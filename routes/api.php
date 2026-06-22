@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
@@ -181,7 +182,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
             $validated = $request->validate([
                 'name'              => 'required|string|max:255',
                 'email'             => 'required|email|unique:users,email',
-                'password'          => ['required', Password::min(8)],
                 'role'              => 'required|string|exists:roles,name',
                 'commune_ids'       => 'sometimes|array',
                 'commune_ids.*'     => 'exists:communes,id',
@@ -189,10 +189,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
                 'arrondissement_ids.*'  => 'exists:arrondissements,id',
             ]);
 
+            // Générer un mot de passe aléatoire sécurisé
+            $generatedPassword = Str::random(12) . rand(10, 99) . '!';
+
             $user = User::create([
                 'name'     => $validated['name'],
                 'email'    => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'password' => Hash::make($generatedPassword),
             ]);
 
             $user->assignRole($validated['role']);
@@ -206,6 +209,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
                     $user->arrondissements()->sync($validated['arrondissement_ids']);
                 }
             }
+
+            // Envoyer l'email avec les identifiants
+            $user->notify(new \App\Notifications\UserCredentialsNotification(
+                password: $generatedPassword,
+                roleName: $validated['role']
+            ));
 
             return response()->json([
                 'success' => true,

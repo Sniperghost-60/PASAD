@@ -147,7 +147,7 @@ export default function CreateUser() {
     const { hasPermission } = useAuth();
     useEffect(() => { if (!hasPermission('utilisateurs.créer')) navigate('/dashboard'); }, [hasPermission, navigate]);
 
-    const [form, setForm]         = useState({ name:'', email:'', password:'', confirm:'', role:'' });
+    const [form, setForm]         = useState({ name:'', email:'', role:'' });
     const [errors, setErrors]     = useState({});
     const [deps, setDeps]         = useState([]);
     const [selDep, setSelDep]     = useState('');
@@ -206,8 +206,6 @@ export default function CreateUser() {
         const e = {};
         if (!form.name.trim())  e.name    = 'Le nom complet est requis';
         if (!form.email.trim()) e.email   = "L'adresse email est requise";
-        if (form.password.length < 8) e.password = 'Minimum 8 caractères requis';
-        if (form.password !== form.confirm) e.confirm = 'Les mots de passe ne correspondent pas';
         if (!form.role) e.role = 'Veuillez sélectionner un rôle';
         if (form.role === 'Conseiller' && selCom.length === 0) e.communes = 'Sélectionnez au moins une commune';
         setErrors(e);
@@ -219,13 +217,13 @@ export default function CreateUser() {
         if (!validate()) return;
         setLoading(true);
         try {
-            const payload = { name:form.name, email:form.email, password:form.password, role:form.role };
+            const payload = { name:form.name, email:form.email, role:form.role };
             if (form.role === 'Conseiller') {
                 payload.commune_ids = selCom;
                 payload.arrondissement_ids = selArr;
             }
             await api.post('/api/users', payload);
-            setToast({ show:true, message:'Compte créé avec succès !', type:'success' });
+            setToast({ show:true, message:'Compte créé et email envoyé !', type:'success' });
             setTimeout(() => navigate('/dashboard/users'), 1500);
         } catch (err) {
             const msg = err.response?.data?.message
@@ -284,51 +282,15 @@ export default function CreateUser() {
                                     <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
                                         placeholder="jean.dupont@pasad.bj" className={inp(errors.email)} autoComplete="email" />
                                 </Field>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                    <Field label="Mot de passe" hint="min. 8 car." error={errors.password}>
-                                        <div className="relative">
-                                            <input type="password" value={form.password} onChange={e => set('password', e.target.value)}
-                                                placeholder="••••••••" className={inp(errors.password)} autoComplete="new-password" />
-                                            {form.password.length >= 8 && (
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                    <svg className="size-4 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                    </svg>
-                                                </span>
-                                            )}
-                                        </div>
-                                    </Field>
-                                    <Field label="Confirmer le mot de passe" error={errors.confirm}>
-                                        <div className="relative">
-                                            <input type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)}
-                                                placeholder="••••••••" className={inp(errors.confirm)} autoComplete="new-password" />
-                                            {form.confirm && form.confirm === form.password && (
-                                                <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                    <svg className="size-4 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                    </svg>
-                                                </span>
-                                            )}
-                                        </div>
-                                    </Field>
-                                </div>
-                                {/* Indicateur force mot de passe */}
-                                {form.password.length > 0 && (
-                                    <div>
-                                        <div className="flex gap-1 mb-1">
-                                            {[1,2,3,4].map(i => (
-                                                <div key={i} className={`h-1 flex-1 rounded-full transition-all ${
-                                                    form.password.length >= i*3
-                                                        ? i <= 1 ? 'bg-red-400' : i === 2 ? 'bg-amber-400' : i === 3 ? 'bg-teal-400' : 'bg-teal-600'
-                                                        : 'bg-slate-200'
-                                                }`} />
-                                            ))}
-                                        </div>
-                                        <p className="text-xs text-slate-400">
-                                            {form.password.length < 4 ? 'Très faible' : form.password.length < 7 ? 'Faible' : form.password.length < 10 ? 'Moyen' : 'Fort'}
-                                        </p>
+                                <div className="flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/50 p-4">
+                                    <svg className="size-5 flex-shrink-0 text-teal-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div className="flex-1">
+                                        <p className="text-xs font-bold text-teal-900">Mot de passe généré automatiquement</p>
+                                        <p className="text-xs text-teal-700 mt-1">Un mot de passe sécurisé sera créé et envoyé par email à l'utilisateur.</p>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
 
