@@ -2,10 +2,13 @@ import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider }            from './contexts/AuthContext';
 import { GuestRoute, ProtectedRoute } from './components/AuthGuards';
-import Login          from './pages/Login';
-import Register       from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import Dashboard      from './pages/Dashboard';
+import Login           from './pages/Login';
+import Register        from './pages/Register';
+import ForgotPassword  from './pages/ForgotPassword';
+import Dashboard       from './pages/Dashboard';
+import UsersManagement from './pages/UsersManagement';
+import CreateUser      from './pages/CreateUser';
+import ComingSoon      from './pages/ComingSoon';
 
 export default function App() {
     return (
@@ -21,6 +24,24 @@ export default function App() {
                 {/* Routes protégées */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<Dashboard />} />
+
+                    {/* Gestion des utilisateurs */}
+                    <Route path="/dashboard/users"        element={<UsersManagement />} />
+                    <Route path="/dashboard/users/create" element={<CreateUser />} />
+
+                    {/* Modules à venir */}
+                    <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />
+                    <Route path="/producteurs/create" element={<ComingSoon title="Nouveau producteur" icon="users" />} />
+                    <Route path="/parcelles"          element={<ComingSoon title="Parcelles"      icon="parcelles" />} />
+                    <Route path="/parcelles/create"   element={<ComingSoon title="Nouvelle parcelle" icon="parcelles" />} />
+                    <Route path="/suivis"             element={<ComingSoon title="Suivis CEP"     icon="suivis"   />} />
+                    <Route path="/suivis/create"      element={<ComingSoon title="Nouveau suivi"  icon="suivis"   />} />
+                    <Route path="/cultures"           element={<ComingSoon title="Cultures"       icon="cultures" />} />
+                    <Route path="/caisse"             element={<ComingSoon title="Caisse & Stock" icon="caisse"   />} />
+                    <Route path="/rapports"           element={<ComingSoon title="Rapports"       icon="rapports" />} />
+                    <Route path="/stats"              element={<ComingSoon title="Statistiques"   icon="stats"    />} />
+                    <Route path="/roles"              element={<ComingSoon title="Rôles & Permissions" icon="shield" />} />
+                    <Route path="/config"             element={<ComingSoon title="Configuration"  icon="settings" />} />
                 </Route>
 
                 {/* Fallback */}

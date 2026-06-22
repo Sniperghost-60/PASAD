@@ -89,8 +89,22 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    // ── Helpers rôles ────────────────────────────────────────────────────
+    const hasRole = (role) => {
+        if (!user?.roles) return false;
+        if (Array.isArray(role)) return role.some(r => user.roles.includes(r));
+        return user.roles.includes(role);
+    };
+
+    const hasPermission = (perm) => {
+        if (!user?.permissions) return false;
+        return user.permissions.includes(perm);
+    };
+
+    const isSuperAdmin = () => hasRole('Super-Admin');
+
     return (
-        <AuthContext.Provider value={{ user, loading, errors, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin }}>
             {children}
         </AuthContext.Provider>
     );

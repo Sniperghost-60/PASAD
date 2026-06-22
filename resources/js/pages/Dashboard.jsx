@@ -1,228 +1,187 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Sidebar, Header, Icon, ICONS, RoleBadge } from '../components/Layout';
+import api from '../services/api';
 
-/* ─── Données statiques de démonstration ─── */
-const STATS = [
-    { label: 'Parcelles actives',    value: '12', unit: 'ha',    icon: '🌍', bg: '#D8F3DC', color: '#1B4332', trend: '+2 ce mois' },
-    { label: 'Cultures en cours',    value: '8',  unit: 'types', icon: '🌱', bg: '#B7E4C7', color: '#2D6A4F', trend: '3 en floraison' },
-    { label: 'Rendement moyen',      value: '42', unit: 'q/ha',  icon: '📈', bg: '#95D5B2', color: '#40916C', trend: '+5 % vs N‑1' },
-    { label: 'Zones à irriguer',     value: '3',  unit: 'zones', icon: '💧', bg: '#74C69D', color: '#52B788', trend: 'Demain 06h00' },
+const STAT_CONFIG = [
+    { key: 'producteurs', label: 'Producteurs',       icon: 'users',     from: '#DBEAFE', to: '#93C5FD', color: '#1E40AF', perm: 'producteurs.voir', path: '/producteurs' },
+    { key: 'parcelles',   label: 'Parcelles actives', icon: 'parcelles', from: '#D1FAE5', to: '#6EE7B7', color: '#065F46', perm: 'parcelles.voir',   path: '/parcelles'   },
+    { key: 'suivis',      label: 'Suivis CEP',         icon: 'suivis',    from: '#FEF3C7', to: '#FCD34D', color: '#92400E', perm: 'suivis.voir',      path: '/suivis'      },
+    { key: 'rapports',    label: 'Rapports générés',  icon: 'rapports',  from: '#FCE7F3', to: '#F9A8D4', color: '#9D174D', perm: 'rapports.voir',    path: '/rapports'    },
 ];
 
-const ACTIVITY = [
-    { time: 'Il y a 2h',  action: 'Traitement phytosanitaire appliqué', parcelle: 'Parcelle B3', icon: '💊' },
-    { time: 'Hier',       action: 'Semis blé tendre effectué',           parcelle: 'Parcelle A1', icon: '🌾' },
-    { time: 'Il y a 3j',  action: 'Analyse de sol reçue',               parcelle: 'Parcelle C7', icon: '🔬' },
-    { time: 'Il y a 5j',  action: 'Récolte maïs terminée',              parcelle: 'Parcelle D2', icon: '🌽' },
+const QUICK_ACTIONS = [
+    { label: 'Nouveau producteur', icon: 'users',     bg: '#DBEAFE', color: '#1E40AF', perm: 'producteurs.créer', path: '/producteurs/create' },
+    { label: 'Saisir un suivi',    icon: 'suivis',    bg: '#D1FAE5', color: '#065F46', perm: 'suivis.créer',      path: '/suivis/create'      },
+    { label: 'Ajouter parcelle',   icon: 'parcelles', bg: '#FEF3C7', color: '#92400E', perm: 'parcelles.créer',   path: '/parcelles/create'   },
+    { label: 'Générer rapport',    icon: 'rapports',  bg: '#FCE7F3', color: '#9D174D', perm: 'rapports.générer',  path: '/rapports'           },
+    { label: 'Gérer utilisateurs', icon: 'roles',     bg: '#F3E8FF', color: '#6B21A8', perm: 'utilisateurs.voir', path: '/dashboard/users'    },
 ];
 
-const NAV = [
-    { icon: '📊', label: 'Tableau de bord', path: '/dashboard',  active: true  },
-    { icon: '🌍', label: 'Mes Parcelles',   path: '/parcelles'              },
-    { icon: '🌱', label: 'Cultures',        path: '/cultures'               },
-    { icon: '💧', label: 'Irrigation',      path: '/irrigation'             },
-    { icon: '🔬', label: 'Analyses',        path: '/analyses'               },
-    { icon: '📈', label: 'Rapports',        path: '/rapports'               },
-    { icon: '⚙️', label: 'Paramètres',      path: '/parametres'             },
-];
-
-/* ─── Sidebar ─── */
-function Sidebar({ open, user, onLogout }) {
+function StatCard({ label, value, icon, from, to, color, loading, path, navigate }) {
     return (
-        <aside
-            className={`${open ? 'w-64' : 'w-16'} flex-shrink-0 flex flex-col transition-all duration-300`}
-            style={{ background: 'linear-gradient(180deg,#1B4332 0%,#2D6A4F 100%)' }}
+        <div
+            onClick={() => navigate(path)}
+            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
         >
-            {/* Logo */}
-            <div className="p-5 flex items-center gap-3 border-b border-white/10">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow"
-                    style={{ background: 'linear-gradient(135deg,#D4A017,#F59E0B)' }}>
-                    <span className="text-base">🌾</span>
+            <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg,${from},${to})` }}>
+                    <Icon d={ICONS[icon]} className="w-5 h-5" style={{ color }} />
                 </div>
-                {open && (
-                    <div>
-                        <p className="text-white font-bold text-lg tracking-wide leading-none">AgriSuivi CEP</p>
-                        <p className="text-green-300 text-xs mt-0.5">Champs Écoles Paysans</p>
-                    </div>
-                )}
             </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 py-4 space-y-0.5 px-2">
-                {NAV.map(({ icon, label, path, active }) => (
-                    <Link key={path} to={path}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                            ${active ? 'bg-white/15 text-white font-semibold' : 'text-green-200 hover:bg-white/10 hover:text-white'}`}>
-                        <span className="text-lg flex-shrink-0">{icon}</span>
-                        {open && <span className="text-sm truncate">{label}</span>}
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Profil */}
-            <div className="p-4 border-t border-white/10">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                                    text-white text-sm font-bold"
-                        style={{ background: '#40916C' }}>
-                        {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
-                    </div>
-                    {open && (
-                        <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">{user?.name}</p>
-                            <p className="text-green-300 text-xs truncate">{user?.email}</p>
-                        </div>
-                    )}
-                </div>
-                {open && (
-                    <button onClick={onLogout}
-                        className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-xl
-                                   text-green-200 hover:bg-white/10 hover:text-white transition text-xs">
-                        <span>🚪</span><span>Se déconnecter</span>
-                    </button>
-                )}
-            </div>
-        </aside>
+            {loading ? (
+                <div className="h-8 w-16 bg-gray-100 animate-pulse rounded-lg mb-1" />
+            ) : (
+                <p className="text-2xl font-black text-gray-900">{value}</p>
+            )}
+            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+        </div>
     );
 }
 
-/* ─── Dashboard principal ─── */
 export default function Dashboard() {
-    const { user, logout } = useAuth();
+    const { user, hasPermission } = useAuth();
     const navigate = useNavigate();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [collapsed, setCollapsed] = useState(false);
+    const [stats, setStats] = useState({});
+    const [loadingStats, setLoadingStats] = useState(true);
 
-    const handleLogout = async () => { await logout(); navigate('/login'); };
+    useEffect(() => {
+        api.get('/dashboard/stats')
+            .then(res => setStats(res.data))
+            .catch(() => setStats({}))
+            .finally(() => setLoadingStats(false));
+    }, []);
+
+    const visibleStats   = STAT_CONFIG.filter(s => hasPermission(s.perm));
+    const visibleActions = QUICK_ACTIONS.filter(a => hasPermission(a.perm));
+
+    const greeting = () => {
+        const h = new Date().getHours();
+        if (h < 12) return 'Bonjour';
+        if (h < 18) return 'Bon après-midi';
+        return 'Bonsoir';
+    };
 
     return (
-        <div className="min-h-screen flex" style={{ background: '#EEF6F1' }}>
-            <Sidebar open={sidebarOpen} user={user} onLogout={handleLogout}/>
+        <div className="flex h-screen overflow-hidden bg-gray-50">
+            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(o => !o)} />
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                <Header
+                    collapsed={collapsed}
+                    onToggle={() => setCollapsed(o => !o)}
+                    title="Tableau de bord"
+                    subtitle={`${greeting()}, ${user?.name?.split(' ')[0]} — résumé de l'activité`}
+                />
+                <main className="flex-1 overflow-y-auto p-6 space-y-6">
 
-            <main className="flex-1 flex flex-col overflow-hidden">
-
-                {/* Header */}
-                <header className="bg-white border-b border-green-100 px-6 py-4 flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setSidebarOpen(o => !o)}
-                            className="p-2 rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-700 transition">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>
-                            </svg>
-                        </button>
-                        <div>
-                            <h1 className="text-lg font-bold" style={{ color: '#1B4332' }}>Tableau de bord</h1>
-                        <p className="text-xs text-gray-400">Bonjour, {user?.name} · AgriSuivi CEP</p>
+                    {/* Bannière d'accueil */}
+                    <div className="rounded-2xl p-6 flex items-center justify-between overflow-hidden relative"
+                        style={{ background: 'linear-gradient(135deg,#1B4332 0%,#40916C 100%)' }}>
+                        <div className="relative z-10">
+                            <h2 className="text-white text-xl font-black mb-1">{greeting()}, {user?.name} 👋</h2>
+                            <p className="text-green-200 text-sm mb-3">Plateforme de suivi CEP — Champs Écoles Paysans</p>
+                            <RoleBadge roles={user?.roles} />
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-xl">
-                            <span className="text-sm">🌤️</span>
-                            <span className="text-xs font-medium" style={{ color: '#2D6A4F' }}>24°C · Ensoleillé</span>
+                        <div className="absolute right-0 top-0 bottom-0 w-48 opacity-10 pointer-events-none overflow-hidden">
+                            <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white" />
+                            <div className="absolute -right-4 bottom-0 w-56 h-28 rounded-full bg-white" />
                         </div>
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-                            style={{ background: 'linear-gradient(135deg,#1B4332,#40916C)' }}>
-                            {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
-                        </div>
-                    </div>
-                </header>
-
-                {/* Contenu */}
-                <div className="flex-1 overflow-auto p-6 space-y-5">
-
-                    {/* Statistiques */}
-                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                        {STATS.map(({ label, value, unit, icon, bg, color, trend }) => (
-                            <div key={label} className="bg-white rounded-2xl p-5 shadow-sm border border-green-50">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-                                        style={{ background: bg }}>
-                                        {icon}
-                                    </div>
-                                    <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">actif</span>
-                                </div>
-                                <div className="flex items-end gap-1.5">
-                                    <span className="text-3xl font-bold" style={{ color }}>{value}</span>
-                                    <span className="text-sm text-gray-400 mb-1">{unit}</span>
-                                </div>
-                                <p className="text-gray-500 text-xs mt-0.5">{label}</p>
-                                <p className="text-xs mt-1 font-medium" style={{ color: '#40916C' }}>{trend}</p>
+                        <div className="hidden md:flex relative z-10 flex-col items-end gap-2">
+                            <div className="bg-white/15 backdrop-blur rounded-xl px-4 py-2 text-right">
+                                <p className="text-green-200 text-xs">Saison en cours</p>
+                                <p className="text-white font-bold text-sm">Hivernage 2026</p>
                             </div>
-                        ))}
+                        </div>
                     </div>
 
-                    {/* Activité + Actions */}
-                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
-                        {/* Activité récente */}
-                        <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-green-50 p-5">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1B4332' }}>
-                                <span>📋</span> Activité récente
-                            </h3>
-                            <div className="space-y-2">
-                                {ACTIVITY.map(({ time, action, parcelle, icon }) => (
-                                    <div key={action}
-                                        className="flex items-start gap-3 p-3 rounded-xl hover:bg-green-50 transition cursor-pointer">
-                                        <div className="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-base flex-shrink-0">
-                                            {icon}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-gray-800 font-medium">{action}</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">{parcelle} · {time}</p>
-                                        </div>
-                                    </div>
+                    {/* Statistiques réelles */}
+                    {visibleStats.length > 0 && (
+                        <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Vue d'ensemble</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                                {visibleStats.map(s => (
+                                    <StatCard
+                                        key={s.key}
+                                        {...s}
+                                        value={stats[s.key] ?? 0}
+                                        loading={loadingStats}
+                                        navigate={navigate}
+                                    />
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        {/* Activité récente - état vide */}
+                        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="px-5 py-4 border-b border-gray-100">
+                                <h3 className="font-bold text-gray-800">Activité récente</h3>
+                            </div>
+                            <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+                                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                                    <Icon d={ICONS.suivis} className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 font-medium">Aucune activité pour le moment</p>
+                                <p className="text-gray-400 text-sm mt-1">Les actions enregistrées apparaîtront ici</p>
                             </div>
                         </div>
 
                         {/* Actions rapides */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-green-50 p-5">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1B4332' }}>
-                                <span>⚡</span> Actions rapides
-                            </h3>
-                            <div className="space-y-2">
-                                {[
-                                    { label: 'Nouvelle parcelle',      icon: '➕', bg: '#D8F3DC' },
-                                    { label: 'Enregistrer récolte',    icon: '🌾', bg: '#FEF3C7' },
-                                    { label: 'Planifier irrigation',   icon: '💧', bg: '#DBEAFE' },
-                                    { label: 'Demander analyse sol',   icon: '🔬', bg: '#EDE9FE' },
-                                    { label: 'Générer rapport',        icon: '📊', bg: '#FCE7F3' },
-                                ].map(({ label, icon, bg }) => (
-                                    <button key={label}
-                                        className="w-full flex items-center gap-3 p-3 rounded-xl
-                                                   hover:opacity-80 transition text-left"
-                                        style={{ background: bg }}>
-                                        <span className="text-base">{icon}</span>
-                                        <span className="text-sm font-medium text-gray-700">{label}</span>
-                                    </button>
-                                ))}
+                        <div className="flex flex-col gap-4">
+                            {visibleActions.length > 0 && (
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <div className="px-5 py-4 border-b border-gray-100">
+                                        <h3 className="font-bold text-gray-800">Actions rapides</h3>
+                                    </div>
+                                    <div className="p-3 grid grid-cols-2 gap-2">
+                                        {visibleActions.map(({ label, icon, bg, color, path }) => (
+                                            <button
+                                                key={label}
+                                                onClick={() => navigate(path)}
+                                                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:opacity-80 transition text-center"
+                                                style={{ background: bg }}
+                                            >
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                                    style={{ background: color + '22' }}>
+                                                    <Icon d={ICONS[icon]} className="w-4 h-4" style={{ color }} />
+                                                </div>
+                                                <span className="text-xs font-semibold leading-tight" style={{ color }}>{label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Informations système */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div className="px-5 py-4 border-b border-gray-100">
+                                    <h3 className="font-bold text-gray-800">Informations</h3>
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Utilisateurs enregistrés</span>
+                                        <span className="font-semibold text-gray-900">
+                                            {loadingStats ? '…' : (stats.utilisateurs ?? 0)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Votre rôle</span>
+                                        <RoleBadge roles={user?.roles} />
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Saison</span>
+                                        <span className="font-semibold text-gray-900">Hivernage 2026</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Planning de la semaine */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-green-50 p-5">
-                        <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: '#1B4332' }}>
-                            <span>📅</span> Planning de la semaine
-                        </h3>
-                        <div className="grid grid-cols-7 gap-2">
-                            {['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map((day, i) => (
-                                <div key={day}
-                                    className={`text-center rounded-xl p-3 transition ${i === 0 ? '' : 'hover:bg-green-50'}`}
-                                    style={i === 0 ? { background: 'linear-gradient(135deg,#1B4332,#40916C)' } : {}}>
-                                    <p className={`text-xs font-medium ${i === 0 ? 'text-green-200' : 'text-gray-400'}`}>{day}</p>
-                                    <p className={`text-base font-bold mt-1 ${i === 0 ? 'text-white' : 'text-gray-700'}`}>{22 + i}</p>
-                                    {[1, 3, 5].includes(i) && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mx-auto mt-1.5"/>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     );
 }
