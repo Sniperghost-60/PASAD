@@ -226,5 +226,131 @@ Route::middleware(['auth:sanctum'])->group(function () {
                 ],
             ], 201);
         });
+
+        // Voir un utilisateur
+        Route::get('/users/{user}', function (User $user) {
+            return response()->json([
+                ...$user->toArray(),
+                'roles'           => $user->getRoleNames(),
+                'communes'        => $user->communes,
+                'arrondissements' => $user->arrondissements,
+            ]);
+        });
+
+        // Modifier un utilisateur
+        Route::put('/users/{user}', function (Request $request, User $user) {
+            $validated = $request->validate([
+                'name'  => 'required|string|max:255',
+                'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+                'role'  => 'required|string|exists:roles,name',
+            ]);
+
+            $user->update([
+                'name'  => $validated['name'],
+                'email' => $validated['email'],
+            ]);
+
+            // Mettre à jour le rôle si modifié
+            if ($user->getRoleNames()->first() !== $validated['role']) {
+                $user->syncRoles([$validated['role']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'user'    => [
+                    ...$user->toArray(),
+                    'roles'           => $user->getRoleNames(),
+                    'communes'        => $user->communes,
+                    'arrondissements' => $user->arrondissements,
+                ],
+            ]);
+        });
+
+        // Réinitialiser le mot de passe
+        Route::post('/users/{user}/reset-password', function (User $user) {
+            $newPassword = Str::random(12) . rand(10, 99) . '!';
+            $user->update(['password' => Hash::make($newPassword)]);
+
+            $user->notify(new \App\Notifications\PasswordResetNotification(
+                password: $newPassword
+            ));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mot de passe réinitialisé et envoyé par email.',
+            ]);
+        });
+
+        // Bloquer un compte
+        Route::post('/users/{user}/block', function (Request $request, User $user) {
+            $validated = $request->validate(['reason' => 'nullable|string|max:255']);
+
+            $user->update([
+                'is_blocked'     => true,
+                'blocked_at'     => now(),
+                'blocked_reason' => $validated['reason'] ?? null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte bloqué.']);
+        });
+
+        // Débloquer un compte
+        Route::post('/users/{user}/unblock', function (User $user) {
+            $user->update([
+                'is_blocked'     => false,
+                'blocked_at'     => null,
+                'blocked_reason' => null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte débloqué.']);
+        });
+
+        // Suspendre un compte
+        Route::post('/users/{user}/suspend', function (Request $request, User $user) {
+            $validated = $request->validate(['reason' => 'nullable|string|max:255']);
+
+            $user->update([
+                'is_suspended'     => true,
+                'suspended_at'     => now(),
+                'suspended_reason' => $validated['reason'] ?? null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte suspendu.']);
+        });
+
+        // Réactiver un compte suspendu
+        Route::post('/users/{user}/unsuspend', function (User $user) {
+            $user->update([
+                'is_suspended'     => false,
+                'suspended_at'     => null,
+                'suspended_reason' => null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte réactivé.']);
+        });
+
+        // Geler un compte
+        Route::post('/users/{user}/freeze', function (Request $request, User $user) {
+            $validated = $request->validate(['reason' => 'nullable|string|max:255']);
+
+            $user->update([
+                'is_frozen'     => true,
+                'frozen_at'     => now(),
+                'frozen_reason' => $validated['reason'] ?? null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte gelé.']);
+        });
+
+        // Dégeler un compte
+        Route::post('/users/{user}/unfreeze', function (User $user) {
+            $user->update([
+                'is_frozen'     => false,
+                'frozen_at'     => null,
+                'frozen_reason' => null,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Compte dégelé.']);
+        });
     });
 });

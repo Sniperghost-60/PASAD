@@ -141,7 +141,8 @@ export default function UsersManagement() {
                                                 </td>
                                                 <td className="px-5 py-3.5 text-right">
                                                     {hasPermission("utilisateurs.modifier") && (
-                                                        <button className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+                                                        <button onClick={() => navigate(`/dashboard/users/${u.id}/edit`)}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
                                                             <Icon d={ICONS.edit} className="size-3.5" />
                                                             Modifier
                                                         </button>

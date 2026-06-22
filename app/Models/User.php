@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'is_blocked', 'is_suspended', 'is_frozen', 'blocked_at', 'suspended_at', 'frozen_at', 'blocked_reason', 'suspended_reason', 'frozen_reason'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,6 +29,12 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_blocked' => 'boolean',
+            'is_suspended' => 'boolean',
+            'is_frozen' => 'boolean',
+            'blocked_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'frozen_at' => 'datetime',
         ];
     }
 

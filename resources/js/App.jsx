@@ -8,6 +8,7 @@ import ForgotPassword  from './pages/ForgotPassword';
 import Dashboard       from './pages/Dashboard';
 import UsersManagement  from './pages/UsersManagement';
 import CreateUser       from './pages/CreateUser';
+import EditUser         from './pages/EditUser';
 import RolesManagement  from './pages/RolesManagement';
 import GeographyManagement from './pages/GeographyManagement';
 import ComingSoon       from './pages/ComingSoon';
@@ -28,8 +29,9 @@ export default function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
 
                     {/* Gestion des utilisateurs */}
-                    <Route path="/dashboard/users"        element={<UsersManagement />} />
-                    <Route path="/dashboard/users/create" element={<CreateUser />} />
+                    <Route path="/dashboard/users"         element={<UsersManagement />} />
+                    <Route path="/dashboard/users/create"  element={<CreateUser />} />
+                    <Route path="/dashboard/users/:id/edit" element={<EditUser />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />
