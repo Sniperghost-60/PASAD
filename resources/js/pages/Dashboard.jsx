@@ -1,42 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Sidebar, Header, Icon, ICONS, RoleBadge } from '../components/Layout';
+import { Sidebar, Header, RoleBadge, Icon, ICONS } from '../components/Layout';
 import api from '../services/api';
 
-const STAT_CONFIG = [
-    { key: 'producteurs', label: 'Producteurs',       icon: 'users',     from: '#DBEAFE', to: '#93C5FD', color: '#1E40AF', perm: 'producteurs.voir', path: '/producteurs' },
-    { key: 'parcelles',   label: 'Parcelles actives', icon: 'parcelles', from: '#D1FAE5', to: '#6EE7B7', color: '#065F46', perm: 'parcelles.voir',   path: '/parcelles'   },
-    { key: 'suivis',      label: 'Suivis CEP',         icon: 'suivis',    from: '#FEF3C7', to: '#FCD34D', color: '#92400E', perm: 'suivis.voir',      path: '/suivis'      },
-    { key: 'rapports',    label: 'Rapports générés',  icon: 'rapports',  from: '#FCE7F3', to: '#F9A8D4', color: '#9D174D', perm: 'rapports.voir',    path: '/rapports'    },
+const KPI = [
+    { key:'producteurs', label:'Producteurs',       icon:ICONS.users,     gradient:'from-teal-500 to-teal-700',    perm:'producteurs.voir', path:'/producteurs' },
+    { key:'parcelles',   label:'Parcelles actives', icon:ICONS.parcelles, gradient:'from-indigo-500 to-indigo-700',perm:'parcelles.voir',   path:'/parcelles'   },
+    { key:'suivis',      label:'Suivis CEP',         icon:ICONS.suivis,    gradient:'from-amber-500 to-amber-600',  perm:'suivis.voir',      path:'/suivis'      },
+    { key:'rapports',    label:'Rapports générés',  icon:ICONS.rapports,  gradient:'from-rose-500 to-rose-700',    perm:'rapports.voir',    path:'/rapports'    },
 ];
 
-const QUICK_ACTIONS = [
-    { label: 'Nouveau producteur', icon: 'users',     bg: '#DBEAFE', color: '#1E40AF', perm: 'producteurs.créer', path: '/producteurs/create' },
-    { label: 'Saisir un suivi',    icon: 'suivis',    bg: '#D1FAE5', color: '#065F46', perm: 'suivis.créer',      path: '/suivis/create'      },
-    { label: 'Ajouter parcelle',   icon: 'parcelles', bg: '#FEF3C7', color: '#92400E', perm: 'parcelles.créer',   path: '/parcelles/create'   },
-    { label: 'Générer rapport',    icon: 'rapports',  bg: '#FCE7F3', color: '#9D174D', perm: 'rapports.générer',  path: '/rapports'           },
-    { label: 'Gérer utilisateurs', icon: 'roles',     bg: '#F3E8FF', color: '#6B21A8', perm: 'utilisateurs.voir', path: '/dashboard/users'    },
+const ACTIONS = [
+    { label:'Nouveau producteur', icon:ICONS.users,    color:'text-teal-700',  bg:'bg-teal-50',  border:'border-teal-200', perm:'producteurs.créer', path:'/producteurs/create' },
+    { label:'Saisir un suivi',   icon:ICONS.suivis,   color:'text-amber-700', bg:'bg-amber-50', border:'border-amber-200',perm:'suivis.créer',      path:'/suivis/create'      },
+    { label:'Ajouter parcelle',  icon:ICONS.parcelles,color:'text-indigo-700',bg:'bg-indigo-50',border:'border-indigo-200',perm:'parcelles.créer',   path:'/parcelles/create'   },
+    { label:'Générer rapport',   icon:ICONS.rapports, color:'text-rose-700',  bg:'bg-rose-50',  border:'border-rose-200', perm:'rapports.générer',  path:'/rapports'           },
+    { label:'Utilisateurs',      icon:ICONS.users,    color:'text-purple-700',bg:'bg-purple-50',border:'border-purple-200',perm:'utilisateurs.voir', path:'/dashboard/users'   },
 ];
 
-function StatCard({ label, value, icon, from, to, color, loading, path, navigate }) {
+function KpiCard({ label, value, icon, gradient, loading, path, navigate }) {
     return (
-        <div
-            onClick={() => navigate(path)}
-            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
-        >
+        <div onClick={() => navigate(path)}
+            className={"relative overflow-hidden rounded-2xl bg-gradient-to-br " + gradient + " p-5 text-white shadow-lg cursor-pointer hover:shadow-xl hover:-translate-y-0.5 transition-all"}>
+            <div className="pointer-events-none absolute -right-5 -top-5 size-24 rounded-full bg-white/10" />
             <div className="flex items-start justify-between mb-4">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg,${from},${to})` }}>
-                    <Icon d={ICONS[icon]} className="w-5 h-5" style={{ color }} />
-                </div>
+                <div className="rounded-xl bg-white/20 p-2.5"><Icon d={icon} className="size-5 text-white" /></div>
             </div>
-            {loading ? (
-                <div className="h-8 w-16 bg-gray-100 animate-pulse rounded-lg mb-1" />
-            ) : (
-                <p className="text-2xl font-black text-gray-900">{value}</p>
-            )}
-            <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+            {loading
+                ? <div className="h-9 w-16 rounded-xl bg-white/20 animate-pulse mb-1" />
+                : <p className="text-3xl font-black tracking-tight">{value ?? 0}</p>
+            }
+            <p className="text-sm font-semibold text-white/80 mt-0.5">{label}</p>
         </div>
     );
 }
@@ -44,144 +39,111 @@ function StatCard({ label, value, icon, from, to, color, loading, path, navigate
 export default function Dashboard() {
     const { user, hasPermission } = useAuth();
     const navigate = useNavigate();
-    const [collapsed, setCollapsed] = useState(false);
     const [stats, setStats] = useState({});
     const [loadingStats, setLoadingStats] = useState(true);
 
     useEffect(() => {
-        api.get('/dashboard/stats')
-            .then(res => setStats(res.data))
-            .catch(() => setStats({}))
-            .finally(() => setLoadingStats(false));
+        api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => setStats({})).finally(() => setLoadingStats(false));
     }, []);
 
-    const visibleStats   = STAT_CONFIG.filter(s => hasPermission(s.perm));
-    const visibleActions = QUICK_ACTIONS.filter(a => hasPermission(a.perm));
+    const visibleKpi     = KPI.filter(k => hasPermission(k.perm));
+    const visibleActions = ACTIONS.filter(a => hasPermission(a.perm));
 
-    const greeting = () => {
-        const h = new Date().getHours();
-        if (h < 12) return 'Bonjour';
-        if (h < 18) return 'Bon après-midi';
-        return 'Bonsoir';
-    };
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
 
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-50">
-            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(o => !o)} />
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                <Header
-                    collapsed={collapsed}
-                    onToggle={() => setCollapsed(o => !o)}
-                    title="Tableau de bord"
-                    subtitle={`${greeting()}, ${user?.name?.split(' ')[0]} — résumé de l'activité`}
-                />
-                <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="min-h-screen bg-slate-100 font-sans antialiased lg:flex">
+            <Sidebar />
+            <main className="min-w-0 flex-1 lg:ml-60">
+                <Header title="Tableau de bord" subtitle={greeting + ", " + (user?.name?.split(' ')[0] ?? '') + " — bienvenue sur la plateforme"} />
+                <div className="space-y-6 px-4 py-6 sm:px-6">
 
-                    {/* Bannière d'accueil */}
-                    <div className="rounded-2xl p-6 flex items-center justify-between overflow-hidden relative"
-                        style={{ background: 'linear-gradient(135deg,#1B4332 0%,#40916C 100%)' }}>
-                        <div className="relative z-10">
-                            <h2 className="text-white text-xl font-black mb-1">{greeting()}, {user?.name} 👋</h2>
-                            <p className="text-green-200 text-sm mb-3">Plateforme de suivi CEP — Champs Écoles Paysans</p>
-                            <RoleBadge roles={user?.roles} />
-                        </div>
-                        <div className="absolute right-0 top-0 bottom-0 w-48 opacity-10 pointer-events-none overflow-hidden">
-                            <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white" />
-                            <div className="absolute -right-4 bottom-0 w-56 h-28 rounded-full bg-white" />
-                        </div>
-                        <div className="hidden md:flex relative z-10 flex-col items-end gap-2">
-                            <div className="bg-white/15 backdrop-blur rounded-xl px-4 py-2 text-right">
-                                <p className="text-green-200 text-xs">Saison en cours</p>
+                    {/* Bannière */}
+                    <div className="relative overflow-hidden rounded-2xl bg-[#062824] p-6 text-white shadow-lg">
+                        <div className="pointer-events-none absolute -right-8 -top-8 size-40 rounded-full bg-white/5" />
+                        <div className="relative flex items-start justify-between">
+                            <div>
+                                <h2 className="text-xl font-extrabold mb-1">{greeting}, {user?.name} 👋</h2>
+                                <p className="text-cyan-200/80 text-sm mb-3">Plateforme de Suivi CEP — Champs Écoles Paysans</p>
+                                <RoleBadge roles={user?.roles} />
+                            </div>
+                            <div className="hidden sm:block rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-right">
+                                <p className="text-cyan-300 text-xs">Saison en cours</p>
                                 <p className="text-white font-bold text-sm">Hivernage 2026</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Statistiques réelles */}
-                    {visibleStats.length > 0 && (
+                    {/* KPI */}
+                    {visibleKpi.length > 0 && (
                         <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Vue d'ensemble</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Vue d ensemble</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                                {visibleStats.map(s => (
-                                    <StatCard
-                                        key={s.key}
-                                        {...s}
-                                        value={stats[s.key] ?? 0}
-                                        loading={loadingStats}
-                                        navigate={navigate}
-                                    />
-                                ))}
+                                {visibleKpi.map(k => <KpiCard key={k.key} {...k} value={stats[k.key]} loading={loadingStats} navigate={navigate} />)}
                             </div>
                         </div>
                     )}
 
+                    {/* Corps */}
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                        {/* Activité récente - état vide */}
-                        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div className="px-5 py-4 border-b border-gray-100">
-                                <h3 className="font-bold text-gray-800">Activité récente</h3>
+                        <div className="xl:col-span-2 rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                                <h3 className="text-sm font-extrabold text-slate-800">Activité récente</h3>
                             </div>
                             <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-                                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
-                                    <Icon d={ICONS.suivis} className="w-8 h-8 text-gray-400" />
+                                <div className="size-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                                    <Icon d={ICONS.suivis} className="size-8 text-slate-400" />
                                 </div>
-                                <p className="text-gray-500 font-medium">Aucune activité pour le moment</p>
-                                <p className="text-gray-400 text-sm mt-1">Les actions enregistrées apparaîtront ici</p>
+                                <p className="font-semibold text-slate-600">Aucune activité pour le moment</p>
+                                <p className="text-sm text-slate-400 mt-1">Les actions enregistrées apparaîtront ici</p>
                             </div>
                         </div>
 
-                        {/* Actions rapides */}
-                        <div className="flex flex-col gap-4">
+                        <div className="space-y-4">
                             {visibleActions.length > 0 && (
-                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                    <div className="px-5 py-4 border-b border-gray-100">
-                                        <h3 className="font-bold text-gray-800">Actions rapides</h3>
+                                <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                                    <div className="px-5 py-4 border-b border-slate-100">
+                                        <h3 className="text-sm font-extrabold text-slate-800">Actions rapides</h3>
                                     </div>
-                                    <div className="p-3 grid grid-cols-2 gap-2">
-                                        {visibleActions.map(({ label, icon, bg, color, path }) => (
-                                            <button
-                                                key={label}
-                                                onClick={() => navigate(path)}
-                                                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:opacity-80 transition text-center"
-                                                style={{ background: bg }}
-                                            >
-                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                                                    style={{ background: color + '22' }}>
-                                                    <Icon d={ICONS[icon]} className="w-4 h-4" style={{ color }} />
+                                    <div className="p-3 space-y-1">
+                                        {visibleActions.map(({ label, icon, color, bg, border, path }) => (
+                                            <button key={label} onClick={() => navigate(path)}
+                                                className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border " + border + " " + bg + " hover:opacity-80 transition text-left"}>
+                                                <div className="size-7 rounded-lg bg-white flex items-center justify-center shadow-sm flex-shrink-0">
+                                                    <Icon d={icon} className={"size-4 " + color} />
                                                 </div>
-                                                <span className="text-xs font-semibold leading-tight" style={{ color }}>{label}</span>
+                                                <span className={"text-sm font-semibold " + color}>{label}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Informations système */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                <div className="px-5 py-4 border-b border-gray-100">
-                                    <h3 className="font-bold text-gray-800">Informations</h3>
+                            <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                                <div className="px-5 py-4 border-b border-slate-100">
+                                    <h3 className="text-sm font-extrabold text-slate-800">Système</h3>
                                 </div>
-                                <div className="p-4 space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Utilisateurs enregistrés</span>
-                                        <span className="font-semibold text-gray-900">
-                                            {loadingStats ? '…' : (stats.utilisateurs ?? 0)}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Votre rôle</span>
+                                <div className="p-4 divide-y divide-slate-50">
+                                    {[
+                                        { label:'Utilisateurs inscrits', value: loadingStats ? '…' : (stats.utilisateurs ?? 0) },
+                                        { label:'Saison', value:'Hivernage 2026' },
+                                    ].map(({ label, value }) => (
+                                        <div key={label} className="flex items-center justify-between py-2.5 text-sm">
+                                            <span className="text-slate-500">{label}</span>
+                                            <span className="font-semibold text-slate-800">{value}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex items-center justify-between py-2.5 text-sm">
+                                        <span className="text-slate-500">Votre rôle</span>
                                         <RoleBadge roles={user?.roles} />
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-500">Saison</span>
-                                        <span className="font-semibold text-gray-900">Hivernage 2026</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 }

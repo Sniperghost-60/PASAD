@@ -39,4 +39,12 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Commune::class, 'conseiller_commune');
     }
+
+    /**
+     * Obtenir tous les arrondissements affectés à ce conseiller
+     */
+    public function arrondissements(): BelongsToMany
+    {
+        return $this->belongsToMany(Arrondissement::class, 'conseiller_arrondissement');
+    }
 }

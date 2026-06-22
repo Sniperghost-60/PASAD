@@ -6,9 +6,11 @@ import Login           from './pages/Login';
 import Register        from './pages/Register';
 import ForgotPassword  from './pages/ForgotPassword';
 import Dashboard       from './pages/Dashboard';
-import UsersManagement from './pages/UsersManagement';
-import CreateUser      from './pages/CreateUser';
-import ComingSoon      from './pages/ComingSoon';
+import UsersManagement  from './pages/UsersManagement';
+import CreateUser       from './pages/CreateUser';
+import RolesManagement  from './pages/RolesManagement';
+import GeographyManagement from './pages/GeographyManagement';
+import ComingSoon       from './pages/ComingSoon';
 
 export default function App() {
     return (
@@ -40,7 +42,8 @@ export default function App() {
                     <Route path="/caisse"             element={<ComingSoon title="Caisse & Stock" icon="caisse"   />} />
                     <Route path="/rapports"           element={<ComingSoon title="Rapports"       icon="rapports" />} />
                     <Route path="/stats"              element={<ComingSoon title="Statistiques"   icon="stats"    />} />
-                    <Route path="/roles"              element={<ComingSoon title="Rôles & Permissions" icon="shield" />} />
+                    <Route path="/roles"              element={<RolesManagement />} />
+                    <Route path="/geographie"         element={<GeographyManagement />} />
                     <Route path="/config"             element={<ComingSoon title="Configuration"  icon="settings" />} />
                 </Route>
 

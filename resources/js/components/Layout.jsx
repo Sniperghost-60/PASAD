@@ -2,339 +2,197 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-/* ─── Icônes SVG ─────────────────────────────────────────────────────── */
-const Icon = ({ d, d2, className = 'w-5 h-5' }) => (
+/* ── Icônes ──────────────────────────────────────────────────────────── */
+export const Icon = ({ d, className = 'size-5' }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d={d} />{d2 && <path d={d2} />}
+        <path d={d} />
     </svg>
 );
 
-const ICONS = {
-    dashboard:    'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
-    users:        'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
-    parcelles:    'M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16',
-    cultures:     'M12 22V12M20.6 14.4A8 8 0 0 0 12 6a8 8 0 0 0-8.6 8.4',
-    suivis:       'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
-    rapports:     'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
-    caisse:       'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6v6l4 2',
-    stats:        'M18 20V10M12 20V4M6 20v-6',
-    settings:     'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
-    logout:       'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
-    bell:         'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
-    search:       'M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
-    menu:         'M4 6h16M4 12h16M4 18h7',
-    chevronLeft:  'M15 18l-6-6 6-6',
-    chevronRight: 'M9 18l6-6-6-6',
-    user:         'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
-    shield:       'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-    roles:        'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
-    sun:          'M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
+export const ICONS = {
+    dashboard: 'M4 5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm10 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm10 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4Z',
+    users:     'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    parcelles: 'M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16',
+    cultures:  'M12 22V12M20.6 14.4A8 8 0 0 0 12 6a8 8 0 0 0-8.6 8.4',
+    suivis:    'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
+    rapports:  'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
+    caisse:    'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6v6l4 2',
+    stats:     'M3 3v18h18M7 12l4-4 4 4 5-5',
+    settings:  'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+    logout:    'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+    bell:      'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
+    search:    'M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0',
+    shield:    'M12 3 4 7v6c0 5 8 8 8 8s8-3 8-8V7l-8-4Zm-2 9 1.5 1.5L15 10',
+    chevron:   'M19 9l-7 7-7-7',
+    plus:      'M12 5v14M5 12h14',
+    edit:      'M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+    trash:     'M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6',
+    check:     'M20 6 9 17l-5-5',
+    x:         'M18 6 6 18M6 6l12 12',
+    map:       'M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
 };
 
-/* ─── Config navigation par rôle ─────────────────────────────────────── */
-const buildNav = (hasRole, hasPermission) => {
-    const sections = [
-        {
-            title: 'Principal',
-            items: [
-                { label: 'Tableau de bord', path: '/dashboard',  icon: 'dashboard' },
-            ],
-        },
-        {
-            title: 'Terrain',
-            items: [
-                hasPermission('producteurs.voir')  && { label: 'Producteurs',  path: '/producteurs', icon: 'users'     },
-                hasPermission('parcelles.voir')    && { label: 'Parcelles',    path: '/parcelles',   icon: 'parcelles' },
-                hasPermission('suivis.voir')       && { label: 'Suivis CEP',   path: '/suivis',      icon: 'suivis'    },
-                hasPermission('parcelles.voir')    && { label: 'Cultures',     path: '/cultures',    icon: 'cultures'  },
-            ].filter(Boolean),
-        },
-        {
-            title: 'Gestion',
-            items: [
-                hasPermission('caisse.voir')       && { label: 'Caisse & Stock', path: '/caisse',    icon: 'caisse'  },
-                hasPermission('rapports.voir')     && { label: 'Rapports',       path: '/rapports',  icon: 'rapports'},
-                hasPermission('rapports.générer')  && { label: 'Statistiques',   path: '/stats',     icon: 'stats'   },
-            ].filter(Boolean),
-        },
-        {
-            title: 'Administration',
-            items: [
-                hasPermission('utilisateurs.voir') && { label: 'Utilisateurs',  path: '/dashboard/users', icon: 'users'   },
-                hasPermission('roles.gérer')       && { label: 'Rôles',          path: '/roles',        icon: 'shield'  },
-                hasPermission('config.gérer')      && { label: 'Configuration',  path: '/config',       icon: 'settings'},
-            ].filter(Boolean),
-        },
-    ].filter(s => s.items.length > 0);
-
-    return sections;
-};
-
-/* ─── Badge rôle ─────────────────────────────────────────────────────── */
+/* ── Badge rôle ─────────────────────────────────────────────────────── */
 const ROLE_BADGE = {
-    'Super-Admin':   { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
-    'Administrateur':{ bg: 'bg-blue-100',   text: 'text-blue-700',   dot: 'bg-blue-500'   },
-    'Superviseur':   { bg: 'bg-amber-100',  text: 'text-amber-700',  dot: 'bg-amber-500'  },
-    'Conseiller':    { bg: 'bg-green-100',  text: 'text-green-700',  dot: 'bg-green-500'  },
+    'Super-Admin':    { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
+    'Administrateur': { bg: 'bg-blue-100',   text: 'text-blue-700',   dot: 'bg-blue-500'   },
+    'Superviseur':    { bg: 'bg-amber-100',  text: 'text-amber-700',  dot: 'bg-amber-500'  },
+    'Conseiller':     { bg: 'bg-teal-100',   text: 'text-teal-700',   dot: 'bg-teal-500'   },
 };
 
-function RoleBadge({ roles }) {
+export function RoleBadge({ roles }) {
     const role = roles?.[0];
     if (!role) return null;
-    const style = ROLE_BADGE[role] ?? { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' };
+    const s = ROLE_BADGE[role] ?? { bg:'bg-slate-100', text:'text-slate-600', dot:'bg-slate-400' };
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${style.bg} ${style.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
             {role}
         </span>
     );
 }
 
-/* ─── Sidebar ─────────────────────────────────────────────────────────── */
-export function Sidebar({ collapsed, onToggle }) {
-    const { user, hasRole, hasPermission, logout } = useAuth();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const navSections = buildNav(hasRole, hasPermission);
+/* ── Navigation ─────────────────────────────────────────────────────── */
+const buildNav = (hasPermission) => [
+    {
+        title: 'Administration',
+        items: [
+            hasPermission('utilisateurs.voir') && { label:'Utilisateurs',  path:'/dashboard/users', icon:'users'    },
+            hasPermission('roles.gérer')       && { label:'Rôles',          path:'/roles',           icon:'shield'   },
+            hasPermission('config.gérer')      && { label:'Géographie',     path:'/geographie',      icon:'map'      },
+            hasPermission('config.gérer')      && { label:'Configuration',  path:'/config',          icon:'settings' },
+        ].filter(Boolean),
+    },
+].filter(s => s.items.length > 0);
 
-    const handleLogout = async () => { await logout(); navigate('/login'); };
-    const isActive = (path) => location.pathname === path;
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+export function Sidebar() {
+    const { user, hasPermission, logout } = useAuth();
+    const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const sections = buildNav(hasPermission);
+
+    const isActive = (path) =>
+        path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(path);
 
     return (
-        <aside
-            className={`${collapsed ? 'w-[68px]' : 'w-64'} flex-shrink-0 flex flex-col h-screen sticky top-0
-                        transition-all duration-300 ease-in-out overflow-hidden`}
-            style={{ background: 'linear-gradient(180deg,#0F2D1C 0%,#1B4332 60%,#2D6A4F 100%)' }}
-        >
+        <aside className="fixed inset-y-0 left-0 z-40 w-60 flex flex-col bg-[#062824] overflow-y-auto">
             {/* Logo */}
-            <div className={`flex items-center h-16 border-b border-white/10 flex-shrink-0
-                            ${collapsed ? 'justify-center px-0' : 'px-5 gap-3'}`}>
-                <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg"
-                    style={{ background: 'linear-gradient(135deg,#D4A017,#F59E0B)' }}>
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+            <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10 flex-shrink-0">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-amber-400 shadow-md flex-shrink-0">
+                    <svg className="size-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                     </svg>
                 </div>
-                {!collapsed && (
-                    <div className="min-w-0">
-                        <p className="text-white font-bold text-sm leading-tight tracking-wide">AgriSuivi CEP</p>
-                        <p className="text-green-400 text-[10px] leading-tight">Champs Écoles Paysans</p>
-                    </div>
-                )}
-                {!collapsed && (
-                    <button onClick={onToggle}
-                        className="ml-auto p-1.5 rounded-lg text-green-400 hover:text-white hover:bg-white/10 transition flex-shrink-0">
-                        <Icon d={ICONS.chevronLeft} className="w-4 h-4" />
-                    </button>
-                )}
-                {collapsed && (
-                    <button onClick={onToggle} className="sr-only" />
-                )}
+                <div>
+                    <p className="text-white font-extrabold text-sm leading-tight">PASAD</p>
+                    <p className="text-cyan-300/70 text-[10px] leading-tight">AgriSuivi CEP</p>
+                </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin">
-                {navSections.map((section) => (
-                    <div key={section.title} className="mb-1">
-                        {!collapsed && (
-                            <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-green-500/70 select-none">
-                                {section.title}
-                            </p>
-                        )}
-                        {collapsed && <div className="my-1 mx-3 border-t border-white/10" />}
-                        {section.items.map(({ label, path, icon }) => (
-                            <Link key={path} to={path}
-                                className={`flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl transition-all duration-150 group
-                                    ${isActive(path)
-                                        ? 'bg-white/15 text-white shadow-sm'
-                                        : 'text-green-200/80 hover:bg-white/10 hover:text-white'
-                                    } ${collapsed ? 'justify-center' : ''}`}
-                                title={collapsed ? label : undefined}
-                            >
-                                <Icon d={ICONS[icon]} className={`w-[18px] h-[18px] flex-shrink-0 transition-transform group-hover:scale-110
-                                    ${isActive(path) ? 'text-white' : 'text-green-300/80'}`} />
-                                {!collapsed && (
-                                    <span className="text-sm font-medium truncate">{label}</span>
-                                )}
-                                {!collapsed && isActive(path) && (
-                                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                                )}
-                            </Link>
-                        ))}
+            <nav className="flex-1 space-y-6 px-3 py-5">
+                {sections.map(section => (
+                    <div key={section.title}>
+                        <p className="mb-2 px-2 text-xs font-medium text-cyan-100/70 uppercase tracking-wider">{section.title}</p>
+                        <div className="space-y-0.5">
+                            {section.items.map(({ label, path, icon }) => {
+                                const active = isActive(path);
+                                return (
+                                    <Link key={path} to={path}
+                                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                                            active
+                                                ? 'border border-cyan-400/40 bg-teal-500/20 text-white'
+                                                : 'text-cyan-50/80 hover:bg-white/10 hover:text-white'
+                                        }`}>
+                                        <Icon d={ICONS[icon]} className={`size-4 flex-shrink-0 ${active ? 'text-cyan-300' : 'text-cyan-300/60'}`} />
+                                        <span className="truncate">{label}</span>
+                                        {active && <span className="ml-auto size-1.5 rounded-full bg-cyan-400 flex-shrink-0" />}
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
                 ))}
             </nav>
 
-            {/* Profil utilisateur */}
-            <div className="flex-shrink-0 border-t border-white/10">
-                {!collapsed ? (
-                    <div className="p-3">
-                        <div className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                                            text-white text-sm font-bold shadow"
-                                style={{ background: 'linear-gradient(135deg,#40916C,#74C69D)' }}>
-                                {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-white text-xs font-semibold truncate">{user?.name}</p>
-                                <RoleBadge roles={user?.roles} />
-                            </div>
-                        </div>
-                        <button onClick={handleLogout}
-                            className="mt-1 w-full flex items-center gap-3 px-3 py-2 rounded-xl
-                                       text-green-300/80 hover:text-red-300 hover:bg-red-500/10 transition text-xs font-medium">
-                            <Icon d={ICONS.logout} className="w-4 h-4" />
-                            <span>Se déconnecter</span>
-                        </button>
+            {/* Profil bas */}
+            <div className="border-t border-white/10 p-3 flex-shrink-0">
+                <div className="flex items-center gap-3 rounded-lg px-2 py-2 mb-1">
+                    <div className="size-8 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 text-sm font-extrabold flex-shrink-0">
+                        {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
                     </div>
-                ) : (
-                    <div className="p-2 flex flex-col items-center gap-2">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center
-                                        text-white text-sm font-bold"
-                            style={{ background: 'linear-gradient(135deg,#40916C,#74C69D)' }}>
-                            {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-                        </div>
-                        <button onClick={handleLogout} title="Se déconnecter"
-                            className="p-2 rounded-lg text-green-300/80 hover:text-red-300 hover:bg-red-500/10 transition">
-                            <Icon d={ICONS.logout} className="w-4 h-4" />
-                        </button>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-white text-xs font-semibold truncate">{user?.name}</p>
+                        <RoleBadge roles={user?.roles} />
                     </div>
-                )}
+                </div>
+                <button onClick={() => { logout(); navigate('/login'); }}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-cyan-100/70 hover:text-red-300 hover:bg-red-500/10 transition text-xs font-medium">
+                    <Icon d={ICONS.logout} className="size-4" />
+                    <span>Se déconnecter</span>
+                </button>
             </div>
         </aside>
     );
 }
 
-/* ─── Header ──────────────────────────────────────────────────────────── */
-export function Header({ collapsed, onToggle, title, subtitle }) {
-    const { user } = useAuth();
-    const [notifOpen, setNotifOpen]   = useState(false);
-    const [profileOpen, setProfileOpen] = useState(false);
-    const notifRef   = useRef(null);
-    const profileRef = useRef(null);
-    const navigate   = useNavigate();
-    const { logout } = useAuth();
+/* ── Header ──────────────────────────────────────────────────────────── */
+export function Header({ title = 'Tableau de bord', subtitle }) {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    const today = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-    // Fermer les dropdowns en cliquant hors
     useEffect(() => {
-        const handler = (e) => {
-            if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
-            if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
+        const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
     }, []);
 
-    const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
     return (
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between
-                           px-5 shadow-sm flex-shrink-0 z-10">
-            {/* Gauche */}
-            <div className="flex items-center gap-4">
-                {collapsed && (
-                    <button onClick={onToggle}
-                        className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition">
-                        <Icon d={ICONS.menu} className="w-5 h-5" />
-                    </button>
-                )}
-                <div>
-                    <h1 className="text-base font-bold text-gray-800 leading-tight">{title || 'Tableau de bord'}</h1>
-                    <p className="text-xs text-gray-400 leading-tight">{subtitle || today}</p>
-                </div>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-slate-200 bg-white/95 backdrop-blur px-6">
+            <div className="mr-auto">
+                <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
+                {(subtitle || today) && <p className="text-xs text-slate-400 leading-tight capitalize">{subtitle || today}</p>}
             </div>
 
-            {/* Droite */}
-            <div className="flex items-center gap-2">
-                {/* Recherche */}
-                <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-                    <Icon d={ICONS.search} className="w-4 h-4 text-gray-400" />
-                    <input placeholder="Rechercher…" className="bg-transparent text-sm text-gray-600 outline-none w-40 placeholder-gray-400" />
-                    <kbd className="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
-                </div>
+            {/* Notifications */}
+            <button className="relative grid size-9 place-items-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 transition">
+                <Icon d={ICONS.bell} className="size-4" />
+                <span className="absolute top-1 right-1 size-2 rounded-full bg-red-500 border border-white" />
+            </button>
 
-                {/* Notifications */}
-                <div className="relative" ref={notifRef}>
-                    <button onClick={() => setNotifOpen(o => !o)}
-                        className="relative p-2.5 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition">
-                        <Icon d={ICONS.bell} className="w-5 h-5" />
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                    </button>
-                    {notifOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                                <span className="text-sm font-bold text-gray-800">Notifications</span>
-                                <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">3 nouvelles</span>
-                            </div>
-                            {[
-                                { icon: '🌱', title: 'Semis planifié demain',          time: 'Il y a 30 min', color: 'bg-green-100' },
-                                { icon: '📊', title: 'Rapport mensuel disponible',     time: 'Il y a 2h',    color: 'bg-blue-100'  },
-                                { icon: '⚠️',  title: 'Parcelle B3 : alerte sécheresse', time: 'Hier',      color: 'bg-amber-100' },
-                            ].map(({ icon, title, time, color }) => (
-                                <div key={title}
-                                    className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0">
-                                    <div className={`w-9 h-9 ${color} rounded-xl flex items-center justify-center text-lg flex-shrink-0`}>
-                                        {icon}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-800 leading-tight">{title}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5">{time}</p>
-                                    </div>
-                                </div>
-                            ))}
-                            <div className="px-4 py-2.5 text-center">
-                                <button className="text-xs text-green-600 font-semibold hover:underline">
-                                    Voir toutes les notifications
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+            {/* Profil */}
+            <div className="relative" ref={ref}>
+                <button onClick={() => setOpen(o => !o)}
+                    className="flex items-center gap-2 rounded-full hover:bg-slate-100 pl-1 pr-3 py-1 transition">
+                    <div className="size-8 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 text-sm font-extrabold">
+                        {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+                    </div>
+                    <div className="hidden sm:block text-left">
+                        <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name}</p>
+                        <RoleBadge roles={user?.roles} />
+                    </div>
+                    <Icon d={ICONS.chevron} className="size-3.5 text-slate-400" />
+                </button>
 
-                {/* Profil */}
-                <div className="relative" ref={profileRef}>
-                    <button onClick={() => setProfileOpen(o => !o)}
-                        className="flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-xl hover:bg-gray-100 transition">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow"
-                            style={{ background: 'linear-gradient(135deg,#1B4332,#40916C)' }}>
-                            {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+                {open && (
+                    <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100">
+                            <p className="text-sm font-bold text-slate-800">{user?.name}</p>
+                            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                         </div>
-                        <div className="hidden sm:block text-left">
-                            <p className="text-sm font-semibold text-gray-800 leading-tight">{user?.name}</p>
-                            <RoleBadge roles={user?.roles} />
-                        </div>
-                        <Icon d={ICONS.chevronLeft} className="w-3.5 h-3.5 text-gray-400 -rotate-90" />
-                    </button>
-                    {profileOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                                <p className="text-sm font-bold text-gray-800">{user?.name}</p>
-                                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-                            </div>
-                            {[
-                                { label: 'Mon profil',      icon: 'user',     path: '/profil'    },
-                                { label: 'Paramètres',      icon: 'settings', path: '/parametres'},
-                            ].map(({ label, icon, path }) => (
-                                <button key={path} onClick={() => { setProfileOpen(false); navigate(path); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-sm text-gray-700">
-                                    <Icon d={ICONS[icon]} className="w-4 h-4 text-gray-400" />
-                                    {label}
-                                </button>
-                            ))}
-                            <div className="border-t border-gray-100 mt-1">
-                                <button onClick={() => { logout(); navigate('/login'); }}
-                                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition text-sm text-red-600">
-                                    <Icon d={ICONS.logout} className="w-4 h-4" />
-                                    Se déconnecter
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        <button onClick={() => { setOpen(false); logout(); navigate('/login'); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
+                            <Icon d={ICONS.logout} className="size-4" />
+                            Se déconnecter
+                        </button>
+                    </div>
+                )}
             </div>
         </header>
     );
 }
-
-export { RoleBadge, ICONS, Icon };
