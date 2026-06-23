@@ -81,7 +81,10 @@ const buildNav = (hasPermission) => [
         title: 'CEP',
         items: [
             { label: 'Gestion des CEP',          path: '/gestion-cep',            icon: 'cultures' },
-            { label: 'Animation des sessions',    path: '/animation-sessions-cep', icon: 'suivis'   },
+            { label: 'Animation des sessions',    path: '/animation-sessions-cep',         icon: 'suivis'   },
+            { label: 'Base bénéficiaires',        path: '/base-beneficiaires-intervention', icon: 'users'    },
+            { label: 'Bilan sessions',            path: '/bilan-sessions-animation-cep',    icon: 'rapports' },
+            { label: 'Visites d\'échanges',       path: '/organisation-visites-echanges',   icon: 'map'      },
         ],
     },
     {

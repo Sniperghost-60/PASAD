@@ -385,6 +385,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ── Animation sessions CEP ───────────────────────────────────────────
     Route::get('/animation-sessions-cep/experimentations', [App\Http\Controllers\AnimationSessionCepController::class, 'experimentationsDisponibles']);
     Route::resource('animation-sessions-cep', App\Http\Controllers\AnimationSessionCepController::class)->only(['index', 'store']);
+    Route::get('/base-beneficiaires-intervention/participants', [App\Http\Controllers\BaseBeneficiaireInterventionController::class, 'participantsDisponibles']);
+    Route::resource('base-beneficiaires-intervention', App\Http\Controllers\BaseBeneficiaireInterventionController::class)->only(['index', 'store']);
+
+    // ── Bilan sessions animation CEP ─────────────────────────────────────
+    Route::resource('bilan-sessions-animation-cep', App\Http\Controllers\BilanSessionAnimationCepController::class)->only(['index', 'store']);
+    Route::resource('organisation-visites-echanges', App\Http\Controllers\OrganisationVisiteEchangeController::class)->only(['index', 'store']);
 
     // ── Gestion des CEP ──────────────────────────────────────────────────
     Route::get('/cep/{cep}/membres-disponibles', [App\Http\Controllers\CepController::class, 'membresDisponibles']);

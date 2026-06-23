@@ -22,6 +22,9 @@ import ListePresenceSensibilisation from './pages/ListePresenceSensibilisation';
 import IdentificationParticipantsCep from './pages/IdentificationParticipantsCep';
 import GestionCep from './pages/GestionCep';
 import AnimationSessionsCep from './pages/AnimationSessionsCep';
+import BaseBeneficiairesIntervention from './pages/BaseBeneficiairesIntervention';
+import BilanSessionsAnimationCep from './pages/BilanSessionsAnimationCep';
+import OrganisationVisitesEchanges from './pages/OrganisationVisitesEchanges';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 
@@ -62,6 +65,9 @@ export default function App() {
                     <Route path="/identification-participants-cep" element={<IdentificationParticipantsCep />} />
                     <Route path="/gestion-cep" element={<GestionCep />} />
                     <Route path="/animation-sessions-cep" element={<AnimationSessionsCep />} />
+                    <Route path="/base-beneficiaires-intervention" element={<BaseBeneficiairesIntervention />} />
+                    <Route path="/bilan-sessions-animation-cep" element={<BilanSessionsAnimationCep />} />
+                    <Route path="/organisation-visites-echanges" element={<OrganisationVisitesEchanges />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

@@ -309,7 +309,7 @@ export default function AnimationSessionsCep() {
                                         <option value="">— Sélectionner un village —</option>
                                         {villages.map(v => (
                                             <option key={v.id} value={v.id}>
-                                                {v.nom_village}{v.commune ? ` — ${v.commune}` : ''}
+                                                {v.village}{v.commune?.nom ? ` — ${v.commune.nom}` : ''}{v.annee ? ` (${v.annee})` : ''}
                                             </option>
                                         ))}
                                     </select>
