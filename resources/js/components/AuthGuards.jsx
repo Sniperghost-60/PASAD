@@ -20,13 +20,44 @@ function Loader() {
 }
 
 export function ProtectedRoute() {
-    const { user, loading } = useAuth();
+    const { user, loading, activeCommune, conseillerCommunes } = useAuth();
     if (loading) return <Loader />;
-    return user ? <Outlet /> : <Navigate to="/login" replace />;
+    if (!user) return <Navigate to="/login" replace />;
+
+    // Conseiller avec plusieurs communes → doit d'abord choisir
+    const isConseiller = user.roles?.includes('Conseiller');
+    if (isConseiller && conseillerCommunes.length > 1 && !activeCommune) {
+        return <Navigate to="/choisir-commune" replace />;
+    }
+
+    return <Outlet />;
 }
 
 export function GuestRoute() {
-    const { user, loading } = useAuth();
+    const { user, loading, activeCommune, conseillerCommunes } = useAuth();
     if (loading) return <Loader />;
-    return user ? <Navigate to="/dashboard" replace /> : <Outlet />;
+    if (!user) return <Outlet />;
+
+    // Conseiller avec plusieurs communes → envoyer sur la sélection
+    const isConseiller = user.roles?.includes('Conseiller');
+    if (isConseiller && conseillerCommunes.length > 1 && !activeCommune) {
+        return <Navigate to="/choisir-commune" replace />;
+    }
+
+    return <Navigate to="/dashboard" replace />;
+}
+
+// Guard spécial pour la page de sélection de commune
+export function CommuneSelectionRoute() {
+    const { user, loading, activeCommune, conseillerCommunes } = useAuth();
+    if (loading) return <Loader />;
+    if (!user) return <Navigate to="/login" replace />;
+
+    // Si déjà une commune choisie ou 1 seule commune → pas besoin de cette page
+    const isConseiller = user.roles?.includes('Conseiller');
+    if (!isConseiller || conseillerCommunes.length <= 1 || activeCommune) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return <Outlet />;
 }

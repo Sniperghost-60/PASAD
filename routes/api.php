@@ -31,6 +31,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ]);
     });
 
+    // ── Communes et arrondissements du conseiller connecté ──────────────
+    Route::get('/user/communes', function (Request $request) {
+        $user = $request->user()->load(['communes.departement', 'communes.arrondissements']);
+        $communes = $user->communes->map(fn ($c) => [
+            'id'                 => $c->id,
+            'nom'                => $c->nom,
+            'departement'        => $c->departement,
+            'arrondissements_count' => $c->arrondissements->count(),
+        ]);
+        return response()->json($communes->values());
+    });
+
     // ── Statistiques du tableau de bord ────────────────────────────────
     Route::get('/dashboard/stats', function () {
         return response()->json([
@@ -353,4 +365,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
             return response()->json(['success' => true, 'message' => 'Compte dégelé.']);
         });
     });
+
+    // ── Profil Historique ───────────────────────────────────────────────
+    Route::get('/hierarchisation-domaines-activites/villages', [App\Http\Controllers\HierarchisationDomaineActiviteController::class, 'villages']);
+    Route::patch('/matrice-problemes-solutions/solutions/{solution}/status', [App\Http\Controllers\MatriceProblemeSolutionController::class, 'updateSolutionStatus']);
+    Route::patch('/matrice-problemes-solutions/problemes/{probleme}/pertinence', [App\Http\Controllers\MatriceProblemeSolutionController::class, 'updateProblemPertinence']);
+    Route::resource('matrice-problemes-solutions', App\Http\Controllers\MatriceProblemeSolutionController::class)->only(['index', 'store']);
+    Route::get('/curriculum-apprentissage-cep/problemes-pertinents', [App\Http\Controllers\CurriculumApprentissageCepController::class, 'problemesPertinents']);
+    Route::resource('curriculum-apprentissage-cep', App\Http\Controllers\CurriculumApprentissageCepController::class)->only(['index', 'store']);
+    Route::resource('hierarchisation-domaines-activites', App\Http\Controllers\HierarchisationDomaineActiviteController::class)->only(['index', 'store']);
+    Route::resource('hierarchisation-speculations-agricoles', App\Http\Controllers\HierarchisationSpeculationAgricoleController::class)->only(['index', 'store']);
+    Route::resource('profil-historique', App\Http\Controllers\ProfilHistoriqueController::class);
+    Route::get('/resume-protocoles-experimentations/problemes', [App\Http\Controllers\ResumeProtocoleExperimentationController::class, 'problemesDisponibles']);
+    Route::resource('resume-protocoles-experimentations', App\Http\Controllers\ResumeProtocoleExperimentationController::class)->only(['index', 'store']);
 });

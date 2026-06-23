@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider }            from './contexts/AuthContext';
-import { GuestRoute, ProtectedRoute } from './components/AuthGuards';
+import { GuestRoute, ProtectedRoute, CommuneSelectionRoute } from './components/AuthGuards';
 import Login           from './pages/Login';
 import Register        from './pages/Register';
 import ForgotPassword  from './pages/ForgotPassword';
@@ -11,6 +11,14 @@ import CreateUser       from './pages/CreateUser';
 import EditUser         from './pages/EditUser';
 import RolesManagement  from './pages/RolesManagement';
 import GeographyManagement from './pages/GeographyManagement';
+import ProfilHistorique from './pages/ProfilHistorique';
+import ProfilHistoriqueList from './pages/ProfilHistoriqueList';
+import HierarchisationDomainesActivites from './pages/HierarchisationDomainesActivites';
+import HierarchisationSpeculationsAgricoles from './pages/HierarchisationSpeculationsAgricoles';
+import MatriceProblemesSolutions from './pages/MatriceProblemesSolutions';
+import CurriculumApprentissageCep from './pages/CurriculumApprentissageCep';
+import ResumeProtocolesExperimentations from './pages/ResumeProtocolesExperimentations';
+import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 
 export default function App() {
@@ -24,6 +32,11 @@ export default function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                 </Route>
 
+                {/* Sélection de commune (Conseiller multi-communes) */}
+                <Route element={<CommuneSelectionRoute />}>
+                    <Route path="/choisir-commune" element={<CommuneSelection />} />
+                </Route>
+
                 {/* Routes protégées */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/dashboard" element={<Dashboard />} />
@@ -32,6 +45,15 @@ export default function App() {
                     <Route path="/dashboard/users"         element={<UsersManagement />} />
                     <Route path="/dashboard/users/create"  element={<CreateUser />} />
                     <Route path="/dashboard/users/:id/edit" element={<EditUser />} />
+
+                    {/* Profil Historique */}
+                    <Route path="/profil-historique" element={<ProfilHistorique />} />
+                    <Route path="/profil-historique/liste" element={<ProfilHistoriqueList />} />
+                    <Route path="/hierarchisation-domaines-activites" element={<HierarchisationDomainesActivites />} />
+                    <Route path="/hierarchisation-speculations-agricoles" element={<HierarchisationSpeculationsAgricoles />} />
+                    <Route path="/matrice-problemes-solutions" element={<MatriceProblemesSolutions />} />
+                    <Route path="/curriculum-apprentissage-cep" element={<CurriculumApprentissageCep />} />
+                    <Route path="/resume-protocoles-experimentations" element={<ResumeProtocolesExperimentations />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

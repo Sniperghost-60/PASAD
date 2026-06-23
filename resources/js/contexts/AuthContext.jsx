@@ -6,19 +6,45 @@ import {
     logout as apiLogout,
     register as apiRegister,
 } from '../services/api';
+import api from '../services/api';
 import { getApiErrorMessage, translateApiErrors } from '../utils/apiMessages';
 
 const AuthContext = createContext({});
+
+const storageKey = 'pasad_commune';
+const readStoredCommune = () => {
+    try { return JSON.parse(localStorage.getItem(storageKey)) || null; } catch { return null; }
+};
 
 export function AuthProvider({ children }) {
     const [user,    setUser]    = useState(null);
     const [loading, setLoading] = useState(true);
     const [errors,  setErrors]  = useState({});
+    const [activeCommune,      setActiveCommuneState] = useState(readStoredCommune);
+    const [conseillerCommunes, setConseillerCommunes] = useState([]);
+
+    const setActiveCommune = (commune) => {
+        setActiveCommuneState(commune);
+        if (commune) localStorage.setItem(storageKey, JSON.stringify(commune));
+        else localStorage.removeItem(storageKey);
+    };
 
     const fetchUser = useCallback(async () => {
         try {
             const { data } = await getUser();
             setUser(data);
+            // Si Conseiller, charger ses communes
+            if (data?.roles?.includes('Conseiller')) {
+                try {
+                    const { data: communes } = await api.get('/api/user/communes');
+                    const list = Array.isArray(communes) ? communes : [];
+                    setConseillerCommunes(list);
+                    // Auto-sélectionner si 1 seule commune
+                    if (list.length === 1) {
+                        setActiveCommune(list[0]);
+                    }
+                } catch { setConseillerCommunes([]); }
+            }
             return data;
         } catch {
             setUser(null);
@@ -87,6 +113,8 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         await apiLogout();
         setUser(null);
+        setActiveCommune(null);
+        setConseillerCommunes([]);
     };
 
     // ── Helpers rôles ────────────────────────────────────────────────────
@@ -104,7 +132,7 @@ export function AuthProvider({ children }) {
     const isSuperAdmin = () => hasRole('Super-Admin');
 
     return (
-        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin }}>
+        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin, activeCommune, setActiveCommune, conseillerCommunes }}>
             {children}
         </AuthContext.Provider>
     );

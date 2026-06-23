@@ -56,6 +56,17 @@ export function RoleBadge({ roles }) {
 /* ── Navigation ─────────────────────────────────────────────────────── */
 const buildNav = (hasPermission) => [
     {
+        title: 'Formulaires',
+        items: [
+            { label:'Profil historique', path:'/profil-historique', icon:'rapports' },
+            { label:"Domaines d'activités", path:'/hierarchisation-domaines-activites', icon:'stats' },
+            { label:'Spéculations agricoles', path:'/hierarchisation-speculations-agricoles', icon:'cultures' },
+            { label:'Problèmes & solutions', path:'/matrice-problemes-solutions', icon:'suivis' },
+            { label:'Curriculum CEP', path:'/curriculum-apprentissage-cep', icon:'rapports' },
+            { label:'Protocoles d\'expér.', path:'/resume-protocoles-experimentations', icon:'suivis' },
+        ].filter(Boolean),
+    },
+    {
         title: 'Administration',
         items: [
             hasPermission('utilisateurs.voir') && { label:'Utilisateurs',  path:'/dashboard/users', icon:'users'    },
@@ -68,13 +79,16 @@ const buildNav = (hasPermission) => [
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 export function Sidebar() {
-    const { user, hasPermission, logout } = useAuth();
+    const { user, hasPermission, logout, activeCommune, setActiveCommune, conseillerCommunes } = useAuth();
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const sections = buildNav(hasPermission);
+    const [showCommunePicker, setShowCommunePicker] = useState(false);
 
     const isActive = (path) =>
         path === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(path);
+
+    const isConseiller = user?.roles?.includes('Conseiller');
 
     return (
         <aside className="fixed inset-y-0 left-0 z-40 w-60 flex flex-col bg-[#062824] overflow-y-auto">
@@ -90,6 +104,46 @@ export function Sidebar() {
                     <p className="text-cyan-300/70 text-[10px] leading-tight">AgriSuivi CEP</p>
                 </div>
             </div>
+
+            {/* Sélecteur de commune (Conseiller multi-communes) */}
+            {isConseiller && conseillerCommunes.length > 1 && activeCommune && (
+                <div className="border-b border-white/10 px-3 py-3 flex-shrink-0">
+                    <p className="text-[10px] font-semibold text-cyan-300/60 uppercase tracking-wider mb-1.5 px-1">Commune active</p>
+                    <button type="button" onClick={() => setShowCommunePicker(!showCommunePicker)}
+                        className="w-full flex items-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/15 px-3 py-2 text-left hover:bg-teal-500/25 transition-all">
+                        <svg className="size-3.5 text-teal-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="flex-1 text-xs font-semibold text-white truncate">{activeCommune.nom}</span>
+                        <svg className={`size-3.5 text-cyan-300/60 transition-transform ${showCommunePicker ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {/* Dropdown */}
+                    {showCommunePicker && (
+                        <div className="mt-1.5 space-y-0.5">
+                            {conseillerCommunes.map(c => (
+                                <button key={c.id} type="button"
+                                    onClick={() => { setActiveCommune(c); setShowCommunePicker(false); }}
+                                    className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs transition-all ${
+                                        activeCommune?.id === c.id
+                                            ? 'bg-teal-500/30 text-white font-semibold'
+                                            : 'text-cyan-100/70 hover:bg-white/10 hover:text-white'
+                                    }`}>
+                                    {activeCommune?.id === c.id && (
+                                        <svg className="size-3 text-teal-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                    {activeCommune?.id !== c.id && <span className="size-3 flex-shrink-0" />}
+                                    <span className="truncate">{c.nom}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Navigation */}
             <nav className="flex-1 space-y-6 px-3 py-5">
