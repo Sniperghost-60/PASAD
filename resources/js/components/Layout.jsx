@@ -85,6 +85,11 @@ const buildNav = (hasPermission) => [
             { label: 'Base bénéficiaires',        path: '/base-beneficiaires-intervention', icon: 'users'    },
             { label: 'Bilan sessions',            path: '/bilan-sessions-animation-cep',    icon: 'rapports' },
             { label: 'Visites d\'échanges',       path: '/organisation-visites-echanges',   icon: 'map'      },
+            { label: 'Visites commentées',        path: '/visites-echanges-commentees',     icon: 'map'      },
+            { label: 'Difficultés & suggestions', path: '/difficultes-suggestions',         icon: 'suivis'   },
+            { label: 'Rendements CEP',            path: '/evolution-rendements-cep',        icon: 'stats'    },
+            { label: 'Rendement dispositif',      path: '/rendement-dispositif',            icon: 'stats'    },
+            { label: 'Rapport démarrage CEP',     path: '/rapport-demarrage-cep',           icon: 'rapports' },
         ],
     },
     {

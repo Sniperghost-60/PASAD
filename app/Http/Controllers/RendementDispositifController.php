@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RendementDispositif;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class RendementDispositifController extends Controller
+{
+    public function index(Request $request)
+    {
+        return response()->json(
+            RendementDispositif::with(['commune', 'arrondissement'])
+                ->where('user_id', $request->user()->id)
+                ->orderBy('id')
+                ->get()
+        );
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'lignes'                                  => ['required', 'array', 'min:1'],
+            'lignes.*.commune_id'                     => ['nullable', 'integer', 'exists:communes,id'],
+            'lignes.*.arrondissement_id'              => ['nullable', 'integer', 'exists:arrondissements,id'],
+            'lignes.*.village'                        => ['nullable', 'string', 'max:255'],
+            'lignes.*.nom_producteur'                 => ['nullable', 'string', 'max:255'],
+            'lignes.*.culture_technologie'            => ['nullable', 'string', 'max:255'],
+            'lignes.*.rendement_annee_n1'             => ['nullable', 'numeric', 'min:0'],
+            'lignes.*.rendement_annee_n_technologie'  => ['nullable', 'numeric', 'min:0'],
+            'lignes.*.rendement_annee_n_temoin'       => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $userId = $request->user()->id;
+
+        $saved = DB::transaction(function () use ($validated, $userId) {
+            RendementDispositif::where('user_id', $userId)->delete();
+
+            return collect($validated['lignes'])->map(fn ($l) =>
+                RendementDispositif::create([
+                    'user_id'                        => $userId,
+                    'commune_id'                     => $l['commune_id']                    ?? null,
+                    'arrondissement_id'              => $l['arrondissement_id']             ?? null,
+                    'village'                        => $l['village']                       ?? null,
+                    'nom_producteur'                 => $l['nom_producteur']                ?? null,
+                    'culture_technologie'            => $l['culture_technologie']           ?? null,
+                    'rendement_annee_n1'             => $l['rendement_annee_n1']            ?? null,
+                    'rendement_annee_n_technologie'  => $l['rendement_annee_n_technologie'] ?? null,
+                    'rendement_annee_n_temoin'       => $l['rendement_annee_n_temoin']      ?? null,
+                ])
+            )->all();
+        });
+
+        return response()->json([
+            'message' => count($saved) . ' ligne(s) enregistrée(s) avec succès !',
+            'data'    => $saved,
+        ], 201);
+    }
+}

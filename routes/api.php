@@ -391,6 +391,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ── Bilan sessions animation CEP ─────────────────────────────────────
     Route::resource('bilan-sessions-animation-cep', App\Http\Controllers\BilanSessionAnimationCepController::class)->only(['index', 'store']);
     Route::resource('organisation-visites-echanges', App\Http\Controllers\OrganisationVisiteEchangeController::class)->only(['index', 'store']);
+    Route::resource('visites-echanges-commentees', App\Http\Controllers\VisiteEchangeCommenteeController::class)->only(['index', 'store']);
+    Route::resource('difficultes-suggestions', App\Http\Controllers\DifficulteSuggestionController::class)->only(['index', 'store']);
+    Route::resource('evolution-rendements-cep', App\Http\Controllers\EvolutionRendementCepController::class)->only(['index', 'store']);
+    Route::resource('rendement-dispositif', App\Http\Controllers\RendementDispositifController::class)->only(['index', 'store']);
+    Route::resource('rapport-demarrage-cep', App\Http\Controllers\RapportDemarrageCepController::class)->only(['index', 'store']);
 
     // ── Gestion des CEP ──────────────────────────────────────────────────
     Route::get('/cep/{cep}/membres-disponibles', [App\Http\Controllers\CepController::class, 'membresDisponibles']);

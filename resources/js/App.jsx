@@ -25,6 +25,11 @@ import AnimationSessionsCep from './pages/AnimationSessionsCep';
 import BaseBeneficiairesIntervention from './pages/BaseBeneficiairesIntervention';
 import BilanSessionsAnimationCep from './pages/BilanSessionsAnimationCep';
 import OrganisationVisitesEchanges from './pages/OrganisationVisitesEchanges';
+import VisitesEchangesCommentees from './pages/VisitesEchangesCommentees';
+import DifficulteSuggestions from './pages/DifficulteSuggestions';
+import EvolutionRendementsCep from './pages/EvolutionRendementsCep';
+import RendementDispositif from './pages/RendementDispositif';
+import RapportDemarrageCep from './pages/RapportDemarrageCep';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 
@@ -68,6 +73,11 @@ export default function App() {
                     <Route path="/base-beneficiaires-intervention" element={<BaseBeneficiairesIntervention />} />
                     <Route path="/bilan-sessions-animation-cep" element={<BilanSessionsAnimationCep />} />
                     <Route path="/organisation-visites-echanges" element={<OrganisationVisitesEchanges />} />
+                    <Route path="/visites-echanges-commentees" element={<VisitesEchangesCommentees />} />
+                    <Route path="/difficultes-suggestions" element={<DifficulteSuggestions />} />
+                    <Route path="/evolution-rendements-cep" element={<EvolutionRendementsCep />} />
+                    <Route path="/rendement-dispositif" element={<RendementDispositif />} />
+                    <Route path="/rapport-demarrage-cep" element={<RapportDemarrageCep />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />
