@@ -376,6 +376,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('hierarchisation-domaines-activites', App\Http\Controllers\HierarchisationDomaineActiviteController::class)->only(['index', 'store']);
     Route::resource('hierarchisation-speculations-agricoles', App\Http\Controllers\HierarchisationSpeculationAgricoleController::class)->only(['index', 'store']);
     Route::resource('profil-historique', App\Http\Controllers\ProfilHistoriqueController::class);
+    Route::resource('liste-presence-sensibilisation', App\Http\Controllers\ListePresenceSensibilisationController::class)->only(['index', 'store']);
     Route::get('/resume-protocoles-experimentations/problemes', [App\Http\Controllers\ResumeProtocoleExperimentationController::class, 'problemesDisponibles']);
     Route::resource('resume-protocoles-experimentations', App\Http\Controllers\ResumeProtocoleExperimentationController::class)->only(['index', 'store']);
+    Route::get('/identification-participants-cep/from-sensibilisation', [App\Http\Controllers\IdentificationParticipantCepController::class, 'fromSensibilisation']);
+    Route::resource('identification-participants-cep', App\Http\Controllers\IdentificationParticipantCepController::class)->only(['index', 'store']);
+
+    // ── Animation sessions CEP ───────────────────────────────────────────
+    Route::get('/animation-sessions-cep/experimentations', [App\Http\Controllers\AnimationSessionCepController::class, 'experimentationsDisponibles']);
+    Route::resource('animation-sessions-cep', App\Http\Controllers\AnimationSessionCepController::class)->only(['index', 'store']);
+
+    // ── Gestion des CEP ──────────────────────────────────────────────────
+    Route::get('/cep/{cep}/membres-disponibles', [App\Http\Controllers\CepController::class, 'membresDisponibles']);
+    Route::post('/cep/{cep}/membres', [App\Http\Controllers\CepController::class, 'addMembre']);
+    Route::delete('/cep/{cep}/membres/{membre}', [App\Http\Controllers\CepController::class, 'removeMembre']);
+    Route::resource('cep', App\Http\Controllers\CepController::class)->only(['index', 'store', 'destroy']);
 });

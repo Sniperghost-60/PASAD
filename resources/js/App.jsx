@@ -18,6 +18,10 @@ import HierarchisationSpeculationsAgricoles from './pages/HierarchisationSpecula
 import MatriceProblemesSolutions from './pages/MatriceProblemesSolutions';
 import CurriculumApprentissageCep from './pages/CurriculumApprentissageCep';
 import ResumeProtocolesExperimentations from './pages/ResumeProtocolesExperimentations';
+import ListePresenceSensibilisation from './pages/ListePresenceSensibilisation';
+import IdentificationParticipantsCep from './pages/IdentificationParticipantsCep';
+import GestionCep from './pages/GestionCep';
+import AnimationSessionsCep from './pages/AnimationSessionsCep';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 
@@ -54,6 +58,10 @@ export default function App() {
                     <Route path="/matrice-problemes-solutions" element={<MatriceProblemesSolutions />} />
                     <Route path="/curriculum-apprentissage-cep" element={<CurriculumApprentissageCep />} />
                     <Route path="/resume-protocoles-experimentations" element={<ResumeProtocolesExperimentations />} />
+                    <Route path="/liste-presence-sensibilisation" element={<ListePresenceSensibilisation />} />
+                    <Route path="/identification-participants-cep" element={<IdentificationParticipantsCep />} />
+                    <Route path="/gestion-cep" element={<GestionCep />} />
+                    <Route path="/animation-sessions-cep" element={<AnimationSessionsCep />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

@@ -54,28 +54,97 @@ export function RoleBadge({ roles }) {
 }
 
 /* ── Navigation ─────────────────────────────────────────────────────── */
+const CEP_FORMS = [
+    { label: 'Profil historique',       path: '/profil-historique',                      icon: 'rapports', step: '1' },
+    { label: "Domaines d'activités",    path: '/hierarchisation-domaines-activites',      icon: 'stats',    step: '2' },
+    { label: 'Spéculations agricoles',  path: '/hierarchisation-speculations-agricoles',  icon: 'cultures', step: '3' },
+    { label: 'Problèmes & solutions',   path: '/matrice-problemes-solutions',             icon: 'suivis',   step: '4' },
+    { label: 'Curriculum CEP',          path: '/curriculum-apprentissage-cep',            icon: 'rapports', step: '5' },
+    { label: 'Protocoles expér.',       path: '/resume-protocoles-experimentations',      icon: 'suivis',   step: '6' },
+];
+
 const buildNav = (hasPermission) => [
     {
         title: 'Formulaires',
         items: [
-            { label:'Profil historique', path:'/profil-historique', icon:'rapports' },
-            { label:"Domaines d'activités", path:'/hierarchisation-domaines-activites', icon:'stats' },
-            { label:'Spéculations agricoles', path:'/hierarchisation-speculations-agricoles', icon:'cultures' },
-            { label:'Problèmes & solutions', path:'/matrice-problemes-solutions', icon:'suivis' },
-            { label:'Curriculum CEP', path:'/curriculum-apprentissage-cep', icon:'rapports' },
-            { label:'Protocoles d\'expér.', path:'/resume-protocoles-experimentations', icon:'suivis' },
-        ].filter(Boolean),
+            { type: 'group', label: 'Fiches CEP', icon: 'rapports', children: CEP_FORMS },
+        ],
+    },
+    {
+        title: 'Sensibilisation',
+        items: [
+            { label: 'Liste de présence',    path: '/liste-presence-sensibilisation',   icon: 'users' },
+            { label: 'Identification CEP',   path: '/identification-participants-cep',  icon: 'rapports' },
+        ],
+    },
+    {
+        title: 'CEP',
+        items: [
+            { label: 'Gestion des CEP',          path: '/gestion-cep',            icon: 'cultures' },
+            { label: 'Animation des sessions',    path: '/animation-sessions-cep', icon: 'suivis'   },
+        ],
     },
     {
         title: 'Administration',
         items: [
-            hasPermission('utilisateurs.voir') && { label:'Utilisateurs',  path:'/dashboard/users', icon:'users'    },
-            hasPermission('roles.gérer')       && { label:'Rôles',          path:'/roles',           icon:'shield'   },
-            hasPermission('config.gérer')      && { label:'Géographie',     path:'/geographie',      icon:'map'      },
-            hasPermission('config.gérer')      && { label:'Configuration',  path:'/config',          icon:'settings' },
+            hasPermission('utilisateurs.voir') && { label: 'Utilisateurs', path: '/dashboard/users', icon: 'users'    },
+            hasPermission('roles.gérer')       && { label: 'Rôles',        path: '/roles',           icon: 'shield'   },
+            hasPermission('config.gérer')      && { label: 'Géographie',   path: '/geographie',      icon: 'map'      },
+            hasPermission('config.gérer')      && { label: 'Configuration', path: '/config',          icon: 'settings' },
         ].filter(Boolean),
     },
 ].filter(s => s.items.length > 0);
+
+/* ── Groupe collapsible ──────────────────────────────────────────────── */
+function NavGroupItem({ label, icon, children, isActive }) {
+    const { pathname } = useLocation();
+    const [open, setOpen] = useState(isActive);
+
+    useEffect(() => { if (isActive) setOpen(true); }, [isActive]);
+
+    return (
+        <div>
+            <button type="button" onClick={() => setOpen(o => !o)}
+                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                        ? 'border border-cyan-400/40 bg-teal-500/20 text-white'
+                        : 'text-cyan-50/80 hover:bg-white/10 hover:text-white'
+                }`}>
+                <Icon d={ICONS[icon]} className={`size-4 flex-shrink-0 ${isActive ? 'text-cyan-300' : 'text-cyan-300/60'}`} />
+                <span className="flex-1 truncate text-left">{label}</span>
+                <svg className={`size-3.5 flex-shrink-0 text-cyan-300/60 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {open && (
+                <div className="ml-4 mt-0.5 border-l border-white/10 pl-2.5 space-y-0.5">
+                    {children.map(({ label: childLabel, path, icon: childIcon, step }) => (
+                        <Link key={path} to={path}
+                            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors ${
+                                pathname.startsWith(path)
+                                    ? 'bg-teal-500/25 text-white'
+                                    : 'text-cyan-100/65 hover:bg-white/10 hover:text-white'
+                            }`}>
+                            {step && (
+                                <span className={`inline-flex size-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                                    pathname.startsWith(path)
+                                        ? 'bg-cyan-400 text-slate-900'
+                                        : 'bg-white/10 text-cyan-300/70'
+                                }`}>{step}</span>
+                            )}
+                            <span className="truncate">{childLabel}</span>
+                            {pathname.startsWith(path) && (
+                                <span className="ml-auto size-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                            )}
+                        </Link>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 export function Sidebar() {
@@ -151,17 +220,28 @@ export function Sidebar() {
                     <div key={section.title}>
                         <p className="mb-2 px-2 text-xs font-medium text-cyan-100/70 uppercase tracking-wider">{section.title}</p>
                         <div className="space-y-0.5">
-                            {section.items.map(({ label, path, icon }) => {
-                                const active = isActive(path);
+                            {section.items.map((item) => {
+                                if (item.type === 'group') {
+                                    const groupActive = item.children.some(c => isActive(c.path));
+                                    return (
+                                        <NavGroupItem key={item.label}
+                                            label={item.label}
+                                            icon={item.icon}
+                                            children={item.children}
+                                            isActive={groupActive}
+                                        />
+                                    );
+                                }
+                                const active = isActive(item.path);
                                 return (
-                                    <Link key={path} to={path}
+                                    <Link key={item.path} to={item.path}
                                         className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                                             active
                                                 ? 'border border-cyan-400/40 bg-teal-500/20 text-white'
                                                 : 'text-cyan-50/80 hover:bg-white/10 hover:text-white'
                                         }`}>
-                                        <Icon d={ICONS[icon]} className={`size-4 flex-shrink-0 ${active ? 'text-cyan-300' : 'text-cyan-300/60'}`} />
-                                        <span className="truncate">{label}</span>
+                                        <Icon d={ICONS[item.icon]} className={`size-4 flex-shrink-0 ${active ? 'text-cyan-300' : 'text-cyan-300/60'}`} />
+                                        <span className="truncate">{item.label}</span>
                                         {active && <span className="ml-auto size-1.5 rounded-full bg-cyan-400 flex-shrink-0" />}
                                     </Link>
                                 );
