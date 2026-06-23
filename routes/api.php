@@ -5,6 +5,7 @@ use App\Models\Commune;
 use App\Models\Arrondissement;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,6 +32,33 @@ Route::middleware(['auth:sanctum'])->group(function () {
         ]);
     });
 
+    // ── Profil : modifier les informations personnelles ─────────────────
+    Route::put('/me', function (Request $request) {
+        $user = $request->user();
+        $validated = $request->validate([
+            'name'      => ['required', 'string', 'max:255'],
+            'email'     => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'telephone' => ['nullable', 'string', 'max:50'],
+        ]);
+        $user->update($validated);
+        return response()->json([
+            ...$user->fresh()->toArray(),
+            'roles'       => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+        ]);
+    });
+
+    // ── Profil : changer le mot de passe ────────────────────────────────
+    Route::put('/me/password', function (Request $request) {
+        $user = $request->user();
+        $request->validate([
+            'current_password' => ['required', 'string', 'current_password'],
+            'password'         => ['required', 'string', 'confirmed', Password::min(8)],
+        ]);
+        $user->update(['password' => Hash::make($request->password)]);
+        return response()->json(['message' => 'Mot de passe mis à jour.']);
+    });
+
     // ── Communes et arrondissements du conseiller connecté ──────────────
     Route::get('/user/communes', function (Request $request) {
         $user = $request->user()->load(['communes.departement', 'communes.arrondissements']);
@@ -44,14 +72,227 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // ── Statistiques du tableau de bord ────────────────────────────────
-    Route::get('/dashboard/stats', function () {
-        return response()->json([
-            'utilisateurs' => User::count(),
-            'producteurs'  => 0, // sera mis à jour quand le module sera créé
-            'parcelles'    => 0, // sera mis à jour quand le module sera créé
-            'suivis'       => 0, // sera mis à jour quand le module sera créé
-            'rapports'     => 0, // sera mis à jour quand le module sera créé
-        ]);
+    Route::get('/dashboard/stats', function (Request $request) {
+        $user   = $request->user();
+        $uid    = $user->id;
+        $isAdmin = $user->hasAnyRole(['Super-Admin', 'Administrateur', 'Superviseur']);
+
+        $tables = [
+            'profil_historique', 'hierarchisation_domaines_activites',
+            'hierarchisation_speculations_agricoles', 'matrice_problemes',
+            'curriculum_apprentissage_cep', 'resume_protocoles_experimentations',
+            'liste_presence_sensibilisation', 'identification_participants_cep',
+            'cep', 'animation_sessions_cep', 'base_beneficiaires_intervention',
+            'bilan_sessions_animation_cep', 'organisation_visites_echanges',
+            'visites_echanges_commentees', 'difficultes_suggestions',
+            'evolution_rendements_cep', 'rendement_dispositif', 'rapport_demarrage_cep',
+        ];
+
+        $qAll  = fn($t) => DB::table($t)->count();
+        $qUser = fn($t) => DB::table($t)->where('user_id', $uid)->count();
+        $q     = $isAdmin ? $qAll : $qUser;
+
+        $stats = collect($tables)->mapWithKeys(fn($t) => [$t => $q($t)])->all();
+
+        $stats['utilisateurs'] = User::count();
+        $stats['communes']     = DB::table('communes')->count();
+        $stats['cep_membres']  = DB::table('cep_membres')->count();
+
+        // ── Stats communes à tous les rôles (scoped) ─────────────────────────
+        // Taux féminisation participants CEP
+        $totalPart  = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->count();
+        $femmesPart = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->where('sexe', 'F')->count();
+        $stats['taux_feminisation']   = $totalPart > 0 ? round($femmesPart / $totalPart * 100, 1) : 0;
+        $stats['participants_femmes'] = $femmesPart;
+        $stats['participants_hommes'] = $totalPart - $femmesPart;
+
+        // Top 5 spéculations pratiquées
+        $stats['top_speculations'] = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('speculation')->where('speculation', '!=', '')
+            ->selectRaw('speculation, COUNT(*) as nb')
+            ->groupBy('speculation')->orderByDesc('nb')->limit(5)->get();
+
+        // Catégories d'âge
+        $stats['categories_age'] = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('categorie_age')
+            ->selectRaw('categorie_age, COUNT(*) as nb')
+            ->groupBy('categorie_age')->orderByDesc('nb')->get();
+
+        // Superficie couverte totale (ha)
+        $stats['superficie_couverte_total'] = (float) DB::table('animation_sessions_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->sum('superficie_couverte');
+
+        // Totaux AAES & tests à l'urne
+        $stats['nb_aaes_total']      = (int) DB::table('bilan_sessions_animation_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->sum('nb_aaes');
+        $stats['nb_test_urne_total'] = (int) DB::table('bilan_sessions_animation_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->sum('nb_test_urne');
+
+        // Bilan H/F/jeunes cumulé
+        $bilan = DB::table('bilan_sessions_animation_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->selectRaw('SUM(participation_total) as total, SUM(participation_h) as hommes, SUM(participation_f) as femmes, SUM(participation_jeunes) as jeunes')
+            ->first();
+        $stats['bilan_participation'] = $bilan;
+
+        // Top pratiques agroécologiques
+        $pratiquesMap = [];
+        foreach (['pratique_agroecologique_1','pratique_agroecologique_2','pratique_agroecologique_3'] as $col) {
+            DB::table('base_beneficiaires_intervention')
+                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+                ->whereNotNull($col)->where($col, '!=', '')
+                ->selectRaw("$col as pratique, COUNT(*) as nb")
+                ->groupBy($col)->get()
+                ->each(fn($r) => $pratiquesMap[$r->pratique] = ($pratiquesMap[$r->pratique] ?? 0) + $r->nb);
+        }
+        arsort($pratiquesMap);
+        $stats['top_pratiques_agroeco'] = collect(array_slice($pratiquesMap, 0, 6, true))
+            ->map(fn($nb, $pratique) => ['pratique' => $pratique, 'nb' => $nb])->values();
+
+        // Répartition type producteur
+        $stats['producteurs_par_type'] = DB::table('base_beneficiaires_intervention')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('type_producteur')
+            ->selectRaw('type_producteur, COUNT(*) as nb')
+            ->groupBy('type_producteur')->get();
+
+        // Top 5 difficultés signalées
+        $stats['top_difficultes'] = DB::table('difficultes_suggestions')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('difficulte')->where('difficulte', '!=', '')
+            ->selectRaw('difficulte, COUNT(*) as nb')
+            ->groupBy('difficulte')->orderByDesc('nb')->limit(5)->get();
+
+        // Progression mensuelle des saisies (12 derniers mois — proxy : profil_historique)
+        $stats['progression_mensuelle'] = DB::table('profil_historique')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as mois, COUNT(*) as nb")
+            ->groupBy('mois')->orderBy('mois')->get();
+
+        // ── Stats réservées Superviseur / Admin ───────────────────────────
+        // Répartition des utilisateurs par rôle (admins uniquement)
+        if ($isAdmin) {
+            $stats['users_par_role'] = [
+                'Super-Admin'    => User::role('Super-Admin')->count(),
+                'Administrateur' => User::role('Administrateur')->count(),
+                'Superviseur'    => User::role('Superviseur')->count(),
+                'Conseiller'     => User::role('Conseiller')->count(),
+            ];
+
+            // Top 5 conseillers les plus actifs (par nb de CEP créés)
+            $stats['top_conseillers'] = DB::table('cep')
+                ->join('users', 'users.id', '=', 'cep.user_id')
+                ->selectRaw('users.id, users.name, COUNT(cep.id) as nb_cep')
+                ->groupBy('users.id', 'users.name')
+                ->orderByDesc('nb_cep')
+                ->limit(5)
+                ->get();
+
+            // Activité globale : nb d'enregistrements par conseiller (profil historique)
+            $stats['activite_conseillers'] = DB::table('profil_historique')
+                ->join('users', 'users.id', '=', 'profil_historique.user_id')
+                ->selectRaw('users.id, users.name, COUNT(*) as nb')
+                ->groupBy('users.id', 'users.name')
+                ->orderByDesc('nb')
+                ->limit(8)
+                ->get();
+
+            // Taux CEP avec rapport de démarrage
+            $nbCepTotal    = DB::table('cep')->count();
+            $nbAvecRapport = DB::table('rapport_demarrage_cep')->count();
+            $stats['taux_cep_avec_rapport'] = $nbCepTotal > 0 ? round($nbAvecRapport / $nbCepTotal * 100, 1) : 0;
+            $stats['nb_avec_rapport']        = $nbAvecRapport;
+
+            // CEP avec/sans comité en place
+            $stats['cep_avec_comite'] = DB::table('rapport_demarrage_cep')->where('comite_en_place', true)->count();
+            $stats['cep_sans_comite'] = DB::table('rapport_demarrage_cep')->where('comite_en_place', false)->count();
+
+            // Arrondissements sans CEP actif
+            $arrAvecCep = DB::table('cep')->whereNotNull('arrondissement_id')->distinct()->pluck('arrondissement_id');
+            $stats['arrondissements_sans_cep'] = DB::table('arrondissements')->whereNotIn('id', $arrAvecCep)->count();
+            $stats['arrondissements_total']    = DB::table('arrondissements')->count();
+
+            // Gain rendement moyen % (technologie vs témoin) par culture
+            $stats['gain_rendement'] = DB::table('rendement_dispositif')
+                ->whereNotNull('rendement_annee_n_technologie')
+                ->whereNotNull('rendement_annee_n_temoin')
+                ->where('rendement_annee_n_temoin', '>', 0)
+                ->whereNotNull('culture_technologie')
+                ->selectRaw("culture_technologie as culture,
+                    ROUND(AVG((rendement_annee_n_technologie - rendement_annee_n_temoin) / rendement_annee_n_temoin * 100)::numeric, 1) as gain_pct,
+                    COUNT(*) as nb_producteurs")
+                ->groupBy('culture_technologie')->orderByDesc('gain_pct')->limit(6)->get();
+
+            // Producteurs uniques (dédupliqués par contact)
+            $stats['producteurs_uniques'] = DB::table('base_beneficiaires_intervention')
+                ->whereNotNull('contact1_producteur')
+                ->distinct('contact1_producteur')
+                ->count('contact1_producteur');
+
+            // Évolution annuelle des profils CEP
+            $stats['evolution_annuelle_cep'] = DB::table('profil_historique')
+                ->whereNotNull('annee')
+                ->selectRaw('annee::text as annee, COUNT(*) as nb')
+                ->groupBy('annee')->orderBy('annee')->get();
+
+            // Comptes par statut
+            $stats['comptes_par_statut'] = [
+                'actifs'    => User::where('is_blocked', false)->where('is_suspended', false)->where('is_frozen', false)->count(),
+                'bloques'   => User::where('is_blocked', true)->count(),
+                'suspendus' => User::where('is_suspended', true)->count(),
+                'geles'     => User::where('is_frozen', true)->count(),
+            ];
+
+            // Conseillers inactifs ce mois (aucune saisie dans profil_historique)
+            $actifsCeMois = DB::table('profil_historique')
+                ->where('created_at', '>=', now()->startOfMonth())
+                ->distinct()->pluck('user_id');
+            $stats['conseillers_inactifs_mois'] = User::role('Conseiller')
+                ->whereNotIn('id', $actifsCeMois)->count();
+
+            // Pipeline problèmes → solutions → expérimentations
+            $stats['nb_problemes_total']     = DB::table('matrice_problemes')->count();
+            $stats['nb_problemes_pertinents']= DB::table('matrice_problemes')->where('est_pertinent', true)->count();
+            $stats['nb_avec_curriculum']     = DB::table('curriculum_apprentissage_cep')->distinct('matrice_probleme_id')->count('matrice_probleme_id');
+            $stats['nb_experimentations']    = DB::table('resume_protocoles_experimentations')->count();
+
+            // Classement conseillers par activité totale (toutes tables)
+            $conseillerIds = User::role('Conseiller')->pluck('id');
+            if ($conseillerIds->isNotEmpty()) {
+                $allTablesU = [
+                    'profil_historique','hierarchisation_domaines_activites',
+                    'hierarchisation_speculations_agricoles','matrice_problemes',
+                    'curriculum_apprentissage_cep','resume_protocoles_experimentations',
+                    'liste_presence_sensibilisation','identification_participants_cep',
+                    'animation_sessions_cep','base_beneficiaires_intervention',
+                    'bilan_sessions_animation_cep','organisation_visites_echanges',
+                    'visites_echanges_commentees','difficultes_suggestions',
+                    'evolution_rendements_cep','rendement_dispositif','rapport_demarrage_cep',
+                ];
+                $unionSql = collect($allTablesU)->map(fn($t) => "SELECT user_id FROM {$t}")->implode(' UNION ALL ');
+                $idList   = $conseillerIds->implode(',');
+                $stats['classement_conseillers'] = DB::select("
+                    SELECT u.id, u.name, COUNT(a.user_id) as total_activite
+                    FROM users u
+                    LEFT JOIN ({$unionSql}) a ON a.user_id = u.id
+                    WHERE u.id IN ({$idList})
+                    GROUP BY u.id, u.name
+                    ORDER BY total_activite DESC
+                    LIMIT 8
+                ");
+            } else {
+                $stats['classement_conseillers'] = [];
+            }
+        }
+
+        return response()->json($stats);
     });
 
     // ── Gestion des utilisateurs (admin+) ────────────────────────────────
@@ -396,6 +637,209 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('evolution-rendements-cep', App\Http\Controllers\EvolutionRendementCepController::class)->only(['index', 'store']);
     Route::resource('rendement-dispositif', App\Http\Controllers\RendementDispositifController::class)->only(['index', 'store']);
     Route::resource('rapport-demarrage-cep', App\Http\Controllers\RapportDemarrageCepController::class)->only(['index', 'store']);
+
+    // ── Statistiques CEP ─────────────────────────────────────────────────
+    Route::get('/stats/cep', function (Request $request) {
+        $user    = $request->user();
+        $uid     = $user->id;
+        $isAdmin = $user->hasAnyRole(['Super-Admin', 'Administrateur', 'Superviseur']);
+        $scope   = fn($q) => $isAdmin ? $q : $q->where('user_id', $uid);
+
+        // 1. Participants par commune (H/F)
+        $participantsQuery = DB::table('identification_participants_cep as i')
+            ->leftJoin('communes as c', 'c.id', '=', 'i.commune_id')
+            ->selectRaw("COALESCE(c.nom,'Inconnue') as commune,
+                COUNT(*) as total,
+                SUM(CASE WHEN i.sexe='M' THEN 1 ELSE 0 END) as hommes,
+                SUM(CASE WHEN i.sexe='F' THEN 1 ELSE 0 END) as femmes")
+            ->groupBy('c.id', 'c.nom');
+        if (!$isAdmin) $participantsQuery->where('i.user_id', $uid);
+        $participants = $participantsQuery->orderByDesc('total')->limit(10)->get();
+
+        // 2. Répartition H/F globale (pour camembert)
+        $repartitionHF = [
+            'hommes' => DB::table('identification_participants_cep')
+                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+                ->where('sexe', 'M')->count(),
+            'femmes' => DB::table('identification_participants_cep')
+                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+                ->where('sexe', 'F')->count(),
+        ];
+
+        // 3. Rendements par culture (n-1 / technologie / témoin)
+        $rendementsQuery = DB::table('rendement_dispositif')
+            ->selectRaw("culture_technologie as culture,
+                AVG(rendement_annee_n1) as moy_n1,
+                AVG(rendement_annee_n_technologie) as moy_tech,
+                AVG(rendement_annee_n_temoin) as moy_temoin,
+                COUNT(*) as nb_producteurs")
+            ->whereNotNull('culture_technologie')
+            ->groupBy('culture_technologie');
+        if (!$isAdmin) $rendementsQuery->where('user_id', $uid);
+        $rendements = $rendementsQuery->orderByDesc('nb_producteurs')->limit(8)->get();
+
+        // 4. Rendements dispositif par CEP (évolution)
+        $evolutionQuery = DB::table('evolution_rendements_cep as e')
+            ->leftJoin('communes as c', 'c.id', '=', 'e.commune_id')
+            ->selectRaw("COALESCE(e.culture,'N/A') as culture,
+                COALESCE(c.nom,'N/A') as commune,
+                AVG(e.rendement_dispositif_1) as d1,
+                AVG(e.rendement_dispositif_2) as d2,
+                AVG(e.rendement_dispositif_3) as d3,
+                AVG(e.rendement_dispositif_4) as d4")
+            ->whereNotNull('e.culture')
+            ->groupBy('e.culture', 'c.nom', 'c.id');
+        if (!$isAdmin) $evolutionQuery->where('e.user_id', $uid);
+        $evolutionRendements = $evolutionQuery->limit(8)->get();
+
+        // 5. Sessions & visites par mois
+        $sessionsQuery = DB::table('bilan_sessions_animation_cep')
+            ->selectRaw("TO_CHAR(date_session, 'YYYY-MM') as mois,
+                COUNT(*) as nb_sessions,
+                SUM(participation_total) as participants")
+            ->whereNotNull('date_session')
+            ->groupBy('mois')->orderBy('mois');
+        if (!$isAdmin) $sessionsQuery->where('user_id', $uid);
+        $sessions = $sessionsQuery->limit(12)->get();
+
+        $visitesQuery = DB::table('visites_echanges_commentees')
+            ->selectRaw("TO_CHAR(date, 'YYYY-MM') as mois,
+                COUNT(*) as nb_visites,
+                SUM(visiteurs_total) as visiteurs")
+            ->whereNotNull('date')
+            ->groupBy('mois')->orderBy('mois');
+        if (!$isAdmin) $visitesQuery->where('user_id', $uid);
+        $visites = $visitesQuery->limit(12)->get();
+
+        // Fusionner sessions + visites par mois
+        $moisData = collect($sessions)->keyBy('mois')->map(fn($r) => [
+            'mois'        => $r->mois,
+            'nb_sessions' => (int)$r->nb_sessions,
+            'participants'=> (int)($r->participants ?? 0),
+            'nb_visites'  => 0,
+            'visiteurs'   => 0,
+        ])->all();
+        foreach ($visites as $v) {
+            if (isset($moisData[$v->mois])) {
+                $moisData[$v->mois]['nb_visites'] = (int)$v->nb_visites;
+                $moisData[$v->mois]['visiteurs']  = (int)($v->visiteurs ?? 0);
+            } else {
+                $moisData[$v->mois] = [
+                    'mois'        => $v->mois,
+                    'nb_sessions' => 0,
+                    'participants'=> 0,
+                    'nb_visites'  => (int)$v->nb_visites,
+                    'visiteurs'   => (int)($v->visiteurs ?? 0),
+                ];
+            }
+        }
+
+        // 6. Avancement par module (% modules renseignés)
+        $modules = [
+            ['key'=>'profil_historique',                    'label'=>'Profil historique'],
+            ['key'=>'hierarchisation_domaines_activites',   'label'=>"Domaines d'activités"],
+            ['key'=>'hierarchisation_speculations_agricoles','label'=>'Spéculations'],
+            ['key'=>'matrice_problemes',                    'label'=>'Problèmes & solutions'],
+            ['key'=>'curriculum_apprentissage_cep',         'label'=>'Curriculum CEP'],
+            ['key'=>'resume_protocoles_experimentations',   'label'=>'Protocoles expér.'],
+            ['key'=>'liste_presence_sensibilisation',       'label'=>'Liste présence'],
+            ['key'=>'identification_participants_cep',      'label'=>'Participants CEP'],
+            ['key'=>'cep',                                  'label'=>'CEP créés'],
+            ['key'=>'animation_sessions_cep',               'label'=>'Sessions anim.'],
+            ['key'=>'bilan_sessions_animation_cep',         'label'=>'Bilans sessions'],
+            ['key'=>'organisation_visites_echanges',        'label'=>'Org. visites'],
+            ['key'=>'visites_echanges_commentees',          'label'=>'Visites commentées'],
+            ['key'=>'evolution_rendements_cep',             'label'=>'Rendements CEP'],
+            ['key'=>'rendement_dispositif',                 'label'=>'Rendement disp.'],
+            ['key'=>'rapport_demarrage_cep',                'label'=>'Rapport démarrage'],
+        ];
+        $avancement = array_map(function($m) use ($uid, $isAdmin) {
+            $count = DB::table($m['key'])
+                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+                ->count();
+            return ['label' => $m['label'], 'valeur' => $count, 'renseigne' => $count > 0];
+        }, $modules);
+
+        // 7. Top spéculations
+        $topSpecQuery = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('speculation')->where('speculation', '!=', '')
+            ->selectRaw('speculation, COUNT(*) as nb')
+            ->groupBy('speculation')->orderByDesc('nb')->limit(6);
+        $topSpeculations = $topSpecQuery->get();
+
+        // 8. Catégories d'âge
+        $categoriesAge = DB::table('identification_participants_cep')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('categorie_age')
+            ->selectRaw('categorie_age, COUNT(*) as nb')
+            ->groupBy('categorie_age')->get();
+
+        // 9. Top pratiques agroécologiques
+        $pratiquesMap = [];
+        foreach (['pratique_agroecologique_1','pratique_agroecologique_2','pratique_agroecologique_3'] as $col) {
+            DB::table('base_beneficiaires_intervention')
+                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+                ->whereNotNull($col)->where($col, '!=', '')
+                ->selectRaw("$col as pratique, COUNT(*) as nb")
+                ->groupBy($col)->get()
+                ->each(fn($r) => $pratiquesMap[$r->pratique] = ($pratiquesMap[$r->pratique] ?? 0) + $r->nb);
+        }
+        arsort($pratiquesMap);
+        $topPratiques = collect(array_slice($pratiquesMap, 0, 6, true))
+            ->map(fn($nb, $p) => ['pratique' => $p, 'nb' => $nb])->values();
+
+        // 10. Type producteur
+        $typesProducteur = DB::table('base_beneficiaires_intervention')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('type_producteur')
+            ->selectRaw('type_producteur, COUNT(*) as nb')
+            ->groupBy('type_producteur')->get();
+
+        // 11. Top difficultés signalées
+        $topDifficultes = DB::table('difficultes_suggestions')
+            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            ->whereNotNull('difficulte')->where('difficulte', '!=', '')
+            ->selectRaw('difficulte, COUNT(*) as nb')
+            ->groupBy('difficulte')->orderByDesc('nb')->limit(5)->get();
+
+        // 12. Pipeline problèmes → solutions (admin)
+        $pipeline = null;
+        $gainRendement = collect();
+        if ($isAdmin) {
+            $pipeline = [
+                'total'      => DB::table('matrice_problemes')->count(),
+                'pertinents' => DB::table('matrice_problemes')->where('est_pertinent', true)->count(),
+                'curriculum' => DB::table('curriculum_apprentissage_cep')->distinct('matrice_probleme_id')->count('matrice_probleme_id'),
+                'protocoles' => DB::table('resume_protocoles_experimentations')->count(),
+            ];
+            $gainRendement = DB::table('rendement_dispositif')
+                ->whereNotNull('rendement_annee_n_technologie')
+                ->whereNotNull('rendement_annee_n_temoin')
+                ->where('rendement_annee_n_temoin', '>', 0)
+                ->whereNotNull('culture_technologie')
+                ->selectRaw("culture_technologie as culture,
+                    ROUND(AVG((rendement_annee_n_technologie - rendement_annee_n_temoin) / rendement_annee_n_temoin * 100)::numeric, 1) as gain_pct,
+                    COUNT(*) as nb_producteurs")
+                ->groupBy('culture_technologie')->orderByDesc('gain_pct')->limit(6)->get();
+        }
+
+        return response()->json([
+            'participants'        => $participants,
+            'repartition_hf'      => $repartitionHF,
+            'rendements'          => $rendements,
+            'evolution_rendements'=> $evolutionRendements,
+            'sessions_visites'    => collect($moisData)->sortKeys()->values(),
+            'avancement'          => $avancement,
+            'top_speculations'    => $topSpeculations,
+            'categories_age'      => $categoriesAge,
+            'top_pratiques'       => $topPratiques,
+            'types_producteur'    => $typesProducteur,
+            'top_difficultes'     => $topDifficultes,
+            'pipeline'            => $pipeline,
+            'gain_rendement'      => $gainRendement,
+        ]);
+    });
 
     // ── Gestion des CEP ──────────────────────────────────────────────────
     Route::get('/cep/{cep}/membres-disponibles', [App\Http\Controllers\CepController::class, 'membresDisponibles']);

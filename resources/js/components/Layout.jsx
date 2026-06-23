@@ -63,45 +63,99 @@ const CEP_FORMS = [
     { label: 'Protocoles expér.',       path: '/resume-protocoles-experimentations',      icon: 'suivis',   step: '6' },
 ];
 
-const buildNav = (hasPermission) => [
-    {
-        title: 'Formulaires',
+const CEP_ACTIVITES_NAV = [
+    { label: 'Gestion des CEP',           path: '/gestion-cep',                     icon: 'cultures' },
+    { label: 'Animation des sessions',    path: '/animation-sessions-cep',          icon: 'suivis'   },
+    { label: 'Base bénéficiaires',        path: '/base-beneficiaires-intervention', icon: 'users'    },
+    { label: 'Bilan sessions',            path: '/bilan-sessions-animation-cep',    icon: 'rapports' },
+    { label: "Visites d'échanges",        path: '/organisation-visites-echanges',   icon: 'map'      },
+    { label: 'Visites commentées',        path: '/visites-echanges-commentees',     icon: 'map'      },
+    { label: 'Difficultés & suggestions', path: '/difficultes-suggestions',         icon: 'suivis'   },
+    { label: 'Rendements CEP',            path: '/evolution-rendements-cep',        icon: 'stats'    },
+    { label: 'Rendement dispositif',      path: '/rendement-dispositif',            icon: 'stats'    },
+    { label: 'Rapport démarrage CEP',     path: '/rapport-demarrage-cep',           icon: 'rapports' },
+];
+
+const buildNav = (hasPermission, hasRole) => {
+    const isAdmin      = hasRole(['Super-Admin', 'Administrateur']);
+    const isSuperviseur = hasRole('Superviseur');
+    const isConseiller = hasRole('Conseiller');
+
+    /* ── Tableau de bord (tous) */
+    const sectionDashboard = {
+        title: 'Accueil',
         items: [
-            { type: 'group', label: 'Fiches CEP', icon: 'rapports', children: CEP_FORMS },
+            { label: 'Tableau de bord',    path: '/dashboard',         icon: 'dashboard' },
+            { label: 'Statistiques CEP',   path: '/statistiques-cep',  icon: 'stats'     },
         ],
-    },
-    {
+    };
+
+    /* ── Rubriques CEP — visibles par Conseiller + Superviseur + Admin */
+    const sectionFormulaires = {
+        title: 'Formulaires',
+        items: [{ type: 'group', label: 'Fiches CEP', icon: 'rapports', children: CEP_FORMS }],
+    };
+    const sectionSensib = {
         title: 'Sensibilisation',
         items: [
-            { label: 'Liste de présence',    path: '/liste-presence-sensibilisation',   icon: 'users' },
-            { label: 'Identification CEP',   path: '/identification-participants-cep',  icon: 'rapports' },
+            { label: 'Liste de présence',  path: '/liste-presence-sensibilisation',  icon: 'users'    },
+            { label: 'Identification CEP', path: '/identification-participants-cep', icon: 'rapports' },
         ],
-    },
-    {
+    };
+    const sectionCep = {
         title: 'CEP',
-        items: [
-            { label: 'Gestion des CEP',          path: '/gestion-cep',            icon: 'cultures' },
-            { label: 'Animation des sessions',    path: '/animation-sessions-cep',         icon: 'suivis'   },
-            { label: 'Base bénéficiaires',        path: '/base-beneficiaires-intervention', icon: 'users'    },
-            { label: 'Bilan sessions',            path: '/bilan-sessions-animation-cep',    icon: 'rapports' },
-            { label: 'Visites d\'échanges',       path: '/organisation-visites-echanges',   icon: 'map'      },
-            { label: 'Visites commentées',        path: '/visites-echanges-commentees',     icon: 'map'      },
-            { label: 'Difficultés & suggestions', path: '/difficultes-suggestions',         icon: 'suivis'   },
-            { label: 'Rendements CEP',            path: '/evolution-rendements-cep',        icon: 'stats'    },
-            { label: 'Rendement dispositif',      path: '/rendement-dispositif',            icon: 'stats'    },
-            { label: 'Rapport démarrage CEP',     path: '/rapport-demarrage-cep',           icon: 'rapports' },
-        ],
-    },
-    {
-        title: 'Administration',
-        items: [
-            hasPermission('utilisateurs.voir') && { label: 'Utilisateurs', path: '/dashboard/users', icon: 'users'    },
-            hasPermission('roles.gérer')       && { label: 'Rôles',        path: '/roles',           icon: 'shield'   },
-            hasPermission('config.gérer')      && { label: 'Géographie',   path: '/geographie',      icon: 'map'      },
-            hasPermission('config.gérer')      && { label: 'Configuration', path: '/config',          icon: 'settings' },
-        ].filter(Boolean),
-    },
-].filter(s => s.items.length > 0);
+        items: CEP_ACTIVITES_NAV,
+    };
+
+    /* ── Administration */
+    const adminItems = [
+        hasPermission('utilisateurs.voir') && { label: 'Utilisateurs',  path: '/dashboard/users', icon: 'users'    },
+        hasPermission('roles.gérer')       && { label: 'Rôles',         path: '/roles',           icon: 'shield'   },
+        hasPermission('config.gérer')      && { label: 'Géographie',    path: '/geographie',      icon: 'map'      },
+        hasPermission('config.gérer')      && { label: 'Configuration', path: '/config',          icon: 'settings' },
+    ].filter(Boolean);
+
+    const sectionAdmin = adminItems.length > 0
+        ? { title: 'Administration', items: adminItems }
+        : null;
+
+    /* ── Composition selon le rôle */
+    if (isAdmin) {
+        /* Admin / Super-Admin : Dashboard → Admin → supervision CEP (groupée) */
+        return [
+            sectionDashboard,
+            sectionAdmin,
+            {
+                title: 'Supervision CEP',
+                items: [
+                    { type: 'group', label: 'Fiches CEP',        icon: 'rapports', children: CEP_FORMS        },
+                    { type: 'group', label: 'Activités CEP',     icon: 'cultures', children: CEP_ACTIVITES_NAV },
+                    { label: 'Liste de présence',  path: '/liste-presence-sensibilisation',  icon: 'users'    },
+                    { label: 'Identification CEP', path: '/identification-participants-cep', icon: 'rapports' },
+                ],
+            },
+        ].filter(Boolean);
+    }
+
+    if (isSuperviseur) {
+        /* Superviseur : Dashboard → Admin (utilisateurs) → CEP */
+        return [
+            sectionDashboard,
+            sectionAdmin,
+            sectionFormulaires,
+            sectionSensib,
+            sectionCep,
+        ].filter(Boolean);
+    }
+
+    /* Conseiller (défaut) : pas de dashboard prominent, formulaires + CEP */
+    return [
+        sectionDashboard,
+        sectionFormulaires,
+        sectionSensib,
+        sectionCep,
+    ].filter(s => s && s.items.length > 0);
+};
 
 /* ── Groupe collapsible ──────────────────────────────────────────────── */
 function NavGroupItem({ label, icon, children, isActive }) {
@@ -156,10 +210,10 @@ function NavGroupItem({ label, icon, children, isActive }) {
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 export function Sidebar() {
-    const { user, hasPermission, logout, activeCommune, setActiveCommune, conseillerCommunes } = useAuth();
+    const { user, hasPermission, hasRole, logout, activeCommune, setActiveCommune, conseillerCommunes } = useAuth();
     const { pathname } = useLocation();
     const navigate = useNavigate();
-    const sections = buildNav(hasPermission);
+    const sections = buildNav(hasPermission, hasRole);
     const [showCommunePicker, setShowCommunePicker] = useState(false);
 
     const isActive = (path) =>
@@ -270,6 +324,15 @@ export function Sidebar() {
                         <RoleBadge roles={user?.roles} />
                     </div>
                 </div>
+                <Link to="/mon-profil"
+                    className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 transition text-xs font-medium mb-0.5 ${
+                        pathname === '/mon-profil'
+                            ? 'bg-teal-500/20 text-white'
+                            : 'text-cyan-100/70 hover:text-white hover:bg-white/10'
+                    }`}>
+                    <Icon d={ICONS.settings} className="size-4" />
+                    <span>Mon profil</span>
+                </Link>
                 <button onClick={() => { logout(); navigate('/login'); }}
                     className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-cyan-100/70 hover:text-red-300 hover:bg-red-500/10 transition text-xs font-medium">
                     <Icon d={ICONS.logout} className="size-4" />

@@ -132,7 +132,7 @@ export function AuthProvider({ children }) {
     const isSuperAdmin = () => hasRole('Super-Admin');
 
     return (
-        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin, activeCommune, setActiveCommune, conseillerCommunes }}>
+        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin, activeCommune, setActiveCommune, conseillerCommunes, fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

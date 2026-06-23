@@ -30,6 +30,8 @@ import DifficulteSuggestions from './pages/DifficulteSuggestions';
 import EvolutionRendementsCep from './pages/EvolutionRendementsCep';
 import RendementDispositif from './pages/RendementDispositif';
 import RapportDemarrageCep from './pages/RapportDemarrageCep';
+import MonProfil from './pages/MonProfil';
+import StatistiquesCep from './pages/StatistiquesCep';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 
@@ -78,6 +80,8 @@ export default function App() {
                     <Route path="/evolution-rendements-cep" element={<EvolutionRendementsCep />} />
                     <Route path="/rendement-dispositif" element={<RendementDispositif />} />
                     <Route path="/rapport-demarrage-cep" element={<RapportDemarrageCep />} />
+                    <Route path="/mon-profil" element={<MonProfil />} />
+                    <Route path="/statistiques-cep" element={<StatistiquesCep />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

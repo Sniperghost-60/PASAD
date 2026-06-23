@@ -20,6 +20,13 @@ const initData = () => ({
     site_identifie: null, statut_site: '',
 });
 
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
 const fromApi = (r) => ({
     departement:               r.departement              ?? '',
     commune_id:                r.commune_id               ? String(r.commune_id) : '',
@@ -62,7 +69,7 @@ const fromApi = (r) => ({
 /* ── Contenu PDF avec styles 100% inline (aucun CSS global injecté) ───── */
 function buildPdfContent(data, communes) {
     const communeName = communes.find(c => String(c.id) === String(data.commune_id))?.nom ?? '';
-    const dot  = (v) => v || '…………………………………';
+    const dot  = (v) => escapeHtml(v || '…………………………………');
     const chk  = (v) => v ? '&#9745;' : '&#9744;';
     const postes = data.postes_comite || [];
 
@@ -107,15 +114,15 @@ function buildPdfContent(data, communes) {
 </div>
 <div style="${S.secH}">1. Activités préliminaires d'installation du CEP</div>
 <div style="${S.q}"><span style="${S.b}">Qui sont les bénéficiaires du CEP</span> (Donner le(s) nom(s) du ou des villages ou de l'OP)</div>
-<div style="${S.qBlock}">${data.beneficiaires_villages || ''}</div>
+<div style="${S.qBlock}">${escapeHtml(data.beneficiaires_villages)}</div>
 <div style="${S.q}"><span style="${S.b}">Pourquoi avez-vous choisi d'installer le CEP au profit de cette communauté ?</span></div>
-<div style="${S.qBlock}">${data.raison_installation || ''}</div>
+<div style="${S.qBlock}">${escapeHtml(data.raison_installation)}</div>
 <div style="${S.q}">Avez-vous conduit une séance d'information-sensibilisation communautaire ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.seance_sensibilisation === true)} Oui</span><span style="${S.cb}">${chk(data.seance_sensibilisation === false)} Non</span></span>
 </div>
 ${data.seance_sensibilisation ? `<div style="${S.qI}">Si oui, nombre total de participants : <b>${dot(data.sensibilisation_total)}</b> &nbsp; Hommes : <b>${dot(data.sensibilisation_hommes)}</b> &nbsp; Femmes : <b>${dot(data.sensibilisation_femmes)}</b></div>
 <div style="${S.qI}">Précisez les autorités qui ont participé (Coutumiers, religieux, conseillers, etc.)</div>
-<div style="${S.qBI}">${data.sensibilisation_autorites || ''}</div>` : ''}
+<div style="${S.qBI}">${escapeHtml(data.sensibilisation_autorites)}</div>` : ''}
 <div style="${S.q}">Avez-vous conduit une enquête de base pour l'installation du CEP ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.enquete_base === true)} Oui</span><span style="${S.cb}">${chk(data.enquete_base === false)} Non</span></span>
 </div>
@@ -124,7 +131,7 @@ ${data.enquete_base ? `<div style="${S.qI}">Si oui, en combien de séances : <b>
 <div style="${S.qI}">Avez-vous restitué les résultats à la communauté ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.enquete_resultats_restitues === true)} Oui</span><span style="${S.cb}">${chk(data.enquete_resultats_restitues === false)} Non</span></span>
 </div>
-<div style="${S.qBI}">${data.enquete_details || ''}</div>` : ''}
+<div style="${S.qBI}">${escapeHtml(data.enquete_details)}</div>` : ''}
 <div style="${S.q}">Combien d'apprenants sont inscrits : Total <b>${dot(data.apprenants_total)}</b> &nbsp; H <b>${dot(data.apprenants_hommes)}</b> &nbsp; F <b>${dot(data.apprenants_femmes)}</b></div>
 <div style="${S.q}"><span style="${S.b}">Qui a choisi les participants au CEP :</span> ${dot(data.choix_participants)}</div>
 <div style="${S.q}"><span style="${S.b}">Nom du groupe CEP :</span> ${dot(data.nom_groupe)}</div>
@@ -273,31 +280,78 @@ export default function RapportDemarrageCep() {
     /* ── Téléchargement PDF direct (div temporaire, pas de CSS global) ── */
     const downloadPdf = async () => {
         setDownloading(true);
+        let tmp = null;
         try {
-            const { default: html2pdf } = await import('html2pdf.js');
+            const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+                import('html2canvas'),
+                import('jspdf'),
+            ]);
 
-            // Div temporaire hors-écran — NE pollue pas les styles globaux
-            const tmp = document.createElement('div');
-            tmp.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff';
+            // html2canvas peut produire un canevas vide si la cible est hors ecran.
+            // On la rend donc capturable dans la page le temps de generer le PDF.
+            tmp = document.createElement('div');
+            tmp.setAttribute('aria-hidden', 'true');
+            tmp.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;color:#000;z-index:2147483647;pointer-events:none';
             tmp.innerHTML = buildPdfContent(data, communes);
             document.body.appendChild(tmp);
 
-            await html2pdf()
-                .set({
-                    margin:      [8, 8, 8, 8],
-                    filename:    'rapport-demarrage-cep.pdf',
-                    image:       { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak:   { mode: 'avoid-all' },
-                })
-                .from(tmp)
-                .save();
+            await Promise.all(
+                Array.from(tmp.querySelectorAll('img')).map(img => (
+                    img.complete
+                        ? Promise.resolve()
+                        : new Promise(resolve => {
+                            img.onload = resolve;
+                            img.onerror = resolve;
+                        })
+                ))
+            );
 
-            document.body.removeChild(tmp);
+            const canvas = await html2canvas(tmp, {
+                backgroundColor: '#fff',
+                height: tmp.scrollHeight,
+                logging: false,
+                scale: 2,
+                scrollX: 0,
+                scrollY: 0,
+                useCORS: true,
+                width: tmp.scrollWidth,
+                windowWidth: 794,
+            });
+
+            if (!canvas.width || !canvas.height) {
+                throw new Error('Canvas PDF vide');
+            }
+
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+            const margin = 8;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const usableWidth = pageWidth - (margin * 2);
+            const usableHeight = pageHeight - (margin * 2);
+            const imgWidth = usableWidth;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+            let heightLeft = imgHeight;
+            let y = margin;
+
+            pdf.addImage(imgData, 'JPEG', margin, y, imgWidth, imgHeight);
+            heightLeft -= usableHeight;
+
+            while (heightLeft > 0) {
+                pdf.addPage();
+                y = margin - (imgHeight - heightLeft);
+                pdf.addImage(imgData, 'JPEG', margin, y, imgWidth, imgHeight);
+                heightLeft -= usableHeight;
+            }
+
+            pdf.save('rapport-demarrage-cep.pdf');
         } catch {
             setToast({ show: true, message: 'Erreur lors du téléchargement PDF.', type: 'error' });
-        } finally { setDownloading(false); }
+        } finally {
+            if (tmp?.parentNode) tmp.parentNode.removeChild(tmp);
+            setDownloading(false);
+        }
     };
 
     /* ── Styles ── */
