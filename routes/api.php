@@ -20,7 +20,57 @@ use Spatie\Permission\Models\Permission;
 |--------------------------------------------------------------------------
 */
 
+// ── Authentification mobile (token Sanctum) ────────────────────────────
+Route::middleware(['throttle:5,1'])->group(function () {
+
+    Route::post('/mobile/login', function (Request $request) {
+        $validated = $request->validate([
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return response()->json(['message' => 'Identifiants incorrects.'], 401);
+        }
+
+        foreach (['blocked' => 'bloqué', 'suspended' => 'suspendu', 'frozen' => 'gelé'] as $key => $label) {
+            if ($user->{"is_$key"}) {
+                $reason = $user->{"{$key}_reason"};
+                return response()->json([
+                    'message' => "Compte $label" . ($reason ? " : $reason" : '.'),
+                ], 403);
+            }
+        }
+
+        // Révoquer les anciens tokens mobiles avant d'en créer un nouveau
+        $user->tokens()->where('name', 'mobile')->delete();
+
+        $token = $user->createToken('mobile', ['*'], now()->addDays(30))->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user'  => [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'telephone'   => $user->telephone,
+                'roles'       => $user->getRoleNames(),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+            ],
+        ]);
+    });
+
+});
+
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    // Mobile : déconnexion
+    Route::post('/mobile/logout', function (Request $request) {
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Déconnecté avec succès.']);
+    });
 
     // Utilisateur connecté avec rôles & permissions
     Route::get('/user', function (Request $request) {
