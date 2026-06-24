@@ -9,7 +9,7 @@ class RapportDemarrageCep extends Model
     protected $table = 'rapport_demarrage_cep';
 
     protected $fillable = [
-        'user_id', 'departement', 'commune_id', 'facilitateur', 'structure', 'telephone',
+        'user_id', 'cep_id', 'departement', 'commune_id', 'facilitateur', 'structure', 'telephone',
         'longitude', 'latitude',
         'beneficiaires_villages', 'raison_installation',
         'seance_sensibilisation', 'sensibilisation_total', 'sensibilisation_hommes',

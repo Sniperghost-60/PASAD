@@ -9,7 +9,7 @@ class DifficulteSuggestion extends Model
     protected $table = 'difficultes_suggestions';
 
     protected $fillable = [
-        'user_id',
+        'user_id', 'cep_id',
         'difficulte',
         'solution_utilisee',
         'suggestion',

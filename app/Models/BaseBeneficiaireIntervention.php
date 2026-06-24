@@ -9,7 +9,7 @@ class BaseBeneficiaireIntervention extends Model
     protected $table = 'base_beneficiaires_intervention';
 
     protected $fillable = [
-        'user_id', 'date_session',
+        'user_id', 'cep_id', 'date_session',
         'identification_participant_cep_id',
         'departement_id', 'commune_id', 'arrondissement_id', 'village',
         'nom_producteur', 'prenoms_producteur',

@@ -9,7 +9,7 @@ class OrganisationVisiteEchange extends Model
     protected $table = 'organisation_visites_echanges';
 
     protected $fillable = [
-        'user_id', 'date',
+        'user_id', 'cep_id', 'date',
         'lieu_visite', 'nb_participants',
         'objectifs_visite',
         'ce_qui_a_marche',

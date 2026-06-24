@@ -9,7 +9,7 @@ class VisiteEchangeCommentee extends Model
     protected $table = 'visites_echanges_commentees';
 
     protected $fillable = [
-        'user_id', 'date',
+        'user_id', 'cep_id', 'date',
         'experimentations_tests',
         'visiteurs_total', 'visiteurs_hommes', 'visiteurs_femmes',
         'qui_sont_visiteurs',

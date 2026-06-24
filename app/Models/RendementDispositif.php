@@ -9,7 +9,7 @@ class RendementDispositif extends Model
     protected $table = 'rendement_dispositif';
 
     protected $fillable = [
-        'user_id',
+        'user_id', 'cep_id',
         'commune_id', 'arrondissement_id', 'village',
         'nom_producteur', 'culture_technologie',
         'rendement_annee_n1',

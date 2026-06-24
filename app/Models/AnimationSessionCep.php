@@ -9,7 +9,7 @@ class AnimationSessionCep extends Model
     protected $table = 'animation_sessions_cep';
 
     protected $fillable = [
-        'user_id',
+        'user_id', 'cep_id',
         'profil_historique_id',
         'date_session',
         'resume_protocole_experimentation_id',

@@ -9,7 +9,7 @@ class EvolutionRendementCep extends Model
     protected $table = 'evolution_rendements_cep';
 
     protected $fillable = [
-        'user_id',
+        'user_id', 'cep_id',
         'commune_id', 'arrondissement_id', 'village',
         'type_experimentation_cep', 'culture',
         'technologies_dispositif_1', 'technologies_dispositif_2',
