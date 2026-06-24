@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -149,31 +150,32 @@ function ApercuModal({ rows, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function VisitesEchangesCommentees() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [saving, setSaving]           = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        api.get('/api/visites-echanges-commentees')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/visites-echanges-commentees', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    setRows(data.map(r => ({
-                        _id:                       String(r.id),
-                        date:                      r.date              ?? '',
-                        experimentations_tests:    toArr(r.experimentations_tests),
-                        visiteurs_total:            r.visiteurs_total   != null ? String(r.visiteurs_total)  : '',
-                        visiteurs_hommes:           r.visiteurs_hommes  != null ? String(r.visiteurs_hommes) : '',
-                        visiteurs_femmes:           r.visiteurs_femmes  != null ? String(r.visiteurs_femmes) : '',
-                        qui_sont_visiteurs:         toArr(r.qui_sont_visiteurs),
-                        ce_qui_a_marche:            toArr(r.ce_qui_a_marche),
-                        ce_qui_doit_etre_ameliore:  toArr(r.ce_qui_doit_etre_ameliore),
-                    })));
-                }
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                setRows(data.map(r => ({
+                    _id:                       String(r.id),
+                    date:                      r.date              ?? '',
+                    experimentations_tests:    toArr(r.experimentations_tests),
+                    visiteurs_total:            r.visiteurs_total   != null ? String(r.visiteurs_total)  : '',
+                    visiteurs_hommes:           r.visiteurs_hommes  != null ? String(r.visiteurs_hommes) : '',
+                    visiteurs_femmes:           r.visiteurs_femmes  != null ? String(r.visiteurs_femmes) : '',
+                    qui_sont_visiteurs:         toArr(r.qui_sont_visiteurs),
+                    ce_qui_a_marche:            toArr(r.ce_qui_a_marche),
+                    ce_qui_doit_etre_ameliore:  toArr(r.ce_qui_doit_etre_ameliore),
+                })));
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const update    = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
@@ -195,6 +197,7 @@ export default function VisitesEchangesCommentees() {
         setSaving(true);
         try {
             const res = await api.post('/api/visites-echanges-commentees', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     date:                      r.date || null,
                     experimentations_tests:    r.experimentations_tests.map(v => v.trim()).filter(Boolean),
@@ -223,6 +226,12 @@ export default function VisitesEchangesCommentees() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
                             {/* En-tête */}

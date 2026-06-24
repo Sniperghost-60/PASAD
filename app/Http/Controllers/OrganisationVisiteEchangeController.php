@@ -10,17 +10,17 @@ class OrganisationVisiteEchangeController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            OrganisationVisiteEchange::where('user_id', $request->user()->id)
-                ->orderBy('date')
-                ->orderBy('id')
-                ->get()
-        );
+        $query = OrganisationVisiteEchange::where('user_id', $request->user()->id);
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
+        return response()->json($query->orderBy('date')->orderBy('id')->get());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                              => ['nullable', 'integer', 'exists:cep,id'],
             'lignes'                              => ['required', 'array', 'min:1'],
             'lignes.*.date'                       => ['nullable', 'date'],
             'lignes.*.lieu_visite'                => ['nullable', 'string', 'max:255'],
@@ -34,13 +34,17 @@ class OrganisationVisiteEchangeController extends Controller
         ]);
 
         $userId = $request->user()->id;
+        $cepId  = $validated['cep_id'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId) {
-            OrganisationVisiteEchange::where('user_id', $userId)->delete();
+        $saved = DB::transaction(function () use ($validated, $userId, $cepId) {
+            $q = OrganisationVisiteEchange::where('user_id', $userId);
+            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
+            $q->delete();
 
             return collect($validated['lignes'])->map(fn ($l) =>
                 OrganisationVisiteEchange::create([
                     'user_id'                    => $userId,
+                    'cep_id'                     => $cepId,
                     'date'                       => $l['date']                      ?? null,
                     'lieu_visite'                => $l['lieu_visite']               ?? null,
                     'nb_participants'             => $l['nb_participants']           ?? null,

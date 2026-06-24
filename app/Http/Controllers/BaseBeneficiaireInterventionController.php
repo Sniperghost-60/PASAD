@@ -65,6 +65,9 @@ class BaseBeneficiaireInterventionController extends Controller
         $query = BaseBeneficiaireIntervention::with(['departement', 'commune', 'arrondissement'])
             ->where('user_id', $request->user()->id);
 
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
         if ($request->filled('date_session')) {
             $query->whereDate('date_session', $request->input('date_session'));
         }
@@ -76,6 +79,7 @@ class BaseBeneficiaireInterventionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                                    => ['nullable', 'integer', 'exists:cep,id'],
             'date_session'                              => ['nullable', 'date'],
             'beneficiaires'                             => ['required', 'array', 'min:1'],
             'beneficiaires.*.identification_participant_cep_id' => ['nullable', 'integer', 'exists:identification_participants_cep,id'],
@@ -102,16 +106,19 @@ class BaseBeneficiaireInterventionController extends Controller
         ]);
 
         $userId      = $request->user()->id;
+        $cepId       = $validated['cep_id'] ?? null;
         $dateSession = $validated['date_session'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId, $dateSession) {
+        $saved = DB::transaction(function () use ($validated, $userId, $cepId, $dateSession) {
             $q = BaseBeneficiaireIntervention::where('user_id', $userId);
+            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
             $dateSession ? $q->whereDate('date_session', $dateSession) : $q->whereNull('date_session');
             $q->delete();
 
             return collect($validated['beneficiaires'])->map(fn ($b) =>
                 BaseBeneficiaireIntervention::create([
                     'user_id'                           => $userId,
+                    'cep_id'                            => $cepId,
                     'date_session'                      => $dateSession,
                     'identification_participant_cep_id' => $b['identification_participant_cep_id'] ?? null,
                     'departement_id'                    => $b['departement_id']    ?? null,

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -81,26 +82,27 @@ function ApercuModal({ rows, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function DifficulteSuggestions() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [saving, setSaving]           = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        api.get('/api/difficultes-suggestions')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/difficultes-suggestions', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    setRows(data.map(r => ({
-                        _id:               String(r.id),
-                        difficulte:        r.difficulte        ?? '',
-                        solution_utilisee: r.solution_utilisee ?? '',
-                        suggestion:        r.suggestion        ?? '',
-                    })));
-                }
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                setRows(data.map(r => ({
+                    _id:               String(r.id),
+                    difficulte:        r.difficulte        ?? '',
+                    solution_utilisee: r.solution_utilisee ?? '',
+                    suggestion:        r.suggestion        ?? '',
+                })));
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const update    = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
@@ -117,6 +119,7 @@ export default function DifficulteSuggestions() {
         setSaving(true);
         try {
             const res = await api.post('/api/difficultes-suggestions', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     difficulte:        r.difficulte.trim()        || null,
                     solution_utilisee: r.solution_utilisee.trim() || null,
@@ -145,6 +148,12 @@ export default function DifficulteSuggestions() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
                             {/* En-tête */}

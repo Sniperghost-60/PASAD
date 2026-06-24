@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -103,6 +104,7 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function RendementDispositifPage() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]           = useState([emptyRow()]);
     const [communes, setCommunes]   = useState([]);
     const [arrCache, setArrCache]   = useState({});
@@ -117,11 +119,12 @@ export default function RendementDispositifPage() {
     }, []);
 
     useEffect(() => {
-        api.get('/api/rendement-dispositif')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/rendement-dispositif', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    const loaded = data.map(r => ({
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                const loaded = data.map(r => ({
                         _id:                           String(r.id),
                         commune_id:                    r.commune_id        ? String(r.commune_id)        : '',
                         arrondissement_id:             r.arrondissement_id ? String(r.arrondissement_id) : '',
@@ -132,12 +135,11 @@ export default function RendementDispositifPage() {
                         rendement_annee_n_technologie: r.rendement_annee_n_technologie != null ? String(r.rendement_annee_n_technologie) : '',
                         rendement_annee_n_temoin:      r.rendement_annee_n_temoin      != null ? String(r.rendement_annee_n_temoin)      : '',
                     }));
-                    setRows(loaded);
-                    loaded.forEach(r => { if (r.commune_id) loadArr(r.commune_id); });
-                }
+                setRows(loaded);
+                loaded.forEach(r => { if (r.commune_id) loadArr(r.commune_id); });
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const loadArr = useCallback(async (cId) => {
         if (!cId || arrCache[cId]) return;
@@ -164,6 +166,7 @@ export default function RendementDispositifPage() {
         setSaving(true);
         try {
             const res = await api.post('/api/rendement-dispositif', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     commune_id:                    r.commune_id        ? Number(r.commune_id)        : null,
                     arrondissement_id:             r.arrondissement_id ? Number(r.arrondissement_id) : null,
@@ -193,6 +196,12 @@ export default function RendementDispositifPage() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
                             {/* En-tête */}

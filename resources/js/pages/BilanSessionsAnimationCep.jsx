@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import CepSelector from '../components/CepSelector';
 import api from '../services/api';
 
 const emptyRow = () => ({
@@ -108,33 +109,34 @@ function ApercuModal({ rows, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function BilanSessionsAnimationCep() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]       = useState([emptyRow()]);
     const [saving, setSaving]   = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]     = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        api.get('/api/bilan-sessions-animation-cep')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/bilan-sessions-animation-cep', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    setRows(data.map(r => ({
-                        _id:                    String(r.id),
-                        date_session:           r.date_session           ?? '',
-                        participation_total:    r.participation_total    != null ? String(r.participation_total)    : '',
-                        participation_h:        r.participation_h      != null ? String(r.participation_h)      : '',
-                        participation_f:        r.participation_f      != null ? String(r.participation_f)      : '',
-                        participation_jeunes:   r.participation_jeunes != null ? String(r.participation_jeunes) : '',
-                        nb_aaes:                r.nb_aaes                != null ? String(r.nb_aaes)                : '',
-                        nb_test_urne:           r.nb_test_urne           != null ? String(r.nb_test_urne)           : '',
-                        sujets_speciaux:        r.sujets_speciaux        ?? '',
-                        visiteur_nom:           r.visiteur_nom           ?? '',
-                        visiteur_structure:     r.visiteur_structure     ?? '',
-                    })));
-                }
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                setRows(data.map(r => ({
+                    _id:                    String(r.id),
+                    date_session:           r.date_session           ?? '',
+                    participation_total:    r.participation_total    != null ? String(r.participation_total)    : '',
+                    participation_h:        r.participation_h        != null ? String(r.participation_h)        : '',
+                    participation_f:        r.participation_f        != null ? String(r.participation_f)        : '',
+                    participation_jeunes:   r.participation_jeunes   != null ? String(r.participation_jeunes)   : '',
+                    nb_aaes:                r.nb_aaes                != null ? String(r.nb_aaes)                : '',
+                    nb_test_urne:           r.nb_test_urne           != null ? String(r.nb_test_urne)           : '',
+                    sujets_speciaux:        r.sujets_speciaux        ?? '',
+                    visiteur_nom:           r.visiteur_nom           ?? '',
+                    visiteur_structure:     r.visiteur_structure     ?? '',
+                })));
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const update    = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
@@ -154,6 +156,7 @@ export default function BilanSessionsAnimationCep() {
         setSaving(true);
         try {
             const res = await api.post('/api/bilan-sessions-animation-cep', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     date_session:           r.date_session           || null,
                     participation_total:    r.participation_total    !== '' ? Number(r.participation_total)    : null,
@@ -193,6 +196,11 @@ export default function BilanSessionsAnimationCep() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
 
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                             {/* En-tête */}

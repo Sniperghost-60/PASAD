@@ -10,17 +10,18 @@ class EvolutionRendementCepController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            EvolutionRendementCep::with(['commune', 'arrondissement'])
-                ->where('user_id', $request->user()->id)
-                ->orderBy('id')
-                ->get()
-        );
+        $query = EvolutionRendementCep::with(['commune', 'arrondissement'])
+            ->where('user_id', $request->user()->id);
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
+        return response()->json($query->orderBy('id')->get());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                                => ['nullable', 'integer', 'exists:cep,id'],
             'lignes'                                => ['required', 'array', 'min:1'],
             'lignes.*.commune_id'                   => ['nullable', 'integer', 'exists:communes,id'],
             'lignes.*.arrondissement_id'            => ['nullable', 'integer', 'exists:arrondissements,id'],
@@ -38,13 +39,17 @@ class EvolutionRendementCepController extends Controller
         ]);
 
         $userId = $request->user()->id;
+        $cepId  = $validated['cep_id'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId) {
-            EvolutionRendementCep::where('user_id', $userId)->delete();
+        $saved = DB::transaction(function () use ($validated, $userId, $cepId) {
+            $q = EvolutionRendementCep::where('user_id', $userId);
+            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
+            $q->delete();
 
             return collect($validated['lignes'])->map(fn ($l) =>
                 EvolutionRendementCep::create([
                     'user_id'                    => $userId,
+                    'cep_id'                     => $cepId,
                     'commune_id'                 => $l['commune_id']                ?? null,
                     'arrondissement_id'          => $l['arrondissement_id']         ?? null,
                     'village'                    => $l['village']                   ?? null,

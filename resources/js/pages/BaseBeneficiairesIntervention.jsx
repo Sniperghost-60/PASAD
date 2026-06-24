@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -269,6 +270,7 @@ function ApercuModal({ rows, departements, communeCache, arrCache, dateSession, 
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function BaseBeneficiairesIntervention() {
+    const [selectedCep, setSelectedCep]   = useState('');
     const [dateSession, setDateSession]   = useState('');
     const [departements, setDepartements] = useState([]);
     const [communeCache, setCommuneCache] = useState({});
@@ -286,9 +288,11 @@ export default function BaseBeneficiairesIntervention() {
             .catch(() => {});
     }, []);
 
-    const loadData = useCallback(async (date) => {
+    const loadData = useCallback(async (date, cepId) => {
         try {
-            const params = date ? { date_session: date } : {};
+            const params = {};
+            if (date)  params.date_session = date;
+            if (cepId) params.cep_id = cepId;
             const res = await api.get('/api/base-beneficiaires-intervention', { params });
             const data = Array.isArray(res.data) ? res.data : [];
             if (data.length > 0) {
@@ -326,7 +330,7 @@ export default function BaseBeneficiairesIntervention() {
         } catch {}
     }, []);
 
-    useEffect(() => { loadData(dateSession); }, [dateSession, loadData]);
+    useEffect(() => { loadData(dateSession, selectedCep); }, [dateSession, selectedCep, loadData]);
 
     const loadCommunes = useCallback(async (deptId) => {
         if (!deptId || communeCache[deptId]) return;
@@ -402,7 +406,11 @@ export default function BaseBeneficiairesIntervention() {
         }));
         setSaving(true);
         try {
-            const res = await api.post('/api/base-beneficiaires-intervention', { date_session: dateSession || null, beneficiaires });
+            const res = await api.post('/api/base-beneficiaires-intervention', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
+                date_session: dateSession || null,
+                beneficiaires,
+            });
             setToast({ show: true, message: res.data.message, type: 'success' });
             if (dateSession) loadData(dateSession);
         } catch (err) {
@@ -429,6 +437,11 @@ export default function BaseBeneficiairesIntervention() {
 
                 <div className="p-6 space-y-5">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
 
                         {/* Carte session */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

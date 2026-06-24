@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -168,6 +169,7 @@ const emptyLigne = () => ({
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function AnimationSessionsCep() {
+    const [selectedCep, setSelectedCep]       = useState('');
     const [villages, setVillages]             = useState([]);
     const [selectedVillage, setSelectedVillage] = useState('');
     const [dateSession, setDateSession]       = useState('');
@@ -250,6 +252,7 @@ export default function AnimationSessionsCep() {
         if (!validate()) return;
 
         const payload = {
+            cep_id: selectedCep ? Number(selectedCep) : null,
             profil_historique_id: Number(selectedVillage),
             date_session: dateSession || null,
             lignes: lignes
@@ -289,6 +292,11 @@ export default function AnimationSessionsCep() {
 
                 <div className="p-6 space-y-5">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
 
                         {/* ── Carte session ─────────────────────────────── */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

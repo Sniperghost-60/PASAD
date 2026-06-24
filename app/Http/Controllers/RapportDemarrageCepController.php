@@ -9,16 +9,20 @@ class RapportDemarrageCepController extends Controller
 {
     public function index(Request $request)
     {
-        $rapport = RapportDemarrageCep::with('commune')
-            ->where('user_id', $request->user()->id)
-            ->first();
+        $query = RapportDemarrageCep::with('commune')
+            ->where('user_id', $request->user()->id);
 
-        return response()->json($rapport);
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
+
+        return response()->json($query->first());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                       => ['nullable', 'integer', 'exists:cep,id'],
             'departement'                  => ['nullable', 'string', 'max:255'],
             'commune_id'                   => ['nullable', 'integer', 'exists:communes,id'],
             'facilitateur'                 => ['nullable', 'string', 'max:255'],
@@ -58,9 +62,10 @@ class RapportDemarrageCepController extends Controller
             'statut_site'                  => ['nullable', 'string', 'in:accord_cession,communautaire,location'],
         ]);
 
+        $cepId   = $validated['cep_id'] ?? null;
         $rapport = RapportDemarrageCep::updateOrCreate(
-            ['user_id' => $request->user()->id],
-            array_merge($validated, ['user_id' => $request->user()->id])
+            ['user_id' => $request->user()->id, 'cep_id' => $cepId],
+            array_merge($validated, ['user_id' => $request->user()->id, 'cep_id' => $cepId])
         );
 
         return response()->json([

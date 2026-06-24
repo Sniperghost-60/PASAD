@@ -10,16 +10,17 @@ class DifficulteSuggestionController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            DifficulteSuggestion::where('user_id', $request->user()->id)
-                ->orderBy('id')
-                ->get()
-        );
+        $query = DifficulteSuggestion::where('user_id', $request->user()->id);
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
+        return response()->json($query->orderBy('id')->get());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                    => ['nullable', 'integer', 'exists:cep,id'],
             'lignes'                    => ['required', 'array', 'min:1'],
             'lignes.*.difficulte'       => ['nullable', 'string'],
             'lignes.*.solution_utilisee' => ['nullable', 'string'],
@@ -27,13 +28,17 @@ class DifficulteSuggestionController extends Controller
         ]);
 
         $userId = $request->user()->id;
+        $cepId  = $validated['cep_id'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId) {
-            DifficulteSuggestion::where('user_id', $userId)->delete();
+        $saved = DB::transaction(function () use ($validated, $userId, $cepId) {
+            $q = DifficulteSuggestion::where('user_id', $userId);
+            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
+            $q->delete();
 
             return collect($validated['lignes'])->map(fn ($l) =>
                 DifficulteSuggestion::create([
                     'user_id'           => $userId,
+                    'cep_id'            => $cepId,
                     'difficulte'        => $l['difficulte']        ?? null,
                     'solution_utilisee' => $l['solution_utilisee'] ?? null,
                     'suggestion'        => $l['suggestion']        ?? null,

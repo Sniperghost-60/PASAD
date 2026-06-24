@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import { useAuth } from '../contexts/AuthContext';
@@ -201,6 +202,7 @@ function FieldRow({ label, children }) {
 export default function RapportDemarrageCep() {
     const { user, activeCommune, conseillerCommunes } = useAuth();
 
+    const [selectedCep, setSelectedCep] = useState('');
     const [data, setData]         = useState(initData());
     const [communes, setCommunes] = useState([]);
     const [saving, setSaving]     = useState(false);
@@ -225,15 +227,15 @@ export default function RapportDemarrageCep() {
             .then(res => { if (Array.isArray(res.data)) setCommunes(res.data); })
             .catch(() => {});
 
-        api.get('/api/rapport-demarrage-cep')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/rapport-demarrage-cep', { params })
             .then(res => {
-                if (res.data) {
-                    setData(fromApi(res.data));
-                }
+                if (res.data) setData(fromApi(res.data));
+                else setData(initData());
                 setLoaded(true);
             })
             .catch(() => setLoaded(true));
-    }, []);
+    }, [selectedCep]);
 
     /* ── Auto-remplir depuis le conseiller connecté (une seule fois, si pas de données sauvegardées) ── */
     useEffect(() => {
@@ -270,6 +272,7 @@ export default function RapportDemarrageCep() {
                 apprenants_femmes:      data.apprenants_femmes       !== '' ? Number(data.apprenants_femmes)      : null,
                 nb_sous_groupes:        data.nb_sous_groupes         !== '' ? Number(data.nb_sous_groupes)        : null,
             };
+            payload.cep_id = selectedCep ? Number(selectedCep) : null;
             const res = await api.post('/api/rapport-demarrage-cep', payload);
             setToast({ show: true, message: res.data.message, type: 'success' });
         } catch (err) {
@@ -370,6 +373,11 @@ export default function RapportDemarrageCep() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5 max-w-4xl">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
 
                         {/* ── Logo header (identique au style login) ── */}
                         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

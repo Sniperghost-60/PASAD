@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -134,29 +135,30 @@ function ApercuModal({ rows, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function OrganisationVisitesEchanges() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [saving, setSaving]           = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        api.get('/api/organisation-visites-echanges')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/organisation-visites-echanges', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    setRows(data.map(r => ({
-                        _id:                       String(r.id),
-                        date:                      r.date             ?? '',
-                        lieu_visite:               r.lieu_visite      ?? '',
-                        nb_participants:            r.nb_participants != null ? String(r.nb_participants) : '',
-                        objectifs_visite:           Array.isArray(r.objectifs_visite)          && r.objectifs_visite.length          ? r.objectifs_visite          : [''],
-                        ce_qui_a_marche:            Array.isArray(r.ce_qui_a_marche)           && r.ce_qui_a_marche.length           ? r.ce_qui_a_marche           : [''],
-                        ce_qui_doit_etre_ameliore:  Array.isArray(r.ce_qui_doit_etre_ameliore) && r.ce_qui_doit_etre_ameliore.length ? r.ce_qui_doit_etre_ameliore : [''],
-                    })));
-                }
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                setRows(data.map(r => ({
+                    _id:                       String(r.id),
+                    date:                      r.date             ?? '',
+                    lieu_visite:               r.lieu_visite      ?? '',
+                    nb_participants:            r.nb_participants != null ? String(r.nb_participants) : '',
+                    objectifs_visite:           Array.isArray(r.objectifs_visite)          && r.objectifs_visite.length          ? r.objectifs_visite          : [''],
+                    ce_qui_a_marche:            Array.isArray(r.ce_qui_a_marche)           && r.ce_qui_a_marche.length           ? r.ce_qui_a_marche           : [''],
+                    ce_qui_doit_etre_ameliore:  Array.isArray(r.ce_qui_doit_etre_ameliore) && r.ce_qui_doit_etre_ameliore.length ? r.ce_qui_doit_etre_ameliore : [''],
+                })));
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const update = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
@@ -178,6 +180,7 @@ export default function OrganisationVisitesEchanges() {
         setSaving(true);
         try {
             const res = await api.post('/api/organisation-visites-echanges', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     date:                      r.date || null,
                     lieu_visite:               r.lieu_visite.trim() || null,
@@ -204,6 +207,12 @@ export default function OrganisationVisitesEchanges() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
                             {/* En-tête */}

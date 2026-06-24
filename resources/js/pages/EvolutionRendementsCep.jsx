@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -105,6 +106,7 @@ function ApercuModal({ rows, communeCache, arrCache, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function EvolutionRendementsCep() {
+    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [communeCache, setCommuneCache] = useState({});
     const [arrCache, setArrCache]       = useState({});
@@ -126,11 +128,12 @@ export default function EvolutionRendementsCep() {
 
     /* Charger les données existantes */
     useEffect(() => {
-        api.get('/api/evolution-rendements-cep')
+        const params = selectedCep ? { cep_id: selectedCep } : {};
+        api.get('/api/evolution-rendements-cep', { params })
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                if (data.length > 0) {
-                    const rows = data.map(r => ({
+                if (data.length === 0) { setRows([emptyRow()]); return; }
+                const rows = data.map(r => ({
                         _id:                       String(r.id),
                         commune_id:                r.commune_id         ? String(r.commune_id)        : '',
                         arrondissement_id:         r.arrondissement_id  ? String(r.arrondissement_id) : '',
@@ -146,12 +149,11 @@ export default function EvolutionRendementsCep() {
                         rendement_dispositif_3:    r.rendement_dispositif_3 != null ? String(r.rendement_dispositif_3) : '',
                         rendement_dispositif_4:    r.rendement_dispositif_4 != null ? String(r.rendement_dispositif_4) : '',
                     }));
-                    setRows(rows);
-                    rows.forEach(r => { if (r.commune_id) loadArr(r.commune_id); });
-                }
+                setRows(rows);
+                rows.forEach(r => { if (r.commune_id) loadArr(r.commune_id); });
             })
             .catch(() => {});
-    }, []);
+    }, [selectedCep]);
 
     const loadArr = useCallback(async (cId) => {
         if (!cId || arrCache[cId]) return;
@@ -178,6 +180,7 @@ export default function EvolutionRendementsCep() {
         setSaving(true);
         try {
             const res = await api.post('/api/evolution-rendements-cep', {
+                cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     commune_id:                r.commune_id        ? Number(r.commune_id)        : null,
                     arrondissement_id:         r.arrondissement_id ? Number(r.arrondissement_id) : null,
@@ -214,6 +217,12 @@ export default function EvolutionRendementsCep() {
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* Sélecteur CEP */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
+                        </div>
+
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
                             {/* En-tête */}

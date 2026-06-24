@@ -36,6 +36,9 @@ class AnimationSessionCepController extends Controller
         $query = AnimationSessionCep::with('protocole.probleme')
             ->where('user_id', $request->user()->id);
 
+        if ($request->filled('cep_id')) {
+            $query->where('cep_id', $request->input('cep_id'));
+        }
         if ($request->filled('profil_historique_id')) {
             $query->where('profil_historique_id', $request->input('profil_historique_id'));
         }
@@ -50,6 +53,7 @@ class AnimationSessionCepController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'cep_id'                                   => ['nullable', 'integer', 'exists:cep,id'],
             'profil_historique_id'                     => ['nullable', 'integer', 'exists:profil_historique,id'],
             'date_session'                             => ['nullable', 'date'],
             'lignes'                                   => ['required', 'array', 'min:1'],
@@ -62,11 +66,13 @@ class AnimationSessionCepController extends Controller
         ]);
 
         $userId             = $request->user()->id;
+        $cepId              = $validated['cep_id'] ?? null;
         $profilHistoriqueId = $validated['profil_historique_id'] ?? null;
         $dateSession        = $validated['date_session'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId, $profilHistoriqueId, $dateSession) {
+        $saved = DB::transaction(function () use ($validated, $userId, $cepId, $profilHistoriqueId, $dateSession) {
             $q = AnimationSessionCep::where('user_id', $userId);
+            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
             $profilHistoriqueId
                 ? $q->where('profil_historique_id', $profilHistoriqueId)
                 : $q->whereNull('profil_historique_id');
@@ -78,6 +84,7 @@ class AnimationSessionCepController extends Controller
             return collect($validated['lignes'])->map(fn ($l) =>
                 AnimationSessionCep::create([
                     'user_id'                             => $userId,
+                    'cep_id'                              => $cepId,
                     'profil_historique_id'                => $profilHistoriqueId,
                     'date_session'                        => $dateSession,
                     'resume_protocole_experimentation_id' => $l['resume_protocole_experimentation_id'],
