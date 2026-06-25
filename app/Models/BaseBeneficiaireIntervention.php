@@ -21,6 +21,12 @@ class BaseBeneficiaireIntervention extends Model
         'culture_principale', 'culture_associee',
     ];
 
+    protected $casts = [
+        'superficie_totale' => 'float',
+        'coordonnee_x'      => 'float',
+        'coordonnee_y'      => 'float',
+    ];
+
     public function user()              { return $this->belongsTo(User::class); }
     public function departement()       { return $this->belongsTo(Departement::class); }
     public function commune()           { return $this->belongsTo(Commune::class); }
