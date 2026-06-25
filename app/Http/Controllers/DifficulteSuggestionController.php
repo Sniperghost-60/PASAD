@@ -23,11 +23,14 @@ class DifficulteSuggestionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'cep_id'                    => ['nullable', 'integer', 'exists:cep,id'],
-            'lignes'                    => ['required', 'array', 'min:1'],
-            'lignes.*.difficulte'       => ['nullable', 'string'],
-            'lignes.*.solution_utilisee' => ['nullable', 'string'],
-            'lignes.*.suggestion'       => ['nullable', 'string'],
+            'cep_id'                      => ['nullable', 'integer', 'exists:cep,id'],
+            'lignes'                      => ['required', 'array', 'min:1'],
+            'lignes.*.difficulte'         => ['nullable', 'array'],
+            'lignes.*.difficulte.*'       => ['string', 'max:1000'],
+            'lignes.*.solution_utilisee'  => ['nullable', 'array'],
+            'lignes.*.solution_utilisee.*'=> ['string', 'max:1000'],
+            'lignes.*.suggestion'         => ['nullable', 'array'],
+            'lignes.*.suggestion.*'       => ['string', 'max:1000'],
         ]);
 
         $userId = $request->user()->id;
@@ -42,9 +45,9 @@ class DifficulteSuggestionController extends Controller
                 DifficulteSuggestion::create([
                     'user_id'           => $userId,
                     'cep_id'            => $cepId,
-                    'difficulte'        => $l['difficulte']        ?? null,
-                    'solution_utilisee' => $l['solution_utilisee'] ?? null,
-                    'suggestion'        => $l['suggestion']        ?? null,
+                    'difficulte'        => array_values(array_filter($l['difficulte']        ?? [], 'strlen')) ?: null,
+                    'solution_utilisee' => array_values(array_filter($l['solution_utilisee'] ?? [], 'strlen')) ?: null,
+                    'suggestion'        => array_values(array_filter($l['suggestion']        ?? [], 'strlen')) ?: null,
                 ])
             )->all();
         });

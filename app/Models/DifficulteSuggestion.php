@@ -15,5 +15,11 @@ class DifficulteSuggestion extends Model
         'suggestion',
     ];
 
+    protected $casts = [
+        'difficulte'        => 'array',
+        'solution_utilisee' => 'array',
+        'suggestion'        => 'array',
+    ];
+
     public function user() { return $this->belongsTo(User::class); }
 }

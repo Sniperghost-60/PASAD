@@ -6,10 +6,16 @@ import api from '../services/api';
 
 const emptyRow = () => ({
     _id:                Math.random().toString(36).slice(2),
-    difficulte:         '',
-    solution_utilisee:  '',
-    suggestion:         '',
+    difficulte:         [''],
+    solution_utilisee:  [''],
+    suggestion:         [''],
 });
+
+const toArr = (v) => {
+    if (!v) return [''];
+    if (Array.isArray(v)) return v.length ? v : [''];
+    return [v];
+};
 
 /* ── Modal aperçu ────────────────────────────────────────────────────── */
 function ApercuModal({ rows, onClose }) {
@@ -29,7 +35,7 @@ function ApercuModal({ rows, onClose }) {
         win.print();
     };
 
-    const filled = rows.filter(r => r.difficulte || r.solution_utilisee || r.suggestion);
+    const filled = rows.filter(r => r.difficulte?.some(v=>v) || r.solution_utilisee?.some(v=>v) || r.suggestion?.some(v=>v));
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
@@ -67,9 +73,9 @@ function ApercuModal({ rows, onClose }) {
                         <tbody>
                             {(filled.length > 0 ? filled : Array.from({length: 5}).map(() => ({}))).map((r, i) => (
                                 <tr key={r._id ?? i}>
-                                    <td className="border border-black px-3 py-4">{r.difficulte ?? ''}</td>
-                                    <td className="border border-black px-3 py-4">{r.solution_utilisee ?? ''}</td>
-                                    <td className="border border-black px-3 py-4">{r.suggestion ?? ''}</td>
+                                                    <td className="border border-black px-3 py-4">{(r.difficulte ?? []).filter(Boolean).join(' • ') || ''}</td>
+                                    <td className="border border-black px-3 py-4">{(r.solution_utilisee ?? []).filter(Boolean).join(' • ') || ''}</td>
+                                    <td className="border border-black px-3 py-4">{(r.suggestion ?? []).filter(Boolean).join(' • ') || ''}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -96,9 +102,9 @@ export default function DifficulteSuggestions() {
                 if (data.length === 0) { setRows([emptyRow()]); return; }
                 setRows(data.map(r => ({
                     _id:               String(r.id),
-                    difficulte:        r.difficulte        ?? '',
-                    solution_utilisee: r.solution_utilisee ?? '',
-                    suggestion:        r.suggestion        ?? '',
+                    difficulte:        toArr(r.difficulte),
+                    solution_utilisee: toArr(r.solution_utilisee),
+                    suggestion:        toArr(r.suggestion),
                 })));
             })
             .catch(() => {});
@@ -106,12 +112,28 @@ export default function DifficulteSuggestions() {
 
     const update    = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
+
+    const updateItem = (rowIdx, field, itemIdx, val) =>
+        setRows(cur => cur.map((r, i) => {
+            if (i !== rowIdx) return r;
+            const arr = [...r[field]];
+            arr[itemIdx] = val;
+            return { ...r, [field]: arr };
+        }));
+    const addItem = (rowIdx, field) =>
+        setRows(cur => cur.map((r, i) => i === rowIdx ? { ...r, [field]: [...r[field], ''] } : r));
+    const removeItem = (rowIdx, field, itemIdx) =>
+        setRows(cur => cur.map((r, i) => {
+            if (i !== rowIdx) return r;
+            const arr = r[field].filter((_, j) => j !== itemIdx);
+            return { ...r, [field]: arr.length ? arr : [''] };
+        }));
     const addRow    = () => setRows(c => [...c, emptyRow()]);
     const removeRow = (idx) => setRows(c => c.length > 1 ? c.filter((_, i) => i !== idx) : [emptyRow()]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const lignes = rows.filter(r => r.difficulte || r.solution_utilisee || r.suggestion);
+        const lignes = rows.filter(r => r.difficulte?.some(v=>v) || r.solution_utilisee?.some(v=>v) || r.suggestion?.some(v=>v));
         if (lignes.length === 0) {
             setToast({ show: true, message: 'Veuillez remplir au moins une ligne.', type: 'error' });
             return;
@@ -121,9 +143,9 @@ export default function DifficulteSuggestions() {
             const res = await api.post('/api/difficultes-suggestions', {
                 cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
-                    difficulte:        r.difficulte.trim()        || null,
-                    solution_utilisee: r.solution_utilisee.trim() || null,
-                    suggestion:        r.suggestion.trim()        || null,
+                    difficulte:        r.difficulte.filter(Boolean),
+                    solution_utilisee: r.solution_utilisee.filter(Boolean),
+                    suggestion:        r.suggestion.filter(Boolean),
                 })),
             });
             setToast({ show: true, message: res.data.message, type: 'success' });
@@ -191,14 +213,30 @@ export default function DifficulteSuggestions() {
                                             {/* 3 cellules */}
                                             <div className="grid flex-1 grid-cols-3 gap-3">
                                                 {COLS.map(col => (
-                                                    <textarea
-                                                        key={col.field}
-                                                        value={row[col.field]}
-                                                        onChange={e => update(idx, col.field, e.target.value)}
-                                                        placeholder={col.placeholder}
-                                                        rows={3}
-                                                        className={taCls}
-                                                    />
+                                                    <div key={col.field} className="flex flex-col gap-1">
+                                                        {(row[col.field] || ['']).map((item, itemIdx) => (
+                                                            <div key={itemIdx} className="flex items-center gap-1">
+                                                                <input
+                                                                    type="text"
+                                                                    value={item}
+                                                                    onChange={e => updateItem(idx, col.field, itemIdx, e.target.value)}
+                                                                    placeholder={col.placeholder}
+                                                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:bg-white transition-all"
+                                                                />
+                                                                {(row[col.field] || ['']).length > 1 && (
+                                                                    <button type="button" onClick={() => removeItem(idx, col.field, itemIdx)}
+                                                                        className="flex size-6 flex-shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-400 hover:bg-red-100">
+                                                                        <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        <button type="button" onClick={() => addItem(idx, col.field)}
+                                                            className={`flex items-center gap-1 self-start rounded-md px-2 py-1 text-[10px] font-semibold ${col.color} ${col.bg} border border-current/20 hover:opacity-80`}>
+                                                            <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                                            Ajouter
+                                                        </button>
+                                                    </div>
                                                 ))}
                                             </div>
 
