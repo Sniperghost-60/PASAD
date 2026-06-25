@@ -17,6 +17,12 @@ class RendementDispositif extends Model
         'rendement_annee_n_temoin',
     ];
 
+    protected $casts = [
+        'rendement_annee_n1'           => 'float',
+        'rendement_annee_n_technologie' => 'float',
+        'rendement_annee_n_temoin'      => 'float',
+    ];
+
     public function user()           { return $this->belongsTo(User::class); }
     public function commune()        { return $this->belongsTo(Commune::class); }
     public function arrondissement() { return $this->belongsTo(Arrondissement::class); }

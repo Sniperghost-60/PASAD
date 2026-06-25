@@ -20,7 +20,8 @@ class AnimationSessionCep extends Model
     ];
 
     protected $casts = [
-        'innovations' => 'array',
+        'innovations'        => 'array',
+        'superficie_couverte' => 'float',
     ];
 
     public function user()              { return $this->belongsTo(User::class); }

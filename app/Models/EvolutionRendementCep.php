@@ -18,6 +18,13 @@ class EvolutionRendementCep extends Model
         'rendement_dispositif_3', 'rendement_dispositif_4',
     ];
 
+    protected $casts = [
+        'rendement_dispositif_1' => 'float',
+        'rendement_dispositif_2' => 'float',
+        'rendement_dispositif_3' => 'float',
+        'rendement_dispositif_4' => 'float',
+    ];
+
     public function user()            { return $this->belongsTo(User::class); }
     public function commune()         { return $this->belongsTo(Commune::class); }
     public function arrondissement()  { return $this->belongsTo(Arrondissement::class); }
