@@ -37,7 +37,10 @@ class AnimationSessionCepController extends Controller
             ->where('user_id', $request->user()->id);
 
         if ($request->filled('cep_id')) {
-            $query->where('cep_id', $request->input('cep_id'));
+            $cepId = $request->input('cep_id');
+            $query->where(function ($q) use ($cepId) {
+                $q->where('cep_id', $cepId)->orWhereNull('cep_id');
+            });
         }
         if ($request->filled('profil_historique_id')) {
             $query->where('profil_historique_id', $request->input('profil_historique_id'));

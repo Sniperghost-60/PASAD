@@ -13,7 +13,10 @@ class RendementDispositifController extends Controller
         $query = RendementDispositif::with(['commune', 'arrondissement'])
             ->where('user_id', $request->user()->id);
         if ($request->filled('cep_id')) {
-            $query->where('cep_id', $request->input('cep_id'));
+            $cepId = $request->input('cep_id');
+            $query->where(function ($q) use ($cepId) {
+                $q->where('cep_id', $cepId)->orWhereNull('cep_id');
+            });
         }
         return response()->json($query->orderBy('id')->get());
     }
