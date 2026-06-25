@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /**
@@ -10,15 +11,19 @@ import api from '../services/api';
  *   className  : string  — classes Tailwind supplémentaires
  */
 export default function CepSelector({ value, onChange, required = false, className = '' }) {
+    const { activeCommune } = useAuth();
     const [cepList, setCepList] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get('/api/cep')
+        setLoading(true);
+        onChange('');
+        const params = activeCommune ? { commune_id: activeCommune.id } : {};
+        api.get('/api/cep', { params })
             .then(res => setCepList(Array.isArray(res.data) ? res.data : []))
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, []);
+    }, [activeCommune]);
 
     return (
         <div className={`flex flex-col gap-1 ${className}`}>

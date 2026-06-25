@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Inputs multiples inline pour les innovations ────────────────────── */
@@ -169,6 +170,7 @@ const emptyLigne = () => ({
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function AnimationSessionsCep() {
+    const { activeCommune } = useAuth();
     const [selectedCep, setSelectedCep]       = useState('');
     const [villages, setVillages]             = useState([]);
     const [selectedVillage, setSelectedVillage] = useState('');
@@ -181,12 +183,15 @@ export default function AnimationSessionsCep() {
     const [showPreview, setShowPreview]       = useState(false);
     const [toast, setToast]                   = useState({ show: false, message: '', type: 'success' });
 
-    /* Charger la liste des villages (profil_historique) */
+    /* Charger la liste des villages (profil_historique) filtrée par commune active */
     useEffect(() => {
-        api.get('/api/profil-historique')
+        setSelectedVillage('');
+        setLignes([emptyLigne()]);
+        const params = activeCommune ? { commune_id: activeCommune.id } : {};
+        api.get('/api/profil-historique', { params })
             .then(res => setVillages(Array.isArray(res.data) ? res.data : []))
             .catch(() => {});
-    }, []);
+    }, [activeCommune]);
 
     /* Charger les expérimentations quand le village change */
     useEffect(() => {
