@@ -119,11 +119,12 @@ class HierarchisationDomaineActiviteController extends Controller
 
             return collect($domaines)->map(fn ($domaine) => HierarchisationDomaineActivite::create([
                 'profil_historique_id' => $profil->id,
-                'user_id' => $request->user()->id,
-                'domaine_activite' => $domaine['domaine_activite'],
-                'score' => $domaine['score'] ?? null,
-                'rang' => $domaine['rang'] ?? null,
-                'autre_precision' => $domaine['autre_precision'] ?? null,
+                'commune_id'           => $profil->commune_id,
+                'user_id'              => $request->user()->id,
+                'domaine_activite'     => $domaine['domaine_activite'],
+                'score'                => $domaine['score'] ?? null,
+                'rang'                 => $domaine['rang'] ?? null,
+                'autre_precision'      => $domaine['autre_precision'] ?? null,
             ]))->all();
         });
 

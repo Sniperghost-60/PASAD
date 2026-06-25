@@ -20,6 +20,7 @@ class CepController extends Controller
             'membres.participant.arrondissement',
         ])
         ->where('user_id', $request->user()->id)
+        ->when($request->filled('commune_id'), fn($q) => $q->where('commune_id', $request->integer('commune_id')))
         ->orderBy('created_at', 'desc')
         ->get();
 

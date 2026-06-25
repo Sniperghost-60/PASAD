@@ -96,15 +96,16 @@ class CurriculumApprentissageCepController extends Controller
             CurriculumApprentissageCep::where('profil_historique_id', $profil->id)->delete();
 
             return collect($validated['activites'])->map(fn ($activite) => CurriculumApprentissageCep::create([
-                'profil_historique_id' => $profil->id,
-                'matrice_probleme_id' => $activite['matrice_probleme_id'],
-                'user_id' => $request->user()->id,
+                'profil_historique_id'   => $profil->id,
+                'commune_id'             => $profil->commune_id,
+                'matrice_probleme_id'    => $activite['matrice_probleme_id'],
+                'user_id'                => $request->user()->id,
                 'option_solution_tester' => $activite['option_solution_tester'] ?? '',
-                'quoi_faire_activite' => $activite['quoi_faire_activite'] ?? '',
-                'moyens' => $activite['moyens'] ?? null,
-                'periode_debut' => $activite['periode_debut'] ?? null,
-                'periode_fin' => $activite['periode_fin'] ?? null,
-                'responsable' => $activite['responsable'] ?? null,
+                'quoi_faire_activite'    => $activite['quoi_faire_activite'] ?? '',
+                'moyens'                 => $activite['moyens'] ?? null,
+                'periode_debut'          => $activite['periode_debut'] ?? null,
+                'periode_fin'            => $activite['periode_fin'] ?? null,
+                'responsable'            => $activite['responsable'] ?? null,
             ]))->all();
         });
 

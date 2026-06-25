@@ -1062,24 +1062,60 @@ function DashboardAdmin({ user, stats, loading }) {
 ══════════════════════════════════════════════════════════════════════ */
 export default function Dashboard() {
     const { user, hasRole } = useAuth();
-    const [stats,   setStats]   = useState({});
-    const [loading, setLoading] = useState(true);
+    const [stats,          setStats]          = useState({});
+    const [loading,        setLoading]        = useState(true);
+    const [communes,       setCommunes]       = useState([]);
+    const [selectedCommune, setSelectedCommune] = useState('');
 
+    const isAdmin       = hasRole(['Super-Admin', 'Administrateur']);
+    const isSuperviseur = hasRole('Superviseur');
+
+    // Charger les communes accessibles (conseillers uniquement)
     useEffect(() => {
-        api.get('/api/dashboard/stats')
+        if (!isAdmin && !isSuperviseur) {
+            api.get('/api/user/communes')
+                .then(r => setCommunes(r.data))
+                .catch(() => {});
+        }
+    }, [isAdmin, isSuperviseur]);
+
+    // Recharger les stats quand la commune change
+    useEffect(() => {
+        setLoading(true);
+        const params = selectedCommune ? `?commune_id=${selectedCommune}` : '';
+        api.get(`/api/dashboard/stats${params}`)
             .then(r => setStats(r.data))
             .catch(() => setStats({}))
             .finally(() => setLoading(false));
-    }, []);
-
-    const isAdmin      = hasRole(['Super-Admin', 'Administrateur']);
-    const isSuperviseur = hasRole('Superviseur');
+    }, [selectedCommune]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100/50 to-white flex">
             <Sidebar />
             <div className="flex-1 ml-60 flex flex-col min-h-screen">
                 <Header title="Tableau de bord" />
+
+                {/* Sélecteur de commune (Conseillers uniquement) */}
+                {!isAdmin && !isSuperviseur && communes.length > 1 && (
+                    <div className="px-6 pt-4">
+                        <div className="inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-white px-3 py-2 shadow-sm">
+                            <svg className="size-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            <select
+                                value={selectedCommune}
+                                onChange={e => setSelectedCommune(e.target.value)}
+                                className="border-none bg-transparent text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                            >
+                                <option value="">Toutes mes communes</option>
+                                {communes.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nom}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+
                 <main className="flex-1 px-6 py-6">
                     {isAdmin
                         ? <DashboardAdmin       user={user} stats={stats} loading={loading} />

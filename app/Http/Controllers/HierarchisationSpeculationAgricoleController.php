@@ -95,12 +95,13 @@ class HierarchisationSpeculationAgricoleController extends Controller
 
             return collect($speculations)->map(fn ($speculation) => HierarchisationSpeculationAgricole::create([
                 'profil_historique_id' => $profil->id,
-                'user_id' => $request->user()->id,
-                'domaine_activite' => 'Agriculture',
+                'commune_id'           => $profil->commune_id,
+                'user_id'              => $request->user()->id,
+                'domaine_activite'     => 'Agriculture',
                 'speculation_agricole' => $speculation['speculation_agricole'],
-                'score' => $speculation['score'] ?? null,
-                'rang' => $speculation['rang'] ?? null,
-                'autre_precision' => $speculation['autre_precision'] ?? null,
+                'score'                => $speculation['score'] ?? null,
+                'rang'                 => $speculation['rang'] ?? null,
+                'autre_precision'      => $speculation['autre_precision'] ?? null,
             ]))->all();
         });
 

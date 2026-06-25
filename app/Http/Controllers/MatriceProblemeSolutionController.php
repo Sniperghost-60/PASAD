@@ -53,9 +53,10 @@ class MatriceProblemeSolutionController extends Controller
             return collect($validated['problemes'])->map(function ($item) use ($profil, $request) {
                 $probleme = MatriceProbleme::create([
                     'profil_historique_id' => $profil->id,
-                    'user_id' => $request->user()->id,
-                    'probleme' => $item['probleme'],
-                    'causes' => $item['causes'] ?? null,
+                    'commune_id'           => $profil->commune_id,
+                    'user_id'              => $request->user()->id,
+                    'probleme'             => $item['probleme'],
+                    'causes'               => $item['causes'] ?? null,
                 ]);
 
                 foreach ($item['solutions_habituelles'] ?? [] as $solution) {

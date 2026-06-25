@@ -88,6 +88,7 @@ class ResumeProtocoleExperimentationController extends Controller
             return collect($validated['experimentations'])->map(fn ($exp) =>
                 ResumeProtocoleExperimentation::create([
                     'profil_historique_id'    => $profil->id,
+                    'commune_id'              => $profil->commune_id,
                     'matrice_probleme_id'     => $exp['matrice_probleme_id'],
                     'user_id'                 => $request->user()->id,
                     'titre_experimentation'   => $exp['titre_experimentation'] ?? '',

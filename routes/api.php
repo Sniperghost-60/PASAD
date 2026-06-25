@@ -123,9 +123,36 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // ── Statistiques du tableau de bord ────────────────────────────────
     Route::get('/dashboard/stats', function (Request $request) {
-        $user   = $request->user();
-        $uid    = $user->id;
-        $isAdmin = $user->hasAnyRole(['Super-Admin', 'Administrateur', 'Superviseur']);
+        $user      = $request->user();
+        $uid       = $user->id;
+        $isAdmin   = $user->hasAnyRole(['Super-Admin', 'Administrateur', 'Superviseur']);
+        $communeId = $request->filled('commune_id') ? (int) $request->input('commune_id') : null;
+
+        // IDs des CEP appartenant à la commune sélectionnée (pour filtrer les sous-tables)
+        $cepIds = null;
+        if ($communeId) {
+            $cepQuery = DB::table('cep')->where('commune_id', $communeId);
+            if (!$isAdmin) $cepQuery->where('user_id', $uid);
+            $cepIds = $cepQuery->pluck('id')->toArray();
+        }
+
+        // Tables filtrables par commune_id directement
+        $byCommune = [
+            'profil_historique',
+            'hierarchisation_domaines_activites',
+            'hierarchisation_speculations_agricoles',
+            'matrice_problemes',
+            'curriculum_apprentissage_cep',
+            'resume_protocoles_experimentations',
+            'identification_participants_cep',
+            'liste_presence_sensibilisation',
+            'base_beneficiaires_intervention',
+        ];
+        // Tables filtrables par cep_id
+        $byCepId   = ['animation_sessions_cep', 'bilan_sessions_animation_cep',
+                      'organisation_visites_echanges', 'visites_echanges_commentees',
+                      'difficultes_suggestions', 'evolution_rendements_cep',
+                      'rendement_dispositif', 'rapport_demarrage_cep'];
 
         $tables = [
             'profil_historique', 'hierarchisation_domaines_activites',
@@ -138,55 +165,74 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'evolution_rendements_cep', 'rendement_dispositif', 'rapport_demarrage_cep',
         ];
 
-        $qAll  = fn($t) => DB::table($t)->count();
-        $qUser = fn($t) => DB::table($t)->where('user_id', $uid)->count();
-        $q     = $isAdmin ? $qAll : $qUser;
+        $applyScope = function ($query, string $table) use ($isAdmin, $uid, $communeId, $cepIds, $byCommune, $byCepId) {
+            if (!$isAdmin) $query->where('user_id', $uid);
+            if ($communeId) {
+                if ($table === 'cep') {
+                    $query->where('commune_id', $communeId);
+                } elseif (in_array($table, $byCommune)) {
+                    $query->where('commune_id', $communeId);
+                } elseif (in_array($table, $byCepId) && $cepIds !== null) {
+                    $query->whereIn('cep_id', $cepIds);
+                }
+            }
+            return $query;
+        };
 
-        $stats = collect($tables)->mapWithKeys(fn($t) => [$t => $q($t)])->all();
+        $qAll  = fn($t) => DB::table($t)->count();
+        $q     = fn($t) => $applyScope(DB::table($t), $t)->count();
+        $qFn   = $isAdmin && !$communeId ? $qAll : $q;
+
+        $stats = collect($tables)->mapWithKeys(fn($t) => [$t => $qFn($t)])->all();
 
         $stats['utilisateurs'] = User::count();
         $stats['communes']     = DB::table('communes')->count();
         $stats['cep_membres']  = DB::table('cep_membres')->count();
 
-        // ── Stats communes à tous les rôles (scoped) ─────────────────────────
+        // Helper: scope une query par user + commune (commune_id direct)
+        $scopeByCommune = function ($query) use ($isAdmin, $uid, $communeId) {
+            if (!$isAdmin) $query->where('user_id', $uid);
+            if ($communeId) $query->where('commune_id', $communeId);
+            return $query;
+        };
+
+        // Helper: scope une query par user + cep_id (tables liées aux CEP)
+        $scopeByCep = function ($query) use ($isAdmin, $uid, $cepIds) {
+            if (!$isAdmin) $query->where('user_id', $uid);
+            if ($cepIds !== null) $query->whereIn('cep_id', $cepIds);
+            return $query;
+        };
+
+        // ── Stats scoped ─────────────────────────────────────────────────────
         // Taux féminisation participants CEP
-        $totalPart  = DB::table('identification_participants_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->count();
-        $femmesPart = DB::table('identification_participants_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
-            ->where('sexe', 'F')->count();
+        $totalPart  = $scopeByCommune(DB::table('identification_participants_cep'))->count();
+        $femmesPart = $scopeByCommune(DB::table('identification_participants_cep'))->where('sexe', 'F')->count();
         $stats['taux_feminisation']   = $totalPart > 0 ? round($femmesPart / $totalPart * 100, 1) : 0;
         $stats['participants_femmes'] = $femmesPart;
         $stats['participants_hommes'] = $totalPart - $femmesPart;
 
         // Top 5 spéculations pratiquées
-        $stats['top_speculations'] = DB::table('identification_participants_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $stats['top_speculations'] = $scopeByCommune(DB::table('identification_participants_cep'))
             ->whereNotNull('speculation')->where('speculation', '!=', '')
             ->selectRaw('speculation, COUNT(*) as nb')
             ->groupBy('speculation')->orderByDesc('nb')->limit(5)->get();
 
         // Catégories d'âge
-        $stats['categories_age'] = DB::table('identification_participants_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $stats['categories_age'] = $scopeByCommune(DB::table('identification_participants_cep'))
             ->whereNotNull('categorie_age')
             ->selectRaw('categorie_age, COUNT(*) as nb')
             ->groupBy('categorie_age')->orderByDesc('nb')->get();
 
         // Superficie couverte totale (ha)
-        $stats['superficie_couverte_total'] = (float) DB::table('animation_sessions_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $stats['superficie_couverte_total'] = (float) $scopeByCep(DB::table('animation_sessions_cep'))
             ->sum('superficie_couverte');
 
         // Totaux AAES & tests à l'urne
-        $stats['nb_aaes_total']      = (int) DB::table('bilan_sessions_animation_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->sum('nb_aaes');
-        $stats['nb_test_urne_total'] = (int) DB::table('bilan_sessions_animation_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))->sum('nb_test_urne');
+        $stats['nb_aaes_total']      = (int) $scopeByCep(DB::table('bilan_sessions_animation_cep'))->sum('nb_aaes');
+        $stats['nb_test_urne_total'] = (int) $scopeByCep(DB::table('bilan_sessions_animation_cep'))->sum('nb_test_urne');
 
         // Bilan H/F/jeunes cumulé
-        $bilan = DB::table('bilan_sessions_animation_cep')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $bilan = $scopeByCep(DB::table('bilan_sessions_animation_cep'))
             ->selectRaw('SUM(participation_total) as total, SUM(participation_h) as hommes, SUM(participation_f) as femmes, SUM(participation_jeunes) as jeunes')
             ->first();
         $stats['bilan_participation'] = $bilan;
@@ -194,8 +240,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Top pratiques agroécologiques
         $pratiquesMap = [];
         foreach (['pratique_agroecologique_1','pratique_agroecologique_2','pratique_agroecologique_3'] as $col) {
-            DB::table('base_beneficiaires_intervention')
-                ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+            $scopeByCommune(DB::table('base_beneficiaires_intervention'))
                 ->whereNotNull($col)->where($col, '!=', '')
                 ->selectRaw("$col as pratique, COUNT(*) as nb")
                 ->groupBy($col)->get()
@@ -206,15 +251,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ->map(fn($nb, $pratique) => ['pratique' => $pratique, 'nb' => $nb])->values();
 
         // Répartition type producteur
-        $stats['producteurs_par_type'] = DB::table('base_beneficiaires_intervention')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $stats['producteurs_par_type'] = $scopeByCommune(DB::table('base_beneficiaires_intervention'))
             ->whereNotNull('type_producteur')
             ->selectRaw('type_producteur, COUNT(*) as nb')
             ->groupBy('type_producteur')->get();
 
         // Top 5 difficultés signalées
-        $stats['top_difficultes'] = DB::table('difficultes_suggestions')
-            ->when(!$isAdmin, fn($q) => $q->where('user_id', $uid))
+        $stats['top_difficultes'] = $scopeByCep(DB::table('difficultes_suggestions'))
             ->whereNotNull('difficulte')->where('difficulte', '!=', '')
             ->selectRaw('difficulte, COUNT(*) as nb')
             ->groupBy('difficulte')->orderByDesc('nb')->limit(5)->get();
