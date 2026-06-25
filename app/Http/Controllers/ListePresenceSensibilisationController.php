@@ -18,6 +18,11 @@ class ListePresenceSensibilisationController extends Controller
             $query->whereDate('date_session', $request->input('date_session'));
         }
 
+        $query->when(
+            $request->filled('commune_id'),
+            fn ($q) => $q->where('commune_id', $request->integer('commune_id'))
+        );
+
         return response()->json($query->orderBy('id')->get());
     }
 

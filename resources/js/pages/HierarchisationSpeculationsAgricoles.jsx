@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 const SPECULATIONS_FIXES = [
@@ -46,6 +47,7 @@ const calculateRanks = (rows) => {
 export default function HierarchisationSpeculationsAgricoles() {
     const [searchParams] = useSearchParams();
     const initialProfilId = searchParams.get('profil_historique_id') || '';
+    const { activeCommune } = useAuth();
     const [villages, setVillages] = useState([]);
     const [selectedProfilId, setSelectedProfilId] = useState(initialProfilId);
     const [rows, setRows] = useState(emptyRows());
@@ -56,7 +58,7 @@ export default function HierarchisationSpeculationsAgricoles() {
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const calculatedRanks = useMemo(() => calculateRanks(rows), [rows]);
 
-    useEffect(() => { loadVillages(); }, []);
+    useEffect(() => { setSelectedProfilId(''); setRows(emptyRows()); loadVillages(); }, [activeCommune]);
 
     useEffect(() => {
         if (selectedProfilId) loadExistingRows(selectedProfilId);
@@ -71,7 +73,8 @@ export default function HierarchisationSpeculationsAgricoles() {
     const loadVillages = async () => {
         setLoadingVillages(true);
         try {
-            const res = await api.get('/api/hierarchisation-domaines-activites/villages');
+            const params = activeCommune ? `?commune_id=${activeCommune.id}` : '';
+            const res = await api.get(`/api/hierarchisation-domaines-activites/villages${params}`);
             const data = Array.isArray(res.data) ? res.data : [];
             setVillages(data);
             if (!selectedProfilId && data.length === 1) {

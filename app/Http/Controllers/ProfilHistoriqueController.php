@@ -23,6 +23,12 @@ class ProfilHistoriqueController extends Controller
             });
         }
 
+        // Filtre par commune sélectionnée (mobile)
+        $query->when(
+            $request->filled('commune_id'),
+            fn ($q) => $q->where('commune_id', $request->integer('commune_id'))
+        );
+
         $profils = $query->orderBy('annee', 'desc')->get();
 
         return response()->json($profils);

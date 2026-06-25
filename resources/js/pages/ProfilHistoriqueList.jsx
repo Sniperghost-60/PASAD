@@ -2,22 +2,25 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 export default function ProfilHistoriqueList() {
     const navigate = useNavigate();
+    const { activeCommune } = useAuth();
     const [profils, setProfils] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const [confirmDelete, setConfirmDelete] = useState(null);
 
-    useEffect(() => { loadProfils(); }, []);
+    useEffect(() => { loadProfils(); }, [activeCommune]);
 
     const loadProfils = async () => {
         setLoading(true);
         try {
-            const res = await api.get('/api/profil-historique');
+            const params = activeCommune ? `?commune_id=${activeCommune.id}` : '';
+            const res = await api.get(`/api/profil-historique${params}`);
             setProfils(Array.isArray(res.data) ? res.data : []);
         } catch { setProfils([]); } finally { setLoading(false); }
     };

@@ -149,6 +149,11 @@ class HierarchisationDomaineActiviteController extends Controller
             });
         }
 
+        $query->when(
+            $request->filled('commune_id'),
+            fn ($q) => $q->where('commune_id', $request->integer('commune_id'))
+        );
+
         return $query;
     }
 
