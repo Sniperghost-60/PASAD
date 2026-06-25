@@ -43,10 +43,16 @@ class AnimationSessionCepController extends Controller
             });
         }
         if ($request->filled('profil_historique_id')) {
-            $query->where('profil_historique_id', $request->input('profil_historique_id'));
+            $phId = $request->input('profil_historique_id');
+            $query->where(function ($q) use ($phId) {
+                $q->where('profil_historique_id', $phId)->orWhereNull('profil_historique_id');
+            });
         }
         if ($request->filled('date_session')) {
-            $query->whereDate('date_session', $request->input('date_session'));
+            $date = $request->input('date_session');
+            $query->where(function ($q) use ($date) {
+                $q->whereDate('date_session', $date)->orWhereNull('date_session');
+            });
         }
 
         return response()->json($query->orderBy('id')->get());
