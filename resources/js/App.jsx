@@ -34,6 +34,7 @@ import MonProfil from './pages/MonProfil';
 import StatistiquesCep from './pages/StatistiquesCep';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
+import AppVersionManagement from './pages/AppVersionManagement';
 
 export default function App() {
     return (
@@ -96,6 +97,7 @@ export default function App() {
                     <Route path="/stats"              element={<ComingSoon title="Statistiques"   icon="stats"    />} />
                     <Route path="/roles"              element={<RolesManagement />} />
                     <Route path="/geographie"         element={<GeographyManagement />} />
+                    <Route path="/app-version"        element={<AppVersionManagement />} />
                     <Route path="/config"             element={<ComingSoon title="Configuration"  icon="settings" />} />
                 </Route>
 

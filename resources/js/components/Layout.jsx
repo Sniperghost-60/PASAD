@@ -112,6 +112,7 @@ const buildNav = (hasPermission, hasRole) => {
         hasPermission('utilisateurs.voir') && { label: 'Utilisateurs',  path: '/dashboard/users', icon: 'users'    },
         hasPermission('roles.gérer')       && { label: 'Rôles',         path: '/roles',           icon: 'shield'   },
         hasPermission('config.gérer')      && { label: 'Géographie',    path: '/geographie',      icon: 'map'      },
+        hasRole('Super-Admin')             && { label: 'Versions app',  path: '/app-version',     icon: 'bell'     },
         hasPermission('config.gérer')      && { label: 'Configuration', path: '/config',          icon: 'settings' },
     ].filter(Boolean);
 

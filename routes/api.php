@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\AppVersion;
 use App\Models\Departement;
 use App\Models\Commune;
 use App\Models\Arrondissement;
@@ -19,6 +20,31 @@ use Spatie\Permission\Models\Permission;
 | API Routes — PASAD Agronomy Platform
 |--------------------------------------------------------------------------
 */
+
+// ── Vérification version applicative (public, pas d'auth requise) ──────
+Route::get('/app/version-check', function (Request $request) {
+    try {
+        $config = AppVersion::current();
+    } catch (\Exception) {
+        // Table pas encore créée ou vide : on laisse passer
+        return response()->json(['needs_update' => false, 'force_update' => false]);
+    }
+
+    $appVersion = $request->header('X-App-Version', '0.0.0');
+    $needsUpdate = version_compare($appVersion, $config->min_version, '<');
+
+    return response()->json([
+        'needs_update'    => $needsUpdate,
+        'force_update'    => $config->force_update,
+        'min_version'     => $config->min_version,
+        'latest_version'  => $config->latest_version,
+        'android_url'     => $config->android_url,
+        'ios_url'         => $config->ios_url,
+        'release_notes'   => $config->release_notes,
+        // La preuve : la version envoyée par l'app est comparée ici
+        'app_version_received' => $appVersion,
+    ]);
+});
 
 // ── Authentification mobile (token Sanctum) ────────────────────────────
 Route::middleware(['throttle:5,1'])->group(function () {
@@ -932,6 +958,36 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'pipeline'            => $pipeline,
             'gain_rendement'      => $gainRendement,
         ]);
+    });
+
+    // ── Gestion des versions applicatives (Super-Admin) ──────────────────
+    Route::middleware('role:Super-Admin')->group(function () {
+        Route::get('/app/version', function () {
+            return response()->json(AppVersion::current());
+        });
+
+        Route::put('/app/version', function (Request $request) {
+            $validated = $request->validate([
+                'min_version'    => ['required', 'string', 'max:20', 'regex:/^\d+\.\d+\.\d+$/'],
+                'latest_version' => ['required', 'string', 'max:20', 'regex:/^\d+\.\d+\.\d+$/'],
+                'force_update'   => ['required', 'boolean'],
+                'android_url'    => ['nullable', 'url', 'max:500'],
+                'ios_url'        => ['nullable', 'url', 'max:500'],
+                'release_notes'  => ['nullable', 'string', 'max:2000'],
+            ]);
+
+            // On ne garde qu'un seul enregistrement — on le met à jour
+            try {
+                $config = AppVersion::current();
+            } catch (\Exception) {
+                $config = new AppVersion();
+            }
+
+            $config->fill([...$validated, 'published_by' => $request->user()->id]);
+            $config->save();
+
+            return response()->json(['success' => true, 'config' => $config->fresh()]);
+        });
     });
 
     // ── Gestion des CEP ──────────────────────────────────────────────────
