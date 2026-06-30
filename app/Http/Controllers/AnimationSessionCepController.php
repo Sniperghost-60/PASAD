@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnimationSessionCep;
+use App\Models\Cep;
 use App\Models\ResumeProtocoleExperimentation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,12 @@ class AnimationSessionCepController extends Controller
             $query->where(function ($q) use ($date) {
                 $q->whereDate('date_session', $date)->orWhereNull('date_session');
             });
+        }
+        if ($request->filled('commune_id')) {
+            $cepIds = Cep::where('commune_id', $request->integer('commune_id'))
+                ->where('user_id', $request->user()->id)
+                ->pluck('id');
+            $query->whereIn('cep_id', $cepIds);
         }
 
         return response()->json($query->orderBy('id')->get());

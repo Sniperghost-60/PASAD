@@ -18,6 +18,9 @@ class RapportDemarrageCepController extends Controller
                 $q->where('cep_id', $cepId)->orWhereNull('cep_id');
             });
         }
+        if ($request->filled('commune_id')) {
+            $query->where('commune_id', $request->integer('commune_id'));
+        }
 
         return response()->json($query->first());
     }

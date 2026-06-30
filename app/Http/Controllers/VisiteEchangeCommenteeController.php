@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cep;
 use App\Models\VisiteEchangeCommentee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,12 @@ class VisiteEchangeCommenteeController extends Controller
             $query->where(function ($q) use ($cepId) {
                 $q->where('cep_id', $cepId)->orWhereNull('cep_id');
             });
+        }
+        if ($request->filled('commune_id')) {
+            $cepIds = Cep::where('commune_id', $request->integer('commune_id'))
+                ->where('user_id', $request->user()->id)
+                ->pluck('id');
+            $query->whereIn('cep_id', $cepIds);
         }
         return response()->json($query->orderBy('date')->orderBy('id')->get());
     }

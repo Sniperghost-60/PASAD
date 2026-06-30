@@ -71,6 +71,9 @@ class BaseBeneficiaireInterventionController extends Controller
                 $q->where('cep_id', $cepId)->orWhereNull('cep_id');
             });
         }
+        if ($request->filled('commune_id')) {
+            $query->where('commune_id', $request->integer('commune_id'));
+        }
         if ($request->filled('date_session')) {
             $query->whereDate('date_session', $request->input('date_session'));
         }

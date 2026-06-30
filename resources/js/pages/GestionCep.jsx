@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Icônes ──────────────────────────────────────────────────────────── */
@@ -578,6 +579,7 @@ function CepCard({ cep, onDeleted, onMembreAdded, onMembreRemoved }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function GestionCep() {
+    const { activeCommune } = useAuth();
     const [ceps, setCeps]               = useState([]);
     const [departements, setDepts]      = useState([]);
     const [loading, setLoading]         = useState(true);
@@ -588,14 +590,16 @@ export default function GestionCep() {
         setToast({ show: true, message, type });
 
     useEffect(() => {
+        setLoading(true);
+        const params = activeCommune ? { commune_id: activeCommune.id } : {};
         Promise.all([
-            api.get('/api/cep'),
+            api.get('/api/cep', { params }),
             api.get('/api/departements'),
         ]).then(([cepRes, deptRes]) => {
             setCeps(Array.isArray(cepRes.data) ? cepRes.data : []);
             setDepts(Array.isArray(deptRes.data) ? deptRes.data : []);
         }).catch(() => {}).finally(() => setLoading(false));
-    }, []);
+    }, [activeCommune?.id]);
 
     const handleCreated = (newCep) => {
         setCeps(c => [{ ...newCep, membres: [] }, ...c]);

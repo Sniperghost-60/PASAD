@@ -22,6 +22,48 @@ const emptyProblemGroup = (suffix = Date.now()) => ({
     responsables: [''],
 });
 
+function SolutionSelectInputs({ label, addLabel, values, onChange, onAdd, onRemove, required, errors, options, disabledMessage }) {
+    return (
+        <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                {required && <span className="text-red-400">*</span>} {label}
+            </label>
+            {options.length === 0 ? (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">{disabledMessage}</p>
+            ) : (
+                <>
+                    {values.map((value, index) => (
+                        <div key={index} className="flex gap-2">
+                            <select value={value}
+                                onChange={e => onChange(index, e.target.value)}
+                                className={`flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-100 ${errors?.[index] ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-teal-400'}`}>
+                                <option value="">Sélectionner une solution validée</option>
+                                {options.map(opt => (
+                                    <option key={opt.id} value={opt.solution}>{opt.solution}</option>
+                                ))}
+                            </select>
+                            <button type="button" onClick={() => onRemove(index)}
+                                className="inline-flex size-8 flex-shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                                <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    ))}
+                    {errors?.general && <p className="text-xs text-red-500">{errors.general}</p>}
+                    <button type="button" onClick={onAdd}
+                        className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-600 hover:bg-teal-50 transition-all">
+                        <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter {addLabel}
+                    </button>
+                </>
+            )}
+        </div>
+    );
+}
+
 function MultiTextInputs({ label, addLabel, values, onChange, onAdd, onRemove, placeholder, required, errors }) {
     return (
         <div className="space-y-2">
@@ -88,9 +130,18 @@ export default function CurriculumApprentissageCep() {
     };
 
     const updateProblemGroup = (groupIndex, field, value) => {
-        setProblemGroups(current => current.map((group, index) => (
-            index === groupIndex ? { ...group, [field]: value } : group
-        )));
+        setProblemGroups(current => current.map((group, index) => {
+            if (index !== groupIndex) return group;
+            if (field === 'matrice_probleme_id' && value !== group.matrice_probleme_id) {
+                return { ...group, [field]: value, options: [''] };
+            }
+            return { ...group, [field]: value };
+        }));
+    };
+
+    const validatedSolutions = (problemId) => {
+        const problem = pertinentProblems.find(p => String(p.id) === String(problemId));
+        return problem?.solutions ?? [];
     };
 
     const updateGroupListValue = (groupIndex, field, valueIndex, value) => {
@@ -341,15 +392,18 @@ export default function CurriculumApprentissageCep() {
                                                     </div>
 
                                                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-                                                        <MultiTextInputs label="Option (solution) à tester"
+                                                        <SolutionSelectInputs label="Option (solution) à tester"
                                                             addLabel="une option"
                                                             values={group.options}
                                                             onChange={(index, value) => updateGroupListValue(groupIndex, 'options', index, value)}
                                                             onAdd={() => addGroupListValue(groupIndex, 'options')}
                                                             onRemove={(index) => removeGroupListValue(groupIndex, 'options', index)}
-                                                            placeholder="Option à tester"
                                                             required
-                                                            errors={errors[`options_${groupIndex}`]} />
+                                                            errors={errors[`options_${groupIndex}`]}
+                                                            options={validatedSolutions(group.matrice_probleme_id)}
+                                                            disabledMessage={group.matrice_probleme_id
+                                                                ? "Aucune solution validée pour ce problème. Validez d'abord des solutions dans la Matrice des problèmes et solutions."
+                                                                : 'Sélectionnez un problème pour voir ses solutions validées.'} />
 
                                                         <MultiTextInputs label="Quoi faire (activité)"
                                                             addLabel="une activité"

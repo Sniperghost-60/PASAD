@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CurriculumApprentissageCep;
 use App\Models\MatriceProbleme;
+use App\Models\MatriceProblemeSolution;
 use App\Models\ProfilHistorique;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ class CurriculumApprentissageCepController extends Controller
         $profil = $this->findAccessibleProfil($request, $validated['profil_historique_id']);
 
         return response()->json(
-            MatriceProbleme::where('profil_historique_id', $profil->id)
+            MatriceProbleme::with(['solutions' => fn ($q) => $q->where('statut', 'validee')->orderBy('id')])
+                ->where('profil_historique_id', $profil->id)
                 ->where('est_pertinent', true)
                 ->orderBy('id')
                 ->get()
@@ -78,11 +80,26 @@ class CurriculumApprentissageCepController extends Controller
             ], 422);
         }
 
+        $validSolutionsByProblem = MatriceProblemeSolution::whereIn('matrice_probleme_id', $pertinentIds)
+            ->where('statut', 'validee')
+            ->get()
+            ->groupBy('matrice_probleme_id')
+            ->map(fn ($solutions) => $solutions->pluck('solution')->all());
+
         foreach ($validated['activites'] as $activite) {
             if (! $pertinentIds->contains((int) $activite['matrice_probleme_id'])) {
                 return response()->json([
                     'message' => 'Chaque activité doit être liée à un problème pertinent du village.',
                 ], 422);
+            }
+
+            if (filled($activite['option_solution_tester'] ?? null)) {
+                $validOptions = $validSolutionsByProblem[$activite['matrice_probleme_id']] ?? [];
+                if (! in_array($activite['option_solution_tester'], $validOptions, true)) {
+                    return response()->json([
+                        'message' => 'La solution à tester doit être une solution validée dans la matrice des problèmes et solutions.',
+                    ], 422);
+                }
             }
 
             if (! empty($activite['periode_debut']) && ! empty($activite['periode_fin']) && $activite['periode_fin'] < $activite['periode_debut']) {
