@@ -64,7 +64,8 @@ const CEP_FORMS = [
 ];
 
 const CAI_NAV = [
-    { label: 'Liste producteurs', path: '/cai/liste-producteurs', icon: 'users', step: '1' },
+    { label: 'Liste producteurs',   path: '/cai/liste-producteurs',   icon: 'users',   step: '1' },
+    { label: 'Liste organisations', path: '/cai/liste-organisations', icon: 'cultures', step: '2' },
 ];
 
 const CEP_ACTIVITES_NAV = [

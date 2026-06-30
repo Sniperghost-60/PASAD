@@ -1000,4 +1000,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Phase 1 / Étape 1 — Liste des producteurs prêts à s'engager dans le CAI
     Route::get('/cai/liste-producteurs',  [App\Http\Controllers\CaiListeProducteurController::class, 'index']);
     Route::post('/cai/liste-producteurs', [App\Http\Controllers\CaiListeProducteurController::class, 'store']);
+
+    // Phase 1 / Étape 1 — Liste des organisations, coopératives, groupes de producteurs
+    Route::get('/cai/liste-organisations',  [App\Http\Controllers\CaiListeOrganisationController::class, 'index']);
+    Route::post('/cai/liste-organisations', [App\Http\Controllers\CaiListeOrganisationController::class, 'store']);
 });
