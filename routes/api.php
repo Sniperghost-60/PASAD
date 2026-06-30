@@ -995,4 +995,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/cep/{cep}/membres', [App\Http\Controllers\CepController::class, 'addMembre']);
     Route::delete('/cep/{cep}/membres/{membre}', [App\Http\Controllers\CepController::class, 'removeMembre']);
     Route::resource('cep', App\Http\Controllers\CepController::class)->only(['index', 'store', 'destroy']);
+
+    // ── CAI (Conseil Agricole Intégré) ───────────────────────────────────
+    // Phase 1 / Étape 1 — Liste des producteurs prêts à s'engager dans le CAI
+    Route::get('/cai/liste-producteurs',  [App\Http\Controllers\CaiListeProducteurController::class, 'index']);
+    Route::post('/cai/liste-producteurs', [App\Http\Controllers\CaiListeProducteurController::class, 'store']);
 });

@@ -35,6 +35,7 @@ import StatistiquesCep from './pages/StatistiquesCep';
 import CommuneSelection from './pages/CommuneSelection';
 import ComingSoon       from './pages/ComingSoon';
 import AppVersionManagement from './pages/AppVersionManagement';
+import CaiListeProducteurs from './pages/CaiListeProducteurs';
 
 export default function App() {
     return (
@@ -83,6 +84,9 @@ export default function App() {
                     <Route path="/rapport-demarrage-cep" element={<RapportDemarrageCep />} />
                     <Route path="/mon-profil" element={<MonProfil />} />
                     <Route path="/statistiques-cep" element={<StatistiquesCep />} />
+
+                    {/* ── CAI (Conseil Agricole Intégré) */}
+                    <Route path="/cai/liste-producteurs" element={<CaiListeProducteurs />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

@@ -63,6 +63,10 @@ const CEP_FORMS = [
     { label: 'Protocoles expér.',       path: '/resume-protocoles-experimentations',      icon: 'suivis',   step: '6' },
 ];
 
+const CAI_NAV = [
+    { label: 'Liste producteurs', path: '/cai/liste-producteurs', icon: 'users', step: '1' },
+];
+
 const CEP_ACTIVITES_NAV = [
     { label: 'Gestion des CEP',           path: '/gestion-cep',                     icon: 'cultures' },
     { label: 'Animation des sessions',    path: '/animation-sessions-cep',          icon: 'suivis'   },
@@ -106,6 +110,10 @@ const buildNav = (hasPermission, hasRole) => {
         title: 'CEP',
         items: CEP_ACTIVITES_NAV,
     };
+    const sectionCai = {
+        title: 'CAI',
+        items: [{ type: 'group', label: 'Phase 1 — Préliminaire', icon: 'rapports', children: CAI_NAV }],
+    };
 
     /* ── Administration */
     const adminItems = [
@@ -122,7 +130,7 @@ const buildNav = (hasPermission, hasRole) => {
 
     /* ── Composition selon le rôle */
     if (isAdmin) {
-        /* Admin / Super-Admin : Dashboard → Admin → supervision CEP (groupée) */
+        /* Admin / Super-Admin : Dashboard → Admin → supervision CEP (groupée) → CAI */
         return [
             sectionDashboard,
             sectionAdmin,
@@ -135,26 +143,29 @@ const buildNav = (hasPermission, hasRole) => {
                     { label: 'Identification CEP', path: '/identification-participants-cep', icon: 'rapports' },
                 ],
             },
+            sectionCai,
         ].filter(Boolean);
     }
 
     if (isSuperviseur) {
-        /* Superviseur : Dashboard → Admin (utilisateurs) → CEP */
+        /* Superviseur : Dashboard → Admin (utilisateurs) → CEP → CAI */
         return [
             sectionDashboard,
             sectionAdmin,
             sectionFormulaires,
             sectionSensib,
             sectionCep,
+            sectionCai,
         ].filter(Boolean);
     }
 
-    /* Conseiller (défaut) : pas de dashboard prominent, formulaires + CEP */
+    /* Conseiller (défaut) : formulaires + CEP + CAI */
     return [
         sectionDashboard,
         sectionFormulaires,
         sectionSensib,
         sectionCep,
+        sectionCai,
     ].filter(s => s && s.items.length > 0);
 };
 
