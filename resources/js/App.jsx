@@ -37,6 +37,23 @@ import ComingSoon       from './pages/ComingSoon';
 import AppVersionManagement from './pages/AppVersionManagement';
 import CaiListeProducteurs  from './pages/CaiListeProducteurs';
 import CaiListeOrganisations from './pages/CaiListeOrganisations';
+import CaiNegociationAccord        from './pages/CaiNegociationAccord';
+import CaiMarchesCaracterisation  from './pages/CaiMarchesCaracterisation';
+import CaiFacteursLimitant        from './pages/CaiFacteursLimitant';
+import CaiEtudeMarche             from './pages/CaiEtudeMarche';
+import CaiAgroecologieProducteurs from './pages/CaiAgroecologieProducteurs';
+import CaiAppuiMarche             from './pages/CaiAppuiMarche';
+import CaiProgrammationMarche     from './pages/CaiProgrammationMarche';
+import CaiProgrammeQuinzaine      from './pages/CaiProgrammeQuinzaine';
+import CaiJournalCaisse           from './pages/CaiJournalCaisse';
+import CaiFicheStock              from './pages/CaiFicheStock';
+import CaiEvolutionRendementsCep  from './pages/CaiEvolutionRendementsCep';
+import CaiEvolutionRendementsUd          from './pages/CaiEvolutionRendementsUd';
+import CaiEvolutionProduitsChimiques     from './pages/CaiEvolutionProduitsChimiques';
+import CaiEvolutionProduitsOrganiques    from './pages/CaiEvolutionProduitsOrganiques';
+import CaiEvolutionEspeces              from './pages/CaiEvolutionEspeces';
+import CaiAnalyseQualiteSols           from './pages/CaiAnalyseQualiteSols';
+import CaiCoutTransaction              from './pages/CaiCoutTransaction';
 
 export default function App() {
     return (
@@ -89,6 +106,23 @@ export default function App() {
                     {/* ── CAI (Conseil Agricole Intégré) */}
                     <Route path="/cai/liste-producteurs"   element={<CaiListeProducteurs />} />
                     <Route path="/cai/liste-organisations" element={<CaiListeOrganisations />} />
+                    <Route path="/cai/negociation-accord"       element={<CaiNegociationAccord />} />
+                    <Route path="/cai/marches-caracterisation" element={<CaiMarchesCaracterisation />} />
+                    <Route path="/cai/facteurs-limitant"       element={<CaiFacteursLimitant />} />
+                    <Route path="/cai/etude-marche"           element={<CaiEtudeMarche />} />
+                    <Route path="/cai/agroecologie-producteurs" element={<CaiAgroecologieProducteurs />} />
+                    <Route path="/cai/appui-marche"            element={<CaiAppuiMarche />} />
+                    <Route path="/cai/programmation-marche"    element={<CaiProgrammationMarche />} />
+                    <Route path="/cai/programme-quinzaine"     element={<CaiProgrammeQuinzaine />} />
+                    <Route path="/cai/journal-caisse"          element={<CaiJournalCaisse />} />
+                    <Route path="/cai/fiche-stock"             element={<CaiFicheStock />} />
+                    <Route path="/cai/evolution-rendements-cep" element={<CaiEvolutionRendementsCep />} />
+                    <Route path="/cai/evolution-rendements-ud"        element={<CaiEvolutionRendementsUd />} />
+                    <Route path="/cai/evolution-produits-chimiques"   element={<CaiEvolutionProduitsChimiques />} />
+                    <Route path="/cai/evolution-produits-organiques"  element={<CaiEvolutionProduitsOrganiques />} />
+                    <Route path="/cai/evolution-especes"              element={<CaiEvolutionEspeces />} />
+                    <Route path="/cai/analyse-qualite-sols"           element={<CaiAnalyseQualiteSols />} />
+                    <Route path="/cai/cout-transaction"               element={<CaiCoutTransaction />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

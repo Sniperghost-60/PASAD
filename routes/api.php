@@ -1004,4 +1004,72 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Phase 1 / Étape 1 — Liste des organisations, coopératives, groupes de producteurs
     Route::get('/cai/liste-organisations',  [App\Http\Controllers\CaiListeOrganisationController::class, 'index']);
     Route::post('/cai/liste-organisations', [App\Http\Controllers\CaiListeOrganisationController::class, 'store']);
+
+    // Phase 1 / Étape 2 — Négociation de l'accord CAI (CTS-PV/AE et CAM)
+    Route::get('/cai/negociation-accord',  [App\Http\Controllers\CaiNegociationAccordController::class, 'index']);
+    Route::post('/cai/negociation-accord', [App\Http\Controllers\CaiNegociationAccordController::class, 'store']);
+
+    // Phase 2 / Étape 3 — Caractérisation des marchés de produits agroécologiques
+    Route::get('/cai/marches-caracterisation',  [App\Http\Controllers\CaiMarcheCaracterisationController::class, 'index']);
+    Route::post('/cai/marches-caracterisation', [App\Http\Controllers\CaiMarcheCaracterisationController::class, 'store']);
+
+    // Phase 2 / Étape 4 — Identification des facteurs limitant l'accès aux marchés (FFOM)
+    Route::get('/cai/facteurs-limitant',  [App\Http\Controllers\CaiFacteurLimitantController::class, 'index']);
+    Route::post('/cai/facteurs-limitant', [App\Http\Controllers\CaiFacteurLimitantController::class, 'store']);
+
+    // Phase 2 / Étape 5 — Fiche de synthèse d'une étude de marché
+    Route::get('/cai/etude-marche',  [App\Http\Controllers\CaiEtudeMarcheController::class, 'index']);
+    Route::post('/cai/etude-marche', [App\Http\Controllers\CaiEtudeMarcheController::class, 'store']);
+
+    // Phase 2 / Étape 6 — Principes de production agroécologique (Oui/Non par producteur)
+    Route::get('/cai/agroecologie-producteurs',  [App\Http\Controllers\CaiAgroecologieProducteursController::class, 'index']);
+    Route::post('/cai/agroecologie-producteurs', [App\Http\Controllers\CaiAgroecologieProducteursController::class, 'store']);
+
+    // Phase 2 / Étape 9 — Compte Prévisionnel de Mise en marché
+    Route::get('/cai/appui-marche',  [App\Http\Controllers\CaiAppuiMarcheController::class, 'index']);
+    Route::post('/cai/appui-marche', [App\Http\Controllers\CaiAppuiMarcheController::class, 'store']);
+
+    // Phase 2 / Étape 10 — Programmation de la mise en marché (tableau Mois × Décades)
+    Route::get('/cai/programmation-marche',  [App\Http\Controllers\CaiProgrammationMarcheController::class, 'index']);
+    Route::post('/cai/programmation-marche', [App\Http\Controllers\CaiProgrammationMarcheController::class, 'store']);
+
+    // Phase 4 / Étape 13 — Accompagnement technique (Programme de quinzaine)
+    Route::get('/cai/programme-quinzaine',  [App\Http\Controllers\CaiProgrammeQuinzaineController::class, 'index']);
+    Route::post('/cai/programme-quinzaine', [App\Http\Controllers\CaiProgrammeQuinzaineController::class, 'store']);
+
+    // Phase 4 / Étape 14 — Suivi des mouvements d'argent dans la caisse (Journal de caisse)
+    Route::get('/cai/journal-caisse',  [App\Http\Controllers\CaiJournalCaisseController::class, 'index']);
+    Route::post('/cai/journal-caisse', [App\Http\Controllers\CaiJournalCaisseController::class, 'store']);
+
+    // Phase 4 / Étape 15 — Suivi des mouvements de stock d'intrants et de produits agricoles
+    Route::get('/cai/fiche-stock',  [App\Http\Controllers\CaiFicheStockController::class, 'index']);
+    Route::post('/cai/fiche-stock', [App\Http\Controllers\CaiFicheStockController::class, 'store']);
+
+    // Phase 5 / Étape 16 — Évaluation technique de la production agroécologique (Évolution des rendements CEP)
+    Route::get('/cai/evolution-rendements-cep',  [App\Http\Controllers\CaiEvolutionRendementsCepController::class, 'index']);
+    Route::post('/cai/evolution-rendements-cep', [App\Http\Controllers\CaiEvolutionRendementsCepController::class, 'store']);
+
+    // Phase 5 / Étape 17 — Évolution des rendements des UD (Unités de Démonstration)
+    Route::get('/cai/evolution-rendements-ud',  [App\Http\Controllers\CaiEvolutionRendementsUdController::class, 'index']);
+    Route::post('/cai/evolution-rendements-ud', [App\Http\Controllers\CaiEvolutionRendementsUdController::class, 'store']);
+
+    // Phase 5 / Étape 18 — Évolution des quantités de produits chimiques de synthèse utilisés
+    Route::get('/cai/evolution-produits-chimiques',  [App\Http\Controllers\CaiEvolutionProduitsChimiquesController::class, 'index']);
+    Route::post('/cai/evolution-produits-chimiques', [App\Http\Controllers\CaiEvolutionProduitsChimiquesController::class, 'store']);
+
+    // Phase 5 / Étape 19 — Évolution des quantités de produits organiques utilisés
+    Route::get('/cai/evolution-produits-organiques',  [App\Http\Controllers\CaiEvolutionProduitsOrganiquesController::class, 'index']);
+    Route::post('/cai/evolution-produits-organiques', [App\Http\Controllers\CaiEvolutionProduitsOrganiquesController::class, 'store']);
+
+    // Phase 5 / Étape 20 — Évolution du nombre d'espèces animales et végétales cultivées
+    Route::get('/cai/evolution-especes',  [App\Http\Controllers\CaiEvolutionEspecesController::class, 'index']);
+    Route::post('/cai/evolution-especes', [App\Http\Controllers\CaiEvolutionEspecesController::class, 'store']);
+
+    // Phase 5 / Étape 21 — Analyse de la qualité des sols
+    Route::get('/cai/analyse-qualite-sols',  [App\Http\Controllers\CaiAnalyseQualiteSolsController::class, 'index']);
+    Route::post('/cai/analyse-qualite-sols', [App\Http\Controllers\CaiAnalyseQualiteSolsController::class, 'store']);
+
+    // Phase 5 / Étape 22 — Coût de transaction, Marge brute et Marge nette
+    Route::get('/cai/cout-transaction',  [App\Http\Controllers\CaiCoutTransactionController::class, 'index']);
+    Route::post('/cai/cout-transaction', [App\Http\Controllers\CaiCoutTransactionController::class, 'store']);
 });

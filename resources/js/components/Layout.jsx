@@ -64,8 +64,34 @@ const CEP_FORMS = [
 ];
 
 const CAI_NAV = [
-    { label: 'Liste producteurs',   path: '/cai/liste-producteurs',   icon: 'users',   step: '1' },
+    { label: 'Liste producteurs',   path: '/cai/liste-producteurs',   icon: 'users',    step: '1' },
     { label: 'Liste organisations', path: '/cai/liste-organisations', icon: 'cultures', step: '2' },
+    { label: 'Négociation accord',  path: '/cai/negociation-accord',  icon: 'suivis',   step: '3' },
+];
+
+const CAI_PHASE2_NAV = [
+    { label: 'Marchés agroécol.', path: '/cai/marches-caracterisation',    icon: 'stats',    step: '3' },
+    { label: 'Facteurs FFOM',     path: '/cai/facteurs-limitant',          icon: 'suivis',   step: '4' },
+    { label: 'Étude de marché',   path: '/cai/etude-marche',               icon: 'rapports', step: '5' },
+    { label: 'Agroécologie',      path: '/cai/agroecologie-producteurs',   icon: 'cultures', step: '6' },
+    { label: 'Appui marchés',     path: '/cai/appui-marche',               icon: 'caisse',   step: '9' },
+    { label: 'Programmation',     path: '/cai/programmation-marche',       icon: 'rapports', step: '10' },
+];
+
+const CAI_PHASE4_NAV = [
+    { label: 'Prog. quinzaine',   path: '/cai/programme-quinzaine',        icon: 'suivis',   step: '13' },
+    { label: 'Journal de caisse', path: '/cai/journal-caisse',             icon: 'caisse',   step: '14' },
+    { label: 'Fiche de stock',    path: '/cai/fiche-stock',                icon: 'cultures', step: '15' },
+];
+
+const CAI_PHASE5_NAV = [
+    { label: 'Rendements CEP',    path: '/cai/evolution-rendements-cep',      icon: 'stats',    step: '16' },
+    { label: 'Rendements UD',     path: '/cai/evolution-rendements-ud',        icon: 'stats',    step: '17' },
+    { label: 'Produits chimiques', path: '/cai/evolution-produits-chimiques',   icon: 'cultures', step: '18' },
+    { label: 'Produits organiques', path: '/cai/evolution-produits-organiques', icon: 'cultures', step: '19' },
+    { label: 'Espèces cultivées',   path: '/cai/evolution-especes',            icon: 'stats',    step: '20' },
+    { label: 'Qualité des sols',    path: '/cai/analyse-qualite-sols',         icon: 'parcelles', step: '21' },
+    { label: 'Coût / Marges',      path: '/cai/cout-transaction',             icon: 'caisse',    step: '22' },
 ];
 
 const CEP_ACTIVITES_NAV = [
@@ -113,7 +139,12 @@ const buildNav = (hasPermission, hasRole) => {
     };
     const sectionCai = {
         title: 'CAI',
-        items: [{ type: 'group', label: 'Phase 1 — Préliminaire', icon: 'rapports', children: CAI_NAV }],
+        items: [
+            { type: 'group', label: 'Phase 1 — Préliminaire',       icon: 'rapports', children: CAI_NAV        },
+            { type: 'group', label: 'Phase 2 — Diagnostic',         icon: 'stats',    children: CAI_PHASE2_NAV },
+            { type: 'group', label: 'Phase 4 — Mise en œuvre',      icon: 'cultures', children: CAI_PHASE4_NAV },
+            { type: 'group', label: 'Phase 5 — Évaluation',         icon: 'stats',    children: CAI_PHASE5_NAV },
+        ],
     };
 
     /* ── Administration */
