@@ -13,6 +13,8 @@ const TYPES_PRODUCTEUR = [
     'Apprenant',
 ];
 
+const TYPES_PARCELLE = ['UD', 'PA'];
+
 const anneeEnCours = new Date().getFullYear();
 const getCategorie = (annee) => {
     if (!annee) return null;
@@ -82,9 +84,7 @@ function ImportIdentificationModal({ onImport, onClose }) {
                 contact2_producteur: p.contact2_producteur ?? '',
                 sexe:               p.sexe ?? 'M',
                 annee_naissance:    p.annee_naissance ? String(p.annee_naissance) : '',
-                // Coordonnées du CEP auquel appartient le participant
-                coordonnee_x: p.cep_coordonnee_x != null ? String(p.cep_coordonnee_x) : '',
-                coordonnee_y: p.cep_coordonnee_y != null ? String(p.cep_coordonnee_y) : '',
+                // Les coordonnées sont propres à chaque producteur : à récupérer via le bouton GPS de la ligne
                 _cep_nom: p.cep_nom ?? null,
             }));
         onImport(rows);
@@ -102,7 +102,7 @@ function ImportIdentificationModal({ onImport, onClose }) {
                         </svg>
                         <div>
                             <h2 className="text-base font-bold text-white">Importer depuis Identification CEP</h2>
-                            <p className="text-xs text-cyan-200/70 mt-0.5">Les coordonnées X/Y seront auto-remplies depuis le CEP du participant</p>
+                            <p className="text-xs text-cyan-200/70 mt-0.5">Récupérez ensuite les coordonnées GPS propres à chaque producteur avec le bouton dédié</p>
                         </div>
                     </div>
                     <button type="button" onClick={onClose}
@@ -282,6 +282,7 @@ export default function BaseBeneficiairesIntervention() {
     const [errors, setErrors]             = useState({});
     const [showImport, setShowImport]     = useState(false);
     const [showPreview, setShowPreview]   = useState(false);
+    const [gpsLoadingKey, setGpsLoadingKey] = useState(null);
     const [toast, setToast]               = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
@@ -355,6 +356,26 @@ export default function BaseBeneficiairesIntervention() {
 
     const addRow    = () => setRows(c => [...c, emptyRow('manuel')]);
     const removeRow = (idx) => setRows(c => c.length > 1 ? c.filter((_, i) => i !== idx) : [emptyRow('manuel')]);
+
+    const handleGetGPS = (idx, key) => {
+        if (!navigator.geolocation) {
+            setToast({ show: true, message: "La géolocalisation n'est pas supportée par ce navigateur.", type: 'error' });
+            return;
+        }
+        setGpsLoadingKey(key);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                updateRow(idx, 'coordonnee_x', pos.coords.longitude.toFixed(7));
+                updateRow(idx, 'coordonnee_y', pos.coords.latitude.toFixed(7));
+                setGpsLoadingKey(null);
+            },
+            () => {
+                setToast({ show: true, message: 'Impossible de récupérer la position GPS.', type: 'error' });
+                setGpsLoadingKey(null);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    };
 
     const handleImport = (imported) => {
         setRows(cur => {
@@ -551,30 +572,42 @@ export default function BaseBeneficiairesIntervention() {
                                                         </select>
                                                     </td>
                                                     {/* Type parcelle */}
-                                                    <td className="px-0.5"><input value={row.type_parcelle} onChange={e=>updateRow(idx,'type_parcelle',e.target.value)} placeholder="Type parcelle" className={iCls} style={{minWidth:90}} /></td>
+                                                    <td className="px-0.5">
+                                                        <select value={row.type_parcelle} onChange={e=>updateRow(idx,'type_parcelle',e.target.value)} className={sCls(false)} style={{minWidth:90}}>
+                                                            <option value="">— Type —</option>
+                                                            {TYPES_PARCELLE.map(t => <option key={t} value={t}>{t}</option>)}
+                                                        </select>
+                                                    </td>
                                                     {/* Superficie */}
                                                     <td className="px-0.5"><input value={row.superficie_totale} onChange={e=>updateRow(idx,'superficie_totale',e.target.value)} type="number" min="0" step="0.01" placeholder="ha" className={iCls} style={{minWidth:70}} /></td>
                                                     {/* Pratiques */}
                                                     <td className="px-0.5"><input value={row.pratique_agroecologique_1} onChange={e=>updateRow(idx,'pratique_agroecologique_1',e.target.value)} placeholder="Pratique 1" className={iCls} style={{minWidth:100}} /></td>
                                                     <td className="px-0.5"><input value={row.pratique_agroecologique_2} onChange={e=>updateRow(idx,'pratique_agroecologique_2',e.target.value)} placeholder="Pratique 2" className={iCls} style={{minWidth:100}} /></td>
                                                     <td className="px-0.5"><input value={row.pratique_agroecologique_3} onChange={e=>updateRow(idx,'pratique_agroecologique_3',e.target.value)} placeholder="Pratique 3" className={iCls} style={{minWidth:100}} /></td>
-                                                    {/* Coordonnées — auto (identification) ou manuel */}
+                                                    {/* Coordonnées — propres à chaque producteur */}
                                                     <td className="px-0.5">
-                                                        <div className="relative">
-                                                            <input value={row.coordonnee_x} onChange={e=>updateRow(idx,'coordonnee_x',e.target.value)}
-                                                                readOnly={row.source==='identification'} type="number" step="any" placeholder="X (Long.)"
-                                                                className={`${iCls} ${row.source==='identification' ? 'text-teal-700 font-semibold bg-teal-50 border-teal-200' : ''}`}
-                                                                style={{minWidth:90}} />
-                                                            {row.source==='identification' && <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-teal-500 font-bold">CEP</span>}
-                                                        </div>
+                                                        <input value={row.coordonnee_x} onChange={e=>updateRow(idx,'coordonnee_x',e.target.value)}
+                                                            type="number" step="any" placeholder="X (Long.)"
+                                                            className={iCls} style={{minWidth:90}} />
                                                     </td>
                                                     <td className="px-0.5">
-                                                        <div className="relative">
+                                                        <div className="flex items-center gap-1">
                                                             <input value={row.coordonnee_y} onChange={e=>updateRow(idx,'coordonnee_y',e.target.value)}
-                                                                readOnly={row.source==='identification'} type="number" step="any" placeholder="Y (Lat.)"
-                                                                className={`${iCls} ${row.source==='identification' ? 'text-teal-700 font-semibold bg-teal-50 border-teal-200' : ''}`}
-                                                                style={{minWidth:90}} />
-                                                            {row.source==='identification' && <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-teal-500 font-bold">CEP</span>}
+                                                                type="number" step="any" placeholder="Y (Lat.)"
+                                                                className={iCls} style={{minWidth:90}} />
+                                                            <button type="button" onClick={()=>handleGetGPS(idx, row._id)}
+                                                                disabled={gpsLoadingKey === row._id}
+                                                                title="Récupérer la position GPS de ce bénéficiaire"
+                                                                className="flex size-7 flex-shrink-0 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-teal-600 hover:bg-teal-100 disabled:opacity-50 transition-colors">
+                                                                {gpsLoadingKey === row._id ? (
+                                                                    <svg className="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                                                ) : (
+                                                                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                    </svg>
+                                                                )}
+                                                            </button>
                                                         </div>
                                                     </td>
                                                     {/* Cultures */}
