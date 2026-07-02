@@ -185,7 +185,13 @@ function AjouterMembreModal({ cep, onAdded, onClose }) {
 }
 
 /* ── Formulaire création CEP ─────────────────────────────────────────── */
-function FormCreerCep({ departements, onCreated, onCancel }) {
+function FormCreerCep({ departements, conseillerCommunes, onCreated, onCancel }) {
+    const isRestricted = Array.isArray(conseillerCommunes);
+    const restrictedDepartements = isRestricted
+        ? Array.from(new Map(conseillerCommunes.filter(c => c.departement).map(c => [c.departement.id, c.departement])).values())
+        : [];
+    const departementsOptions = isRestricted ? restrictedDepartements : departements;
+
     const [communeCache, setCommuneCache] = useState({});
     const [arrCache, setArrCache]         = useState({});
     const [form, setForm] = useState({
@@ -201,10 +207,14 @@ function FormCreerCep({ departements, onCreated, onCancel }) {
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
     const loadCommunes = async (deptId) => {
-        if (!deptId || communeCache[deptId]) return;
+        if (isRestricted || !deptId || communeCache[deptId]) return;
         const res = await api.get(`/api/departements/${deptId}/communes`);
         setCommuneCache(c => ({ ...c, [deptId]: res.data }));
     };
+
+    const communesForDept = isRestricted
+        ? conseillerCommunes.filter(c => String(c.departement?.id) === String(form.departement_id))
+        : (communeCache[form.departement_id] ?? []);
 
     const loadArr = async (communeId) => {
         if (!communeId || arrCache[communeId]) return;
@@ -282,7 +292,7 @@ function FormCreerCep({ departements, onCreated, onCancel }) {
                             placeholder="Ex : CEP Maïs-Toffo 2026" className={inputCls} />
                     </div>
                     <div>
-                        {label('Adresse')}
+                        {label('Adresse (Indication)')}
                         <input value={form.adresse} onChange={e => set('adresse', e.target.value)}
                             placeholder="Adresse complète" className={inputCls} />
                     </div>
@@ -298,7 +308,7 @@ function FormCreerCep({ departements, onCreated, onCancel }) {
                                 onChange={e => { set('departement_id', e.target.value); set('commune_id', ''); set('arrondissement_id', ''); loadCommunes(e.target.value); }}
                                 className={selectCls}>
                                 <option value="">— Choisir —</option>
-                                {departements.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
+                                {departementsOptions.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
                             </select>
                         </div>
                         <div>
@@ -308,7 +318,7 @@ function FormCreerCep({ departements, onCreated, onCancel }) {
                                 disabled={!form.departement_id}
                                 className={selectCls}>
                                 <option value="">— Choisir —</option>
-                                {(communeCache[form.departement_id] ?? []).map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                                {communesForDept.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
                             </select>
                         </div>
                         <div>
@@ -579,7 +589,7 @@ function CepCard({ cep, onDeleted, onMembreAdded, onMembreRemoved }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function GestionCep() {
-    const { activeCommune } = useAuth();
+    const { activeCommune, hasRole, conseillerCommunes } = useAuth();
     const [ceps, setCeps]               = useState([]);
     const [departements, setDepts]      = useState([]);
     const [loading, setLoading]         = useState(true);
@@ -663,6 +673,7 @@ export default function GestionCep() {
                     {showForm && (
                         <FormCreerCep
                             departements={departements}
+                            conseillerCommunes={hasRole('Conseiller') ? conseillerCommunes : null}
                             onCreated={handleCreated}
                             onCancel={() => setShowForm(false)}
                         />
