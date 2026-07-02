@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CepSelector from '../components/CepSelector';
+import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -611,8 +612,8 @@ export default function BaseBeneficiairesIntervention() {
                                                         </div>
                                                     </td>
                                                     {/* Cultures */}
-                                                    <td className="px-0.5"><input value={row.culture_principale} onChange={e=>updateRow(idx,'culture_principale',e.target.value)} placeholder="Principale" className={iCls} style={{minWidth:90}} /></td>
-                                                    <td className="px-0.5"><input value={row.culture_associee} onChange={e=>updateRow(idx,'culture_associee',e.target.value)} placeholder="Associée" className={iCls} style={{minWidth:90}} /></td>
+                                                    <td className="px-0.5"><CultureSelect value={row.culture_principale} onChange={v=>updateRow(idx,'culture_principale',v)} placeholder="— Principale —" className={iCls} style={{minWidth:90}} /></td>
+                                                    <td className="px-0.5"><CultureSelect value={row.culture_associee} onChange={v=>updateRow(idx,'culture_associee',v)} placeholder="— Associée —" className={iCls} style={{minWidth:90}} /></td>
                                                     {/* Supprimer */}
                                                     <td className="px-0.5">
                                                         <button type="button" onClick={()=>removeRow(idx)}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import CepSelector from '../components/CepSelector';
+import SelectWithOther from '../components/SelectWithOther';
 import api from '../services/api';
 
 const emptyRow = () => ({
@@ -116,6 +117,13 @@ export default function BilanSessionsAnimationCep() {
     const [saving, setSaving]   = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]     = useState({ show: false, message: '', type: 'success' });
+    const [sujetsOptions, setSujetsOptions] = useState([]);
+
+    useEffect(() => {
+        api.get('/api/resume-protocoles-experimentations/sujets-speciaux')
+            .then(res => setSujetsOptions(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setSujetsOptions([]));
+    }, []);
 
     useEffect(() => {
         const params = selectedCep ? { cep_id: selectedCep } : {};
@@ -286,9 +294,11 @@ export default function BilanSessionsAnimationCep() {
                                                 </td>
                                                 {/* Sujets */}
                                                 <td className="px-0.5">
-                                                    <input value={row.sujets_speciaux}
-                                                        onChange={e => update(idx, 'sujets_speciaux', e.target.value)}
-                                                        placeholder="Sujets spéciaux…"
+                                                    <SelectWithOther value={row.sujets_speciaux}
+                                                        onChange={v => update(idx, 'sujets_speciaux', v)}
+                                                        options={sujetsOptions}
+                                                        placeholder="— Sujet spécial —"
+                                                        customPlaceholder="Préciser le sujet"
                                                         className={iCls} style={{minWidth: 160}} />
                                                 </td>
                                                 {/* Visiteurs */}

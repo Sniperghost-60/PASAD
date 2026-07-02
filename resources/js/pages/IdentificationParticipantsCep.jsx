@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -668,8 +669,8 @@ export default function IdentificationParticipantsCep() {
                                                     </td>
                                                     {/* Spéculation */}
                                                     <td className="px-1">
-                                                        <input value={row.speculation} onChange={e => updateRow(idx, 'speculation', e.target.value)}
-                                                            placeholder="Spéculation" className={inputCls()} style={{ minWidth: 100 }} />
+                                                        <CultureSelect value={row.speculation} onChange={v => updateRow(idx, 'speculation', v)}
+                                                            className={inputCls()} style={{ minWidth: 100 }} />
                                                     </td>
                                                     {/* Responsabilité */}
                                                     <td className="px-1">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CepSelector from '../components/CepSelector';
+import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -323,7 +324,7 @@ export default function EvolutionRendementsCep() {
 
                                                 {/* Culture */}
                                                 <td className="px-0.5">
-                                                    <input value={row.culture} onChange={e => update(idx,'culture',e.target.value)} placeholder="Culture…" className={iCls} style={{minWidth:80}} />
+                                                    <CultureSelect value={row.culture} onChange={v => update(idx,'culture',v)} className={iCls} style={{minWidth:80}} />
                                                 </td>
 
                                                 {/* Technologies dispositif 1-4 */}

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification   from '../components/ModernNotification';
 import { useAuth }          from '../contexts/AuthContext';
@@ -151,6 +152,15 @@ export default function CaiEvolutionRendementsCep() {
                                 <td key={c.key} style={{ border: '1px solid #d1d5db', padding: forPrint ? '4px 6px' : '2px 4px' }}>
                                     {forPrint || !editMode ? (
                                         <span>{l[c.key]}</span>
+                                    ) : c.key === 'culture' ? (
+                                        <CultureSelect
+                                            value={l.culture}
+                                            onChange={v => setCell(idx, 'culture', v)}
+                                            style={{
+                                                width: '100%', border: 'none', background: 'transparent',
+                                                outline: 'none', fontSize: '13px', color: '#111827', padding: '2px 4px',
+                                            }}
+                                        />
                                     ) : (
                                         <input
                                             type="text"
