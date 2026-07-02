@@ -194,6 +194,7 @@ export default function MatriceProblemesSolutions() {
             await api.post('/api/matrice-problemes-solutions', {
                 profil_historique_id: selectedProfilId,
                 problemes: problems.map(problem => ({
+                    id: typeof problem.id === 'number' ? problem.id : null,
                     probleme: problem.probleme.trim(),
                     causes: problem.causes.map(c => c.trim()).filter(Boolean),
                     solutions_habituelles: problem.solutions_habituelles.map(s => s.trim()).filter(Boolean),

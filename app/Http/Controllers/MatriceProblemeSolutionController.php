@@ -37,6 +37,7 @@ class MatriceProblemeSolutionController extends Controller
         $validated = $request->validate([
             'profil_historique_id' => ['required', 'integer', 'exists:profil_historique,id'],
             'problemes' => ['required', 'array', 'min:1'],
+            'problemes.*.id' => ['nullable'],
             'problemes.*.probleme' => ['required', 'string'],
             'problemes.*.causes' => ['nullable'],
             'problemes.*.causes.*' => ['nullable', 'string'],
@@ -49,45 +50,88 @@ class MatriceProblemeSolutionController extends Controller
         $profil = $this->findAccessibleProfil($request, $validated['profil_historique_id']);
 
         $saved = DB::transaction(function () use ($validated, $profil, $request) {
-            MatriceProbleme::where('profil_historique_id', $profil->id)->delete();
+            $existing = MatriceProbleme::where('profil_historique_id', $profil->id)
+                ->with('solutions')
+                ->get()
+                ->keyBy('id');
 
-            return collect($validated['problemes'])->map(function ($item) use ($profil, $request) {
-                $probleme = MatriceProbleme::create([
-                    'profil_historique_id' => $profil->id,
-                    'commune_id'           => $profil->commune_id,
-                    'user_id'              => $request->user()->id,
-                    'probleme'             => $item['probleme'],
-                    'causes'               => $item['causes'] ?? null,
-                ]);
+            $keptIds = [];
 
-                foreach ($item['solutions_habituelles'] ?? [] as $solution) {
-                    if (blank($solution)) continue;
+            $result = collect($validated['problemes'])->map(function ($item) use ($profil, $request, $existing, &$keptIds) {
+                $existingId = $item['id'] ?? null;
+                $probleme = (is_numeric($existingId) && $existing->has((int) $existingId))
+                    ? $existing->get((int) $existingId)
+                    : null;
 
-                    $probleme->solutions()->create([
-                        'type' => 'habituelle',
-                        'solution' => $solution,
-                        'statut' => 'validee',
+                if ($probleme) {
+                    $probleme->update([
+                        'probleme' => $item['probleme'],
+                        'causes'   => $item['causes'] ?? null,
+                    ]);
+                } else {
+                    $probleme = MatriceProbleme::create([
+                        'profil_historique_id' => $profil->id,
+                        'commune_id'           => $profil->commune_id,
+                        'user_id'              => $request->user()->id,
+                        'probleme'             => $item['probleme'],
+                        'causes'               => $item['causes'] ?? null,
                     ]);
                 }
 
-                foreach ($item['solutions_proposees'] ?? [] as $solution) {
-                    if (blank($solution)) continue;
+                $keptIds[] = $probleme->id;
 
-                    $probleme->solutions()->create([
-                        'type' => 'proposee',
-                        'solution' => $solution,
-                        'statut' => 'en_attente',
-                    ]);
-                }
+                $this->syncSolutions($probleme, 'habituelle', $item['solutions_habituelles'] ?? []);
+                $this->syncSolutions($probleme, 'proposee', $item['solutions_proposees'] ?? []);
 
                 return $probleme->fresh('solutions');
             })->all();
+
+            MatriceProbleme::where('profil_historique_id', $profil->id)
+                ->whereNotIn('id', $keptIds)
+                ->delete();
+
+            return $result;
         });
 
         return response()->json([
             'message' => 'Matrice des problèmes et solutions enregistrée avec succès !',
             'data' => $saved,
         ], 201);
+    }
+
+    /**
+     * Aligne les solutions d'un type donné sur la liste de textes soumise, en conservant
+     * le statut (validée/rejetée) des solutions existantes dont le texte n'a pas changé.
+     */
+    private function syncSolutions(MatriceProbleme $probleme, string $type, array $texts)
+    {
+        $texts = collect($texts)->map(fn ($t) => trim((string) $t))->filter(fn ($t) => $t !== '')->values();
+        $existingSolutions = $probleme->solutions->where('type', $type)->values();
+
+        $matchedIds = [];
+
+        foreach ($texts as $text) {
+            $match = $existingSolutions->first(
+                fn ($s) => !in_array($s->id, $matchedIds, true) && $s->solution === $text
+            );
+
+            if ($match) {
+                $matchedIds[] = $match->id;
+                continue;
+            }
+
+            $created = $probleme->solutions()->create([
+                'type' => $type,
+                'solution' => $text,
+                'statut' => $type === 'habituelle' ? 'validee' : 'en_attente',
+            ]);
+            $matchedIds[] = $created->id;
+        }
+
+        $probleme->solutions()
+            ->where('type', $type)
+            ->whereNotIn('id', $matchedIds ?: [0])
+            ->delete();
     }
 
     public function updateSolutionStatus(Request $request, MatriceProblemeSolution $solution)
