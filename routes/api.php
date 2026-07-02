@@ -727,6 +727,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // ── Profil Historique ───────────────────────────────────────────────
+    Route::get('/profil-historique/village-evenements', [App\Http\Controllers\ProfilHistoriqueController::class, 'villageEvenements']);
     Route::get('/hierarchisation-domaines-activites/villages', [App\Http\Controllers\HierarchisationDomaineActiviteController::class, 'villages']);
     Route::patch('/matrice-problemes-solutions/solutions/{solution}/status', [App\Http\Controllers\MatriceProblemeSolutionController::class, 'updateSolutionStatus']);
     Route::patch('/matrice-problemes-solutions/problemes/{probleme}/pertinence', [App\Http\Controllers\MatriceProblemeSolutionController::class, 'updateProblemPertinence']);

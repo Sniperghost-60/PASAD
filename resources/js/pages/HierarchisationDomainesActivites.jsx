@@ -57,6 +57,10 @@ export default function HierarchisationDomainesActivites() {
     const [errors, setErrors] = useState({});
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const calculatedRanks = useMemo(() => calculateRanks(rows), [rows]);
+    const totalScore = useMemo(
+        () => rows.reduce((sum, row) => sum + (row.score !== '' ? Number(row.score) || 0 : 0), 0),
+        [rows],
+    );
 
     useEffect(() => { setSelectedProfilId(''); setRows(emptyRows()); loadVillages(); }, [activeCommune]);
 
@@ -121,6 +125,21 @@ export default function HierarchisationDomainesActivites() {
     };
 
     const updateRow = (index, field, value) => {
+        if (field === 'score' && value !== '') {
+            const newScore = Number(value);
+            if (!Number.isNaN(newScore)) {
+                const othersTotal = rows.reduce((sum, row, i) => i === index ? sum : sum + (row.score !== '' ? Number(row.score) || 0 : 0), 0);
+                if (othersTotal + newScore > 20) {
+                    setErrors(prev => ({ ...prev, total: `Le total des scores ne peut pas dépasser 20 (déjà ${othersTotal} attribué${othersTotal > 1 ? 's' : ''}).` }));
+                    return;
+                }
+            }
+        }
+        setErrors(prev => {
+            if (!prev.total) return prev;
+            const { total, ...rest } = prev;
+            return rest;
+        });
         setRows(current => current.map((row, i) => (
             i === index ? { ...row, [field]: value } : row
         )));
@@ -151,6 +170,9 @@ export default function HierarchisationDomainesActivites() {
                 nextErrors[`autre_${index}`] = 'Précision requise';
             }
         });
+
+        const total = rows.reduce((sum, row) => sum + (row.score !== '' ? Number(row.score) || 0 : 0), 0);
+        if (total > 20) nextErrors.total = 'Le total des scores ne peut pas dépasser 20';
 
         setErrors(nextErrors);
         return Object.keys(nextErrors).length === 0;
@@ -193,11 +215,20 @@ export default function HierarchisationDomainesActivites() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 14l3-3 3 3 5-6" />
                                 </svg>
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <h2 className="text-base font-bold text-white">Domaines d'activités du village</h2>
                                 <p className="text-xs text-cyan-200/70 mt-0.5">Renseignez les scores, les rangs sont calculés automatiquement</p>
                             </div>
+                            <div className={`flex flex-col items-center rounded-xl px-4 py-2 ${totalScore > 20 ? 'bg-red-500/20 border border-red-400' : 'bg-white/10'}`}>
+                                <span className={`text-lg font-extrabold ${totalScore > 20 ? 'text-red-300' : 'text-white'}`}>{totalScore} / 20</span>
+                                <span className="text-[10px] uppercase tracking-wide text-cyan-200/70">Total des scores</span>
+                            </div>
                         </div>
+                        {errors.total && (
+                            <div className="mx-6 mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
+                                {errors.total}
+                            </div>
+                        )}
 
                         <div className="p-6 space-y-5">
                             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 items-end">
@@ -268,7 +299,7 @@ export default function HierarchisationDomainesActivites() {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <input type="number" min="0" value={row.score}
+                                                        <input type="number" min="0" max="20" value={row.score}
                                                             onChange={e => updateRow(index, 'score', e.target.value)}
                                                             disabled={loadingRows || !selectedProfilId}
                                                             className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-100 disabled:bg-slate-100 disabled:text-slate-400 ${errors[`score_${index}`] ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white focus:border-teal-400'}`} />

@@ -75,6 +75,23 @@ class ProfilHistoriqueController extends Controller
         return response()->json($profil);
     }
 
+    public function villageEvenements(Request $request)
+    {
+        $validated = $request->validate([
+            'profil_historique_id' => 'required|integer|exists:profil_historique,id',
+        ]);
+
+        $profil = ProfilHistorique::findOrFail($validated['profil_historique_id']);
+
+        $evenements = ProfilHistorique::where('commune_id', $profil->commune_id)
+            ->where('arrondissement_id', $profil->arrondissement_id)
+            ->whereRaw('LOWER(village) = ?', [mb_strtolower($profil->village)])
+            ->orderBy('annee')
+            ->get(['id', 'annee', 'evenements', 'impact']);
+
+        return response()->json($evenements);
+    }
+
     public function update(Request $request, $id)
     {
         $profil = ProfilHistorique::findOrFail($id);

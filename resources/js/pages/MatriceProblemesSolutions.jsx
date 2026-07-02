@@ -57,6 +57,8 @@ export default function MatriceProblemesSolutions() {
     const [selectedProfilId, setSelectedProfilId] = useState(initialProfilId);
     const [problems, setProblems] = useState([emptyProblem()]);
     const [savedProblems, setSavedProblems] = useState([]);
+    const [villageEvenements, setVillageEvenements] = useState([]);
+    const [loadingEvenements, setLoadingEvenements] = useState(false);
     const [loadingVillages, setLoadingVillages] = useState(true);
     const [loadingRows, setLoadingRows] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -68,10 +70,13 @@ export default function MatriceProblemesSolutions() {
     useEffect(() => { setSelectedProfilId(''); setProblems([emptyProblem()]); setSavedProblems([]); loadVillages(); }, [activeCommune]);
 
     useEffect(() => {
-        if (selectedProfilId) loadExistingRows(selectedProfilId);
-        else {
+        if (selectedProfilId) {
+            loadExistingRows(selectedProfilId);
+            loadVillageEvenements(selectedProfilId);
+        } else {
             setProblems([emptyProblem()]);
             setSavedProblems([]);
+            setVillageEvenements([]);
         }
     }, [selectedProfilId]);
 
@@ -116,6 +121,18 @@ export default function MatriceProblemesSolutions() {
             setProblems([emptyProblem()]);
         } finally {
             setLoadingRows(false);
+        }
+    };
+
+    const loadVillageEvenements = async (profilId) => {
+        setLoadingEvenements(true);
+        try {
+            const res = await api.get(`/api/profil-historique/village-evenements?profil_historique_id=${profilId}`);
+            setVillageEvenements(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            setVillageEvenements([]);
+        } finally {
+            setLoadingEvenements(false);
         }
     };
 
@@ -278,6 +295,37 @@ export default function MatriceProblemesSolutions() {
                                     </div>
                                 )}
                             </div>
+
+                            {selectedProfilId && (loadingEvenements || villageEvenements.length > 0) && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+                                    <div className="border-b border-amber-200 bg-amber-100 px-4 py-3">
+                                        <h3 className="text-sm font-extrabold text-amber-800">Événements et impacts historiques du village</h3>
+                                        <p className="text-xs text-amber-700 mt-0.5">À titre informatif, issus du profil historique</p>
+                                    </div>
+                                    {loadingEvenements ? (
+                                        <div className="flex items-center gap-2 px-4 py-4 text-sm text-amber-700">
+                                            <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                            Chargement...
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-amber-100 bg-white">
+                                            {villageEvenements.map(item => (
+                                                <div key={item.id} className="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-3 px-4 py-3">
+                                                    <span className="inline-flex h-fit items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">{item.annee}</span>
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Événement</p>
+                                                        <p className="text-sm text-slate-700">{item.evenements}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Impact</p>
+                                                        <p className="text-sm text-slate-700">{item.impact}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {villages.length === 0 && !loadingVillages ? (
                                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-5 text-center">
