@@ -392,12 +392,6 @@ export default function ResumeProtocolesExperimentations() {
                         </div>
 
                         <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
-                            <button type="button"
-                                onClick={() => { setGroups([emptyGroup()]); setErrors({}); }}
-                                disabled={saving || loadingRows}
-                                className="rounded-xl border-2 border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors">
-                                Réinitialiser
-                            </button>
                             <button type="submit"
                                 disabled={saving || loadingRows || villages.length === 0 || pertinentProblems.length === 0}
                                 className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 transition-all">

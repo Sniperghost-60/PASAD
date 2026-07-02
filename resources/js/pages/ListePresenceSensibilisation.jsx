@@ -534,12 +534,6 @@ export default function ListePresenceSensibilisation() {
                                 </button>
 
                                 <div className="flex items-center gap-3">
-                                <button type="button"
-                                    onClick={() => { setRows([emptyRow()]); setErrors({}); }}
-                                    disabled={saving}
-                                    className="px-5 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors">
-                                    Réinitialiser
-                                </button>
                                 <button type="submit" disabled={saving}
                                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 text-sm font-bold text-white shadow-sm hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                                     {saving && (

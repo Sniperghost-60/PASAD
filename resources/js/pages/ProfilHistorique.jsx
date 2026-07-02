@@ -299,10 +299,6 @@ export default function ProfilHistorique() {
                                 </div>
 
                                 <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
-                                    <button type="button" onClick={() => setForm({ arrondissement_id:'', village:'', events:[emptyEvent()] })}
-                                        className="px-5 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
-                                        Réinitialiser
-                                    </button>
                                     <button type="submit" disabled={loading}
                                         className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                         {loading && <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
