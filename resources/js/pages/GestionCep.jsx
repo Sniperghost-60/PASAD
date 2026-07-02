@@ -185,7 +185,7 @@ function AjouterMembreModal({ cep, onAdded, onClose }) {
 }
 
 /* ── Formulaire création CEP ─────────────────────────────────────────── */
-function FormCreerCep({ departements, conseillerCommunes, onCreated, onCancel }) {
+function FormCreerCep({ departements, conseillerCommunes, activeCommune, onCreated, onCancel }) {
     const isRestricted = Array.isArray(conseillerCommunes);
     const restrictedDepartements = isRestricted
         ? Array.from(new Map(conseillerCommunes.filter(c => c.departement).map(c => [c.departement.id, c.departement])).values())
@@ -196,7 +196,9 @@ function FormCreerCep({ departements, conseillerCommunes, onCreated, onCancel })
     const [arrCache, setArrCache]         = useState({});
     const [form, setForm] = useState({
         nom_cep: '', adresse: '',
-        departement_id: '', commune_id: '', arrondissement_id: '', village: '',
+        departement_id: activeCommune?.departement?.id ? String(activeCommune.departement.id) : '',
+        commune_id: activeCommune?.id ? String(activeCommune.id) : '',
+        arrondissement_id: '', village: '',
         latitude: '', longitude: '',
     });
     const [saving, setSaving]   = useState(false);
@@ -221,6 +223,12 @@ function FormCreerCep({ departements, conseillerCommunes, onCreated, onCancel })
         const res = await api.get(`/api/communes/${communeId}/arrondissements`);
         setArrCache(c => ({ ...c, [communeId]: res.data }));
     };
+
+    // Pré-remplissage : charger les communes/arrondissements de la commune active
+    useEffect(() => {
+        if (form.departement_id && !isRestricted) loadCommunes(form.departement_id);
+        if (form.commune_id) loadArr(form.commune_id);
+    }, []);
 
     const handleGetGPS = () => {
         if (!navigator.geolocation) {
@@ -674,6 +682,7 @@ export default function GestionCep() {
                         <FormCreerCep
                             departements={departements}
                             conseillerCommunes={hasRole('Conseiller') ? conseillerCommunes : null}
+                            activeCommune={activeCommune}
                             onCreated={handleCreated}
                             onCancel={() => setShowForm(false)}
                         />
