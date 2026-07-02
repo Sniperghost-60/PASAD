@@ -280,7 +280,7 @@ export default function RendementDispositifPage() {
 
                                                 {/* Village */}
                                                 <td className="px-0.5">
-                                                    <input value={row.village} onChange={e => update(idx,'village',e.target.value)} placeholder="Village…" className={iCls} style={{minWidth:80}} />
+                                                    <input value={row.village} onChange={e => update(idx,'village',e.target.value.toUpperCase())} placeholder="Village…" className={iCls} style={{minWidth:80}} />
                                                 </td>
 
                                                 {/* Nom producteur UD */}

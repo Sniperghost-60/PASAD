@@ -278,7 +278,7 @@ export function Sidebar() {
                     </svg>
                 </div>
                 <div>
-                    <p className="text-white font-extrabold text-sm leading-tight">PASAD</p>
+                    <p className="text-white font-extrabold text-sm leading-tight">PARSAD</p>
                     <p className="text-cyan-300/70 text-[10px] leading-tight">AgriSuivi CEP</p>
                 </div>
             </div>

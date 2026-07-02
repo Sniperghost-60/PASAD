@@ -11,7 +11,7 @@ import { getApiErrorMessage, translateApiErrors } from '../utils/apiMessages';
 
 const AuthContext = createContext({});
 
-const storageKey = 'pasad_commune';
+const storageKey = 'parsad_commune';
 const readStoredCommune = () => {
     try { return JSON.parse(localStorage.getItem(storageKey)) || null; } catch { return null; }
 };

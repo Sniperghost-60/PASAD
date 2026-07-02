@@ -260,8 +260,9 @@ export default function ProfilHistorique() {
                                             <span className="text-red-400">*</span> Village
                                         </label>
                                         <input type="text" value={form.village}
-                                            onChange={e => setForm(f => ({ ...f, village: e.target.value }))}
+                                            onChange={e => setForm(f => ({ ...f, village: e.target.value.toUpperCase() }))}
                                             placeholder="Nom du village"
+                                            style={{ textTransform: 'uppercase' }}
                                             className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal-100 transition-all ${errors.village ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 focus:border-teal-400 focus:bg-white'}`}
                                             required />
                                         {errors.village && <p className="mt-1 text-xs text-red-500">{errors.village}</p>}

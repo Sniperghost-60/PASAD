@@ -280,7 +280,7 @@ export default function CreateUser() {
                                 </Field>
                                 <Field label="Adresse email" error={errors.email} icon="search">
                                     <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                                        placeholder="jean.dupont@pasad.bj" className={inp(errors.email)} autoComplete="email" />
+                                        placeholder="jean.dupont@parsad.bj" className={inp(errors.email)} autoComplete="email" />
                                 </Field>
                                 <div className="flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/50 p-4">
                                     <svg className="size-5 flex-shrink-0 text-teal-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

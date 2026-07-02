@@ -519,7 +519,7 @@ export default function BaseBeneficiairesIntervention() {
                                                         </select>
                                                     </td>
                                                     {/* Village */}
-                                                    <td className="px-0.5"><input value={row.village} onChange={e=>updateRow(idx,'village',e.target.value)} disabled={row.source==='identification'} placeholder="Village" className={iCls} style={{minWidth:80}} /></td>
+                                                    <td className="px-0.5"><input value={row.village} onChange={e=>updateRow(idx,'village',e.target.value.toUpperCase())} disabled={row.source==='identification'} placeholder="Village" className={iCls} style={{minWidth:80}} /></td>
                                                     {/* Nom */}
                                                     <td className="px-0.5"><input value={row.nom_producteur} onChange={e=>updateRow(idx,'nom_producteur',e.target.value)} disabled={row.source==='identification'} placeholder="Nom *" className={sCls(!!errors[`nom_${idx}`])} style={{minWidth:90}} /></td>
                                                     {/* Prénoms */}

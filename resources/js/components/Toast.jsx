@@ -118,13 +118,13 @@ export default function Toast({
                                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm">
                                     <img
                                         src="/images/ceplogo.png"
-                                        alt="PASAD"
+                                        alt="PARSAD"
                                         className="h-full w-full object-contain p-1.5"
                                     />
                                 </div>
                                 <div className="min-w-0">
                                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                                        PASAD
+                                        PARSAD
                                     </p>
                                     <h3 className={`${config.title} mt-0.5 truncate text-base font-black`}>
                                         {title || (type === 'error' ? 'Échec de connexion' : type === 'success' ? 'Succès' : 'Information')}

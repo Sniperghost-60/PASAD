@@ -153,7 +153,7 @@ export default function CaiEvolutionRendementsCep() {
                                         <input
                                             type="text"
                                             value={l[c.key]}
-                                            onChange={e => setCell(idx, c.key, e.target.value)}
+                                            onChange={e => setCell(idx, c.key, c.key === 'village' ? e.target.value.toUpperCase() : e.target.value)}
                                             style={{
                                                 width: '100%', border: 'none', background: 'transparent',
                                                 outline: 'none', fontSize: '13px', color: '#111827', padding: '2px 4px',

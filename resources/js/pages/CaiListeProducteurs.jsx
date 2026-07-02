@@ -503,7 +503,7 @@ export default function CaiListeProducteurs() {
                                             {/* Village */}
                                             <td className="px-3 py-2">
                                                 <input type="text" value={row.village}
-                                                    onChange={e => updateRow(row._id, 'village', e.target.value)}
+                                                    onChange={e => updateRow(row._id, 'village', e.target.value.toUpperCase())}
                                                     placeholder="Village"
                                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100 focus:bg-white transition-all"
                                                 />

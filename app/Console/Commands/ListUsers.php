@@ -11,7 +11,7 @@ class ListUsers extends Command
         {--role=  : Filtrer par rôle}
         {--email= : Rechercher par e-mail}';
 
-    protected $description = 'Lister les comptes utilisateurs PASAD';
+    protected $description = 'Lister les comptes utilisateurs PARSAD';
 
     public function handle(): int
     {
@@ -32,7 +32,7 @@ class ListUsers extends Command
         }
 
         $this->line('');
-        $this->line("  <fg=cyan>PASAD — {$users->count()} utilisateur(s)</>");
+        $this->line("  <fg=cyan>PARSAD — {$users->count()} utilisateur(s)</>");
         $this->line('');
 
         $this->table(

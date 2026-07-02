@@ -311,7 +311,7 @@ export default function EvolutionRendementsCep() {
 
                                                 {/* Village */}
                                                 <td className="px-0.5">
-                                                    <input value={row.village} onChange={e => update(idx,'village',e.target.value)} placeholder="Village…" className={iCls} style={{minWidth:90}} />
+                                                    <input value={row.village} onChange={e => update(idx,'village',e.target.value.toUpperCase())} placeholder="Village…" className={iCls} style={{minWidth:90}} />
                                                 </td>
 
                                                 {/* Type expérimentation */}

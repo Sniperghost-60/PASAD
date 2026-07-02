@@ -196,7 +196,7 @@ export default function EditUser() {
                                     </Field>
                                     <Field label="Adresse email" error={errors.email} icon="search">
                                         <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                                            placeholder="jean.dupont@pasad.bj" className={inp(errors.email)} />
+                                            placeholder="jean.dupont@parsad.bj" className={inp(errors.email)} />
                                     </Field>
 
                                     {/* Rôle */}

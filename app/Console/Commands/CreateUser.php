@@ -18,13 +18,13 @@ class CreateUser extends Command
         {--telephone=  : Numéro de téléphone (optionnel)}
         {--communes=   : IDs des communes séparés par virgule (ex: 1,2,3) — pour Conseiller}';
 
-    protected $description = 'Créer un nouveau compte utilisateur PASAD';
+    protected $description = 'Créer un nouveau compte utilisateur PARSAD';
 
     public function handle(): int
     {
         $this->line('');
         $this->line('  <fg=cyan>╔══════════════════════════════════════╗</>');
-        $this->line('  <fg=cyan>║   PASAD — Création de compte         ║</>');
+        $this->line('  <fg=cyan>║   PARSAD — Création de compte         ║</>');
         $this->line('  <fg=cyan>╚══════════════════════════════════════╝</>');
         $this->line('');
 

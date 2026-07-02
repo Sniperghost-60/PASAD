@@ -607,7 +607,7 @@ export default function IdentificationParticipantsCep() {
                                                     </td>
                                                     {/* Village */}
                                                     <td className="px-1">
-                                                        <input value={row.village} onChange={e => updateRow(idx, 'village', e.target.value)}
+                                                        <input value={row.village} onChange={e => updateRow(idx, 'village', e.target.value.toUpperCase())}
                                                             placeholder="Village" className={inputCls()} style={{ minWidth: 90 }} />
                                                     </td>
                                                     {/* Nom */}

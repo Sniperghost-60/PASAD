@@ -323,8 +323,8 @@ function FormCreerCep({ departements, onCreated, onCancel }) {
                         </div>
                         <div>
                             {label('Village')}
-                            <input value={form.village} onChange={e => set('village', e.target.value)}
-                                placeholder="Village" className={inputCls} />
+                            <input value={form.village} onChange={e => set('village', e.target.value.toUpperCase())}
+                                placeholder="Village" className={inputCls} style={{ textTransform: 'uppercase' }} />
                         </div>
                     </div>
                 </div>

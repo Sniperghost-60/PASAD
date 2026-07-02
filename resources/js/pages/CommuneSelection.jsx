@@ -45,7 +45,7 @@ export default function CommuneSelection() {
                         </svg>
                     </div>
                     <div>
-                        <p className="text-white font-extrabold text-base leading-tight tracking-tight">PASAD</p>
+                        <p className="text-white font-extrabold text-base leading-tight tracking-tight">PARSAD</p>
                         <p className="text-teal-300/60 text-[11px] leading-tight">AgriSuivi CEP</p>
                     </div>
                 </div>

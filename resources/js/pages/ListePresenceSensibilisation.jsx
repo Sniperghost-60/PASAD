@@ -436,7 +436,7 @@ export default function ListePresenceSensibilisation() {
                                                             {/* Village */}
                                                             <td className="px-2 py-2 min-w-[110px]">
                                                                 <input type="text" value={row.village}
-                                                                    onChange={e => updateRow(index, 'village', e.target.value)}
+                                                                    onChange={e => updateRow(index, 'village', e.target.value.toUpperCase())}
                                                                     placeholder="Village"
                                                                     className={selectCls()} />
                                                             </td>

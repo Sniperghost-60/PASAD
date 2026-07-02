@@ -34,7 +34,7 @@ export default function ComingSoon({ title, description, icon = 'settings' }) {
                         </span>
                         <h2 className="text-2xl font-extrabold text-slate-900 mb-3">{title}</h2>
                         <p className="text-slate-500 text-sm leading-relaxed mb-8">
-                            {description || "Ce module est en cours de développement. Il sera disponible dans une prochaine version de la plateforme PASAD."}
+                            {description || "Ce module est en cours de développement. Il sera disponible dans une prochaine version de la plateforme PARSAD."}
                         </p>
                         <div className="flex items-center justify-center gap-3">
                             <button onClick={() => navigate(-1)}

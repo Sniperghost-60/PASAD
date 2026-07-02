@@ -49,7 +49,7 @@ export default function ForgotPassword() {
                             style={{ background: 'linear-gradient(135deg,#1B4332,#40916C)' }}>
                             <span className="text-xl">🌾</span>
                         </div>
-                        <span className="text-2xl font-bold" style={{ color: '#1B4332' }}>PASAD</span>
+                        <span className="text-2xl font-bold" style={{ color: '#1B4332' }}>PARSAD</span>
                     </div>
                 </div>
 

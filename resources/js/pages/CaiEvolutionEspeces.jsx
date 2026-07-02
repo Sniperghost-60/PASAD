@@ -209,7 +209,7 @@ export default function CaiEvolutionEspeces() {
                                             : <input
                                                 type={c.num ? 'number' : 'text'}
                                                 value={l[c.key]}
-                                                onChange={e => setCell(section, idx, c.key, e.target.value)}
+                                                onChange={e => setCell(section, idx, c.key, c.key === 'village' ? e.target.value.toUpperCase() : e.target.value)}
                                                 style={{
                                                     width: '100%', border: 'none', outline: 'none', background: 'transparent',
                                                     fontSize: 13, color: c.num ? TEAL : '#111827',

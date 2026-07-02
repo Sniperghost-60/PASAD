@@ -124,7 +124,7 @@ export default function AppVersionManagement() {
         <div className="min-h-screen bg-slate-50">
             <Header
                 title="Gestion des versions"
-                subtitle="Contrôle des mises à jour de l'application mobile PASAD"
+                subtitle="Contrôle des mises à jour de l'application mobile PARSAD"
             />
 
             <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -253,7 +253,7 @@ export default function AppVersionManagement() {
                                 type="url"
                                 value={form.android_url}
                                 onChange={set('android_url')}
-                                placeholder="https://pasad.sidem-benin.net/downloads/pasad-1.2.0.apk"
+                                placeholder="https://pasad.sidem-benin.net/downloads/parsad-1.2.0.apk"
                             />
                         </Field>
                         <Field
@@ -264,7 +264,7 @@ export default function AppVersionManagement() {
                                 type="url"
                                 value={form.ios_url}
                                 onChange={set('ios_url')}
-                                placeholder="https://pasad.sidem-benin.net/downloads/pasad-1.2.0.ipa"
+                                placeholder="https://pasad.sidem-benin.net/downloads/parsad-1.2.0.ipa"
                             />
                         </Field>
 

@@ -753,7 +753,7 @@ function DashboardAdmin({ user, stats, loading }) {
                             <p className="text-purple-300/80 text-sm">{greeting}</p>
                         </div>
                         <h2 className="text-2xl font-extrabold text-white">{user?.name?.split(' ')[0]}</h2>
-                        <p className="text-purple-200/50 text-sm mt-1">Administration de la plateforme PASAD</p>
+                        <p className="text-purple-200/50 text-sm mt-1">Administration de la plateforme PARSAD</p>
                         <div className="mt-2.5 flex flex-wrap gap-2">
                             <RoleBadge roles={user?.roles} />
                             {!loading && (

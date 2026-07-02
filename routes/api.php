@@ -17,7 +17,7 @@ use Spatie\Permission\Models\Permission;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes — PASAD Agronomy Platform
+| API Routes — PARSAD Agronomy Platform
 |--------------------------------------------------------------------------
 */
 
