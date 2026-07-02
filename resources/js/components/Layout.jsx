@@ -92,6 +92,9 @@ const CAI_PHASE5_NAV = [
     { label: 'Espèces cultivées',   path: '/cai/evolution-especes',            icon: 'stats',    step: '20' },
     { label: 'Qualité des sols',    path: '/cai/analyse-qualite-sols',         icon: 'parcelles', step: '21' },
     { label: 'Coût / Marges',      path: '/cai/cout-transaction',             icon: 'caisse',    step: '22' },
+    { label: 'Éval. institution.', path: '/cai/evaluation-institutionnelle', icon: 'stats',     step: '23' },
+    { label: 'Éval. organisation.', path: '/cai/evaluation-organisationnelle', icon: 'users',   step: '24' },
+    { label: 'Éval. sociale',       path: '/cai/evaluation-sociale',           icon: 'users',   step: '25' },
 ];
 
 const CEP_ACTIVITES_NAV = [

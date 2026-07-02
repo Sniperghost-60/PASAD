@@ -54,6 +54,9 @@ import CaiEvolutionProduitsOrganiques    from './pages/CaiEvolutionProduitsOrgan
 import CaiEvolutionEspeces              from './pages/CaiEvolutionEspeces';
 import CaiAnalyseQualiteSols           from './pages/CaiAnalyseQualiteSols';
 import CaiCoutTransaction              from './pages/CaiCoutTransaction';
+import CaiEvaluationInstitutionnelle  from './pages/CaiEvaluationInstitutionnelle';
+import CaiEvaluationOrganisationnelle from './pages/CaiEvaluationOrganisationnelle';
+import CaiEvaluationSociale           from './pages/CaiEvaluationSociale';
 
 export default function App() {
     return (
@@ -123,6 +126,9 @@ export default function App() {
                     <Route path="/cai/evolution-especes"              element={<CaiEvolutionEspeces />} />
                     <Route path="/cai/analyse-qualite-sols"           element={<CaiAnalyseQualiteSols />} />
                     <Route path="/cai/cout-transaction"               element={<CaiCoutTransaction />} />
+                    <Route path="/cai/evaluation-institutionnelle"    element={<CaiEvaluationInstitutionnelle />} />
+                    <Route path="/cai/evaluation-organisationnelle"   element={<CaiEvaluationOrganisationnelle />} />
+                    <Route path="/cai/evaluation-sociale"             element={<CaiEvaluationSociale />} />
 
                     {/* Modules à venir */}
                     <Route path="/producteurs"        element={<ComingSoon title="Producteurs"    icon="users"    />} />

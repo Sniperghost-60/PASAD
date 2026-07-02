@@ -1072,4 +1072,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Phase 5 / Étape 22 — Coût de transaction, Marge brute et Marge nette
     Route::get('/cai/cout-transaction',  [App\Http\Controllers\CaiCoutTransactionController::class, 'index']);
     Route::post('/cai/cout-transaction', [App\Http\Controllers\CaiCoutTransactionController::class, 'store']);
+
+    // Phase 5 / Étape 23 — Évaluation institutionnelle
+    Route::get('/cai/evaluation-institutionnelle',  [App\Http\Controllers\CaiEvaluationInstitutionnelleController::class, 'index']);
+    Route::post('/cai/evaluation-institutionnelle', [App\Http\Controllers\CaiEvaluationInstitutionnelleController::class, 'store']);
+
+    // Phase 5 / Étape 24 — Évaluation organisationnelle
+    Route::get('/cai/evaluation-organisationnelle',  [App\Http\Controllers\CaiEvaluationOrganisationnelleController::class, 'index']);
+    Route::post('/cai/evaluation-organisationnelle', [App\Http\Controllers\CaiEvaluationOrganisationnelleController::class, 'store']);
+
+    // Phase 5 / Étape 25 — Évaluation sociale de la mise en marché
+    Route::get('/cai/evaluation-sociale',  [App\Http\Controllers\CaiEvaluationSocialeController::class, 'index']);
+    Route::post('/cai/evaluation-sociale', [App\Http\Controllers\CaiEvaluationSocialeController::class, 'store']);
 });
