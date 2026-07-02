@@ -8,7 +8,7 @@ import api from '../services/api';
 const emptyProblem = (suffix = Date.now()) => ({
     id: `new-${suffix}`,
     probleme: '',
-    causes: '',
+    causes: [''],
     solutions_habituelles: [''],
     solutions_proposees: [''],
 });
@@ -112,7 +112,7 @@ export default function MatriceProblemesSolutions() {
             setProblems(data.length ? data.map(item => ({
                 id: item.id,
                 probleme: item.probleme ?? '',
-                causes: item.causes ?? '',
+                causes: Array.isArray(item.causes) && item.causes.length ? item.causes : [''],
                 solutions_habituelles: item.solutions?.filter(s => s.type === 'habituelle').map(s => s.solution) ?? [''],
                 solutions_proposees: item.solutions?.filter(s => s.type === 'proposee').map(s => s.solution) ?? [''],
             })) : [emptyProblem()]);
@@ -195,7 +195,7 @@ export default function MatriceProblemesSolutions() {
                 profil_historique_id: selectedProfilId,
                 problemes: problems.map(problem => ({
                     probleme: problem.probleme.trim(),
-                    causes: problem.causes.trim() || null,
+                    causes: problem.causes.map(c => c.trim()).filter(Boolean),
                     solutions_habituelles: problem.solutions_habituelles.map(s => s.trim()).filter(Boolean),
                     solutions_proposees: problem.solutions_proposees.map(s => s.trim()).filter(Boolean),
                 })),
@@ -361,10 +361,12 @@ export default function MatriceProblemesSolutions() {
 
                                                 <div>
                                                     <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Causes</label>
-                                                    <textarea value={problem.causes}
-                                                        onChange={e => updateProblem(index, 'causes', e.target.value)}
-                                                        rows={4}
-                                                        className="w-full min-h-[112px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none resize-y focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+                                                    <SolutionInputs label="une cause"
+                                                        values={problem.causes}
+                                                        onChange={(causeIndex, value) => updateSolution(index, 'causes', causeIndex, value)}
+                                                        onAdd={() => addSolution(index, 'causes')}
+                                                        onRemove={(causeIndex) => removeSolution(index, 'causes', causeIndex)}
+                                                        placeholder="Cause" />
                                                 </div>
 
                                                 <div>
@@ -452,7 +454,7 @@ export default function MatriceProblemesSolutions() {
                                             <div key={problem.id} className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-3">
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-800">{problem.probleme}</p>
-                                                    {problem.causes && <p className="mt-1 text-xs text-slate-500">Cause: {problem.causes}</p>}
+                                                    {problem.causes?.length > 0 && <p className="mt-1 text-xs text-slate-500">Causes: {problem.causes.join(' ; ')}</p>}
                                                     <span className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-bold ${
                                                         problem.est_pertinent ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500'
                                                     }`}>
