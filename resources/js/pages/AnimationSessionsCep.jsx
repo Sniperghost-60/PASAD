@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
@@ -170,6 +171,7 @@ const emptyLigne = () => ({
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function AnimationSessionsCep() {
+    const navigate = useNavigate();
     const { activeCommune } = useAuth();
     const [selectedCep, setSelectedCep]       = useState('');
     const [villages, setVillages]             = useState([]);
@@ -490,6 +492,10 @@ export default function AnimationSessionsCep() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
                                             Enregistrer
+                                        </button>
+                                        <button type="button" onClick={() => navigate('/base-beneficiaires-intervention')}
+                                            className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-900 transition-all">
+                                            Suivant →
                                         </button>
                                     </div>
                                 </div>

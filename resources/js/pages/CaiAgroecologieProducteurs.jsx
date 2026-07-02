@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification  from '../components/ModernNotification';
 import { useAuth }         from '../contexts/AuthContext';
@@ -136,6 +137,7 @@ const PRINT_STYLES = [
 /* ── Composant principal ────────────────────────────────────────────── */
 
 export default function CaiAgroecologieProducteurs() {
+    const navigate = useNavigate();
     const { user, communeId } = useAuth();
 
     const [dateSession, setDateSession] = useState('');
@@ -273,6 +275,10 @@ export default function CaiAgroecologieProducteurs() {
                                     </svg>
                                 )}
                                 {saving ? 'Enregistrement…' : 'Enregistrer'}
+                            </button>
+                            <button type="button" onClick={() => navigate('/cai/appui-marche')}
+                                className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 transition-all">
+                                Suivant →
                             </button>
                         </div>
                     </div>

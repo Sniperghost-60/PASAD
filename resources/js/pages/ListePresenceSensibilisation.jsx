@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -157,6 +158,7 @@ const emptyRow = () => ({
 });
 
 export default function ListePresenceSensibilisation() {
+    const navigate = useNavigate();
     const [dateSession, setDateSession]   = useState('');
     const [departements, setDepartements] = useState([]);
     const [communeCache, setCommuneCache] = useState({});
@@ -552,6 +554,10 @@ export default function ListePresenceSensibilisation() {
                                     Enregistrer {rows.filter(r => r.nom_producteur.trim()).length > 0
                                         ? `(${rows.filter(r => r.nom_producteur.trim()).length} participant(s))`
                                         : ''}
+                                </button>
+                                <button type="button" onClick={() => navigate('/identification-participants-cep')}
+                                    className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-900 transition-all">
+                                    Suivant →
                                 </button>
                                 </div>
                             </div>

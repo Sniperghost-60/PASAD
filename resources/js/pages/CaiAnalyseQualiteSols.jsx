@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification   from '../components/ModernNotification';
 import { useAuth }          from '../contexts/AuthContext';
@@ -87,6 +88,7 @@ const PRINT_STYLES = [
 // ── Composant ─────────────────────────────────────────────────────────────────
 export default function CaiAnalyseQualiteSols() {
     const { user, communeId } = useAuth();
+    const navigate = useNavigate();
 
     const today = new Date().toISOString().slice(0, 10);
     const [dateSession, setDateSession] = useState(today);
@@ -325,6 +327,12 @@ export default function CaiAnalyseQualiteSols() {
                                 opacity: saving ? 0.6 : 1,
                             }}>
                                 {saving ? 'Enregistrement...' : 'Enregistrer'}
+                            </button>
+                            <button onClick={() => navigate('/cai/cout-transaction')} style={{
+                                background: BROWN_DARK, color: '#fff', border: 'none', borderRadius: 8,
+                                padding: '8px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                            }}>
+                                Suivant →
                             </button>
                         </div>
                     </div>

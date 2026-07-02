@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
@@ -135,6 +136,7 @@ function ApercuModal({ rows, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function OrganisationVisitesEchanges() {
+    const navigate = useNavigate();
     const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [saving, setSaving]           = useState(false);
@@ -337,6 +339,10 @@ export default function OrganisationVisitesEchanges() {
                                         {saving && <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
                                         <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                         Enregistrer
+                                    </button>
+                                    <button type="button" onClick={() => navigate('/visites-echanges-commentees')}
+                                        className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-bold text-white hover:bg-slate-900 transition-all">
+                                        Suivant →
                                     </button>
                                 </div>
                             </div>

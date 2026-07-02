@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -231,6 +232,7 @@ function ProduitsCell({ produits, onChange }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiListeOrganisations() {
+    const navigate = useNavigate();
     const [dateSession, setDateSession] = useState('');
     const [rows, setRows]               = useState([emptyRow()]);
     const [loadingRows, setLoadingRows] = useState(false);
@@ -403,6 +405,10 @@ export default function CaiListeOrganisations() {
                                     </svg>
                                 }
                                 {saving ? 'Enregistrement…' : 'Enregistrer'}
+                            </button>
+                            <button type="button" onClick={() => navigate('/cai/negociation-accord')}
+                                className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-2 text-sm font-bold text-white hover:bg-slate-900 transition-all shadow">
+                                Suivant →
                             </button>
                         </div>
                     </div>

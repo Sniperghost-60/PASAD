@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import { useAuth }          from '../contexts/AuthContext';
 import ModernNotification   from '../components/ModernNotification';
@@ -75,6 +76,7 @@ const PRINT_STYLES = [
 
 export default function CaiCoutTransaction() {
     const { user, communeId } = useAuth();
+    const navigate = useNavigate();
     const printRef = useRef(null);
 
     const today = new Date().toISOString().slice(0, 10);
@@ -429,6 +431,12 @@ export default function CaiCoutTransaction() {
                             borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
                         }}>
                             Imprimer
+                        </button>
+                        <button onClick={() => navigate('/cai/evaluation-institutionnelle')} style={{
+                            backgroundColor: INDIGO, color: '#fff', border: 'none',
+                            borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto',
+                        }}>
+                            Suivant →
                         </button>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
@@ -109,6 +110,7 @@ function ApercuModal({ data, commune, dateSession, onClose }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiFacteursLimitant() {
+    const navigate = useNavigate();
     const { user, communeId } = useAuth();
 
     const [dateSession, setDateSession]   = useState('');
@@ -199,6 +201,10 @@ export default function CaiFacteursLimitant() {
                             className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white shadow disabled:opacity-60"
                             style={{ background: AMBER_DARK }}>
                             {saving ? 'Enregistrement…' : 'Enregistrer'}
+                        </button>
+                        <button onClick={() => navigate('/cai/etude-marche')}
+                            className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white shadow bg-slate-800 hover:bg-slate-900">
+                            Suivant →
                         </button>
                     </div>
                 </div>

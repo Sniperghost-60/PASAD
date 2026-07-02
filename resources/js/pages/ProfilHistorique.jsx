@@ -309,6 +309,10 @@ export default function ProfilHistorique() {
                                         <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                         Enregistrer {form.events.length > 1 ? `(${form.events.length} événements)` : ''}
                                     </button>
+                                    <button type="button" onClick={() => navigate('/hierarchisation-domaines-activites')}
+                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 text-sm font-bold text-white shadow-sm hover:bg-slate-900 transition-all">
+                                        Suivant →
+                                    </button>
                                 </div>
                             </div>
                         </form>

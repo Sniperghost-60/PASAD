@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -349,6 +350,7 @@ function MarcheCard({ marche, index, total, onChange, onRemove }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiMarchesCaracterisation() {
+    const navigate = useNavigate();
     const [dateSession, setDateSession] = useState('');
     const [marches, setMarches]         = useState([emptyMarche()]);
     const [loading, setLoading]         = useState(false);
@@ -514,6 +516,10 @@ export default function CaiMarchesCaracterisation() {
                                 </svg>
                             )}
                             {saving ? 'Enregistrement…' : 'Enregistrer'}
+                        </button>
+                        <button type="button" onClick={() => navigate('/cai/facteurs-limitant')}
+                            className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 transition-all shadow-sm">
+                            Suivant →
                         </button>
                     </div>
                 </main>

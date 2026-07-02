@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification  from '../components/ModernNotification';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +33,7 @@ const PRINT_STYLES = [
 ].join('');
 
 export default function CaiProgrammeQuinzaine() {
+    const navigate = useNavigate();
     const { user, communeId } = useAuth();
     const today = new Date().toISOString().slice(0, 10);
     const [dateSession, setDateSession] = useState(today);
@@ -280,6 +282,12 @@ export default function CaiProgrammeQuinzaine() {
                             style={{ background: AMBER_DARK }}
                         >
                             {saving ? 'Enregistrement...' : 'Enregistrer'}
+                        </button>
+                        <button
+                            onClick={() => navigate('/cai/journal-caisse')}
+                            className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900"
+                        >
+                            Suivant →
                         </button>
                     </div>
                 </main>

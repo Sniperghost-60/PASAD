@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification   from '../components/ModernNotification';
 import { useAuth }          from '../contexts/AuthContext';
@@ -55,6 +56,7 @@ const PRINT_STYLES = [
 
 export default function CaiEvolutionProduitsChimiques() {
     const { user, communeId } = useAuth();
+    const navigate = useNavigate();
     const today = new Date().toISOString().slice(0, 10);
     const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
@@ -253,6 +255,9 @@ export default function CaiEvolutionProduitsChimiques() {
                                 </button>
                                 <button onClick={handlePrint} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
                                     Imprimer
+                                </button>
+                                <button onClick={() => navigate('/cai/evolution-produits-organiques')} style={{ background: AMBER_DARK, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+                                    Suivant →
                                 </button>
                             </div>
                         </div>

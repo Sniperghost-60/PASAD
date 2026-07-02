@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import ModernNotification from '../components/ModernNotification';
@@ -35,6 +36,7 @@ const PRINT_STYLES = [
 
 export default function CaiEvaluationOrganisationnelle() {
     const { user, communeId } = useAuth();
+    const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [dateSession, setDateSession]  = useState('');
     const [items, setItems]              = useState(emptyData());
@@ -205,6 +207,12 @@ export default function CaiEvaluationOrganisationnelle() {
                             style={{ padding: '10px 26px', background: '#6b7280', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
                         >
                             Aperçu / Imprimer
+                        </button>
+                        <button
+                            onClick={() => navigate('/cai/evaluation-sociale')}
+                            style={{ padding: '10px 26px', background: AMBER_DARK, color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
+                        >
+                            Suivant →
                         </button>
                     </div>
 
