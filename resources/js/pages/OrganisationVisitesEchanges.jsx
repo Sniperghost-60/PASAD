@@ -44,7 +44,9 @@ const emptyRow = () => ({
     _id:                        Math.random().toString(36).slice(2),
     date:                       '',
     lieu_visite:                '',
-    nb_participants:            '',
+    participants_hommes:        '',
+    participants_femmes:        '',
+    participants_jeunes:        '',
     objectifs_visite:           [''],
     ce_qui_a_marche:            [''],
     ce_qui_doit_etre_ameliore:  [''],
@@ -63,8 +65,8 @@ function ApercuModal({ rows, onClose }) {
                 th, td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
                 .title td { background: #f4b942; font-weight: bold; font-size: 12px; padding: 6px; text-align: center; }
                 thead th { background: #f1f5f9; font-weight: bold; font-size: 8px; text-transform: uppercase; }
-                ul { margin: 2px 0; padding-left: 12px; }
-                li { margin-bottom: 1px; }
+                .dash-line { margin-bottom: 2px; }
+                .dash-line:last-child { margin-bottom: 0; }
             </style></head><body>${printRef.current.innerHTML}</body></html>`);
         win.document.close();
         win.print();
@@ -74,9 +76,7 @@ function ApercuModal({ rows, onClose }) {
     const renderList = (arr) => {
         const items = (Array.isArray(arr) ? arr : []).filter(v => v?.trim());
         if (!items.length) return '';
-        return items.length === 1
-            ? items[0]
-            : `<ul>${items.map(v => `<li>${v}</li>`).join('')}</ul>`;
+        return items.map(v => `<div class="dash-line">– ${v}</div>`).join('');
     };
 
     return (
@@ -105,10 +105,10 @@ function ApercuModal({ rows, onClose }) {
                 <div className="p-4 overflow-x-auto" ref={printRef}>
                     <table className="w-full border-collapse text-[10px]">
                         <thead>
-                            <tr className="title"><td colSpan={6}>Organisation de visites d'échanges</td></tr>
+                            <tr className="title"><td colSpan={9}>Organisation de visites d'échanges</td></tr>
                             <tr>
-                                {['Date','Lieu visité','Nb. Participants','Objectifs de la visite','Ce qui a marché','Ce qui doit être amélioré'].map((h, i) => (
-                                    <th key={i} className="border border-black px-2 py-2" style={{minWidth: i >= 3 ? 130 : 70}}>{h}</th>
+                                {['Date','Lieu visité','Total','H','F','J','Objectifs de la visite','Ce qui a marché','Ce qui doit être amélioré'].map((h, i) => (
+                                    <th key={i} className="border border-black px-2 py-2" style={{minWidth: i >= 6 ? 130 : 50}}>{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -117,7 +117,12 @@ function ApercuModal({ rows, onClose }) {
                                 <tr key={r._id ?? i}>
                                     <td className="border border-black px-2 py-3 text-center">{r.date ?? ''}</td>
                                     <td className="border border-black px-2 py-3">{r.lieu_visite ?? ''}</td>
-                                    <td className="border border-black px-2 py-3 text-center">{r.nb_participants ?? ''}</td>
+                                    <td className="border border-black px-2 py-3 text-center font-bold">
+                                        {(Number(r.participants_hommes) || 0) + (Number(r.participants_femmes) || 0) || ''}
+                                    </td>
+                                    <td className="border border-black px-2 py-3 text-center">{r.participants_hommes ?? ''}</td>
+                                    <td className="border border-black px-2 py-3 text-center">{r.participants_femmes ?? ''}</td>
+                                    <td className="border border-black px-2 py-3 text-center">{r.participants_jeunes ?? ''}</td>
                                     <td className="border border-black px-2 py-3"
                                         dangerouslySetInnerHTML={{__html: renderList(r.objectifs_visite)}} />
                                     <td className="border border-black px-2 py-3"
@@ -153,7 +158,9 @@ export default function OrganisationVisitesEchanges() {
                     _id:                       String(r.id),
                     date:                      r.date             ?? '',
                     lieu_visite:               r.lieu_visite      ?? '',
-                    nb_participants:            r.nb_participants != null ? String(r.nb_participants) : '',
+                    participants_hommes:       r.participants_hommes != null ? String(r.participants_hommes) : '',
+                    participants_femmes:       r.participants_femmes != null ? String(r.participants_femmes) : '',
+                    participants_jeunes:       r.participants_jeunes != null ? String(r.participants_jeunes) : '',
                     objectifs_visite:           Array.isArray(r.objectifs_visite)          && r.objectifs_visite.length          ? r.objectifs_visite          : [''],
                     ce_qui_a_marche:            Array.isArray(r.ce_qui_a_marche)           && r.ce_qui_a_marche.length           ? r.ce_qui_a_marche           : [''],
                     ce_qui_doit_etre_ameliore:  Array.isArray(r.ce_qui_doit_etre_ameliore) && r.ce_qui_doit_etre_ameliore.length ? r.ce_qui_doit_etre_ameliore : [''],
@@ -186,7 +193,9 @@ export default function OrganisationVisitesEchanges() {
                 lignes: lignes.map(r => ({
                     date:                      r.date || null,
                     lieu_visite:               r.lieu_visite.trim() || null,
-                    nb_participants:            r.nb_participants !== '' ? Number(r.nb_participants) : null,
+                    participants_hommes:       r.participants_hommes !== '' ? Number(r.participants_hommes) : null,
+                    participants_femmes:       r.participants_femmes !== '' ? Number(r.participants_femmes) : null,
+                    participants_jeunes:       r.participants_jeunes !== '' ? Number(r.participants_jeunes) : null,
                     objectifs_visite:           r.objectifs_visite.map(v => v.trim()).filter(Boolean),
                     ce_qui_a_marche:            r.ce_qui_a_marche.map(v => v.trim()).filter(Boolean),
                     ce_qui_doit_etre_ameliore:  r.ce_qui_doit_etre_ameliore.map(v => v.trim()).filter(Boolean),
@@ -237,7 +246,10 @@ export default function OrganisationVisitesEchanges() {
                                             {[
                                                 {label:'Date',                       w: 120},
                                                 {label:'Lieu visité',                w: 140},
-                                                {label:'Nb. Participants',           w: 90},
+                                                {label:'Total',                      w: 55},
+                                                {label:'H',                          w: 55},
+                                                {label:'F',                          w: 55},
+                                                {label:'J',                          w: 55},
                                                 {label:'Objectifs de la visite',     w: 200},
                                                 {label:'Ce qui a marché',            w: 200},
                                                 {label:'Ce qui doit être amélioré',  w: 200},
@@ -271,10 +283,27 @@ export default function OrganisationVisitesEchanges() {
                                                         className={iCls} />
                                                 </td>
 
-                                                {/* Nb participants */}
+                                                {/* Total (calculé) */}
+                                                <td className="px-0.5 pt-2 text-center text-xs font-bold text-slate-600">
+                                                    {(Number(row.participants_hommes) || 0) + (Number(row.participants_femmes) || 0) || '—'}
+                                                </td>
+
+                                                {/* Participants H / F / J */}
                                                 <td className="px-0.5">
-                                                    <input type="number" min="0" value={row.nb_participants}
-                                                        onChange={e => update(idx, 'nb_participants', e.target.value)}
+                                                    <input type="number" min="0" value={row.participants_hommes}
+                                                        onChange={e => update(idx, 'participants_hommes', e.target.value)}
+                                                        placeholder="0"
+                                                        className={nCls} />
+                                                </td>
+                                                <td className="px-0.5">
+                                                    <input type="number" min="0" value={row.participants_femmes}
+                                                        onChange={e => update(idx, 'participants_femmes', e.target.value)}
+                                                        placeholder="0"
+                                                        className={nCls} />
+                                                </td>
+                                                <td className="px-0.5">
+                                                    <input type="number" min="0" value={row.participants_jeunes}
+                                                        onChange={e => update(idx, 'participants_jeunes', e.target.value)}
                                                         placeholder="0"
                                                         className={nCls} />
                                                 </td>

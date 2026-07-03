@@ -10,11 +10,11 @@ const initData = () => ({
     departement: '', commune_id: '', facilitateur: '', structure: 'FUPRO-BENIN', telephone: '',
     longitude: '', latitude: '',
     beneficiaires_villages: '', raison_installation: '',
-    seance_sensibilisation: null, sensibilisation_total: '', sensibilisation_hommes: '',
+    seance_sensibilisation: null, sensibilisation_hommes: '',
     sensibilisation_femmes: '', sensibilisation_autorites: '',
-    enquete_base: null, enquete_nb_seances: '', enquete_total: '', enquete_hommes: '',
+    enquete_base: null, enquete_nb_seances: '', enquete_hommes: '',
     enquete_femmes: '', enquete_resultats_restitues: null, enquete_details: '',
-    apprenants_total: '', apprenants_hommes: '', apprenants_femmes: '',
+    apprenants_hommes: '', apprenants_femmes: '',
     choix_participants: '', nom_groupe: '', slogan_groupe: '', jour_animation: '',
     constitution_definie: null, sous_groupes: null, nb_sous_groupes: '',
     comite_en_place: null, postes_comite: [], autres_postes: '',
@@ -39,18 +39,15 @@ const fromApi = (r) => ({
     beneficiaires_villages:    r.beneficiaires_villages   ?? '',
     raison_installation:       r.raison_installation      ?? '',
     seance_sensibilisation:    r.seance_sensibilisation   ?? null,
-    sensibilisation_total:     r.sensibilisation_total    != null ? String(r.sensibilisation_total)    : '',
     sensibilisation_hommes:    r.sensibilisation_hommes   != null ? String(r.sensibilisation_hommes)   : '',
     sensibilisation_femmes:    r.sensibilisation_femmes   != null ? String(r.sensibilisation_femmes)   : '',
     sensibilisation_autorites: r.sensibilisation_autorites ?? '',
     enquete_base:              r.enquete_base              ?? null,
     enquete_nb_seances:        r.enquete_nb_seances        != null ? String(r.enquete_nb_seances) : '',
-    enquete_total:             r.enquete_total             != null ? String(r.enquete_total)       : '',
     enquete_hommes:            r.enquete_hommes            != null ? String(r.enquete_hommes)      : '',
     enquete_femmes:            r.enquete_femmes            != null ? String(r.enquete_femmes)      : '',
     enquete_resultats_restitues: r.enquete_resultats_restitues ?? null,
     enquete_details:           r.enquete_details           ?? '',
-    apprenants_total:          r.apprenants_total          != null ? String(r.apprenants_total)    : '',
     apprenants_hommes:         r.apprenants_hommes         != null ? String(r.apprenants_hommes)   : '',
     apprenants_femmes:         r.apprenants_femmes         != null ? String(r.apprenants_femmes)   : '',
     choix_participants:        r.choix_participants        ?? '',
@@ -72,6 +69,7 @@ function buildPdfContent(data, communes) {
     const communeName = communes.find(c => String(c.id) === String(data.commune_id))?.nom ?? '';
     const dot  = (v) => escapeHtml(v || '…………………………………');
     const chk  = (v) => v ? '&#9745;' : '&#9744;';
+    const sumHF = (prefix) => (Number(data[`${prefix}_hommes`]) || 0) + (Number(data[`${prefix}_femmes`]) || 0);
     const postes = data.postes_comite || [];
 
     const S = {
@@ -121,19 +119,19 @@ function buildPdfContent(data, communes) {
 <div style="${S.q}">Avez-vous conduit une séance d'information-sensibilisation communautaire ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.seance_sensibilisation === true)} Oui</span><span style="${S.cb}">${chk(data.seance_sensibilisation === false)} Non</span></span>
 </div>
-${data.seance_sensibilisation ? `<div style="${S.qI}">Si oui, nombre total de participants : <b>${dot(data.sensibilisation_total)}</b> &nbsp; Hommes : <b>${dot(data.sensibilisation_hommes)}</b> &nbsp; Femmes : <b>${dot(data.sensibilisation_femmes)}</b></div>
+${data.seance_sensibilisation ? `<div style="${S.qI}">Si oui, nombre total de participants : <b>${dot(sumHF('sensibilisation'))}</b> &nbsp; Hommes : <b>${dot(data.sensibilisation_hommes)}</b> &nbsp; Femmes : <b>${dot(data.sensibilisation_femmes)}</b></div>
 <div style="${S.qI}">Précisez les autorités qui ont participé (Coutumiers, religieux, conseillers, etc.)</div>
 <div style="${S.qBI}">${escapeHtml(data.sensibilisation_autorites)}</div>` : ''}
 <div style="${S.q}">Avez-vous conduit une enquête de base pour l'installation du CEP ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.enquete_base === true)} Oui</span><span style="${S.cb}">${chk(data.enquete_base === false)} Non</span></span>
 </div>
 ${data.enquete_base ? `<div style="${S.qI}">Si oui, en combien de séances : <b>${dot(data.enquete_nb_seances)}</b></div>
-<div style="${S.qI}">Nb. personnes en moyenne : Total <b>${dot(data.enquete_total)}</b> &nbsp; H <b>${dot(data.enquete_hommes)}</b> &nbsp; F <b>${dot(data.enquete_femmes)}</b></div>
+<div style="${S.qI}">Nb. personnes en moyenne : Total <b>${dot(sumHF('enquete'))}</b> &nbsp; H <b>${dot(data.enquete_hommes)}</b> &nbsp; F <b>${dot(data.enquete_femmes)}</b></div>
 <div style="${S.qI}">Avez-vous restitué les résultats à la communauté ?
     <span style="${S.cbg}"><span style="${S.cb}">${chk(data.enquete_resultats_restitues === true)} Oui</span><span style="${S.cb}">${chk(data.enquete_resultats_restitues === false)} Non</span></span>
 </div>
 <div style="${S.qBI}">${escapeHtml(data.enquete_details)}</div>` : ''}
-<div style="${S.q}">Combien d'apprenants sont inscrits : Total <b>${dot(data.apprenants_total)}</b> &nbsp; H <b>${dot(data.apprenants_hommes)}</b> &nbsp; F <b>${dot(data.apprenants_femmes)}</b></div>
+<div style="${S.q}">Combien d'apprenants sont inscrits : Total <b>${dot(sumHF('apprenants'))}</b> &nbsp; H <b>${dot(data.apprenants_hommes)}</b> &nbsp; F <b>${dot(data.apprenants_femmes)}</b></div>
 <div style="${S.q}"><span style="${S.b}">Qui a choisi les participants au CEP :</span> ${dot(data.choix_participants)}</div>
 <div style="${S.q}"><span style="${S.b}">Nom du groupe CEP :</span> ${dot(data.nom_groupe)}</div>
 <div style="${S.q}"><span style="${S.b}">Slogan du groupe CEP :</span> ${dot(data.slogan_groupe)}</div>
@@ -260,14 +258,11 @@ export default function RapportDemarrageCep() {
             const payload = {
                 ...data,
                 commune_id:             data.commune_id ? Number(data.commune_id) : null,
-                sensibilisation_total:  data.sensibilisation_total  !== '' ? Number(data.sensibilisation_total)  : null,
                 sensibilisation_hommes: data.sensibilisation_hommes !== '' ? Number(data.sensibilisation_hommes) : null,
                 sensibilisation_femmes: data.sensibilisation_femmes !== '' ? Number(data.sensibilisation_femmes) : null,
                 enquete_nb_seances:     data.enquete_nb_seances     !== '' ? Number(data.enquete_nb_seances)     : null,
-                enquete_total:          data.enquete_total           !== '' ? Number(data.enquete_total)          : null,
                 enquete_hommes:         data.enquete_hommes          !== '' ? Number(data.enquete_hommes)         : null,
                 enquete_femmes:         data.enquete_femmes          !== '' ? Number(data.enquete_femmes)         : null,
-                apprenants_total:       data.apprenants_total        !== '' ? Number(data.apprenants_total)       : null,
                 apprenants_hommes:      data.apprenants_hommes       !== '' ? Number(data.apprenants_hommes)      : null,
                 apprenants_femmes:      data.apprenants_femmes       !== '' ? Number(data.apprenants_femmes)      : null,
                 nb_sous_groupes:        data.nb_sous_groupes         !== '' ? Number(data.nb_sous_groupes)        : null,
@@ -362,6 +357,26 @@ export default function RapportDemarrageCep() {
     const taCls = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:bg-white transition-all resize-none';
     const nCls  = 'w-20 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-center outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:bg-white transition-all';
     const sCls  = 'flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:bg-white transition-all';
+
+    /* ── Total H/F auto-calculé (lecture seule) + saisies Hommes/Femmes ── */
+    const renderTotalHF = (prefix) => (
+        <>
+            <label className="flex items-center gap-2 text-sm">
+                <span className="text-slate-600">Total :</span>
+                <span className={`${nCls} inline-flex items-center justify-center font-bold text-slate-600`}>
+                    {(Number(data[`${prefix}_hommes`]) || 0) + (Number(data[`${prefix}_femmes`]) || 0) || '—'}
+                </span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+                <span className="text-slate-600">Hommes :</span>
+                <input type="number" min="0" value={data[`${prefix}_hommes`]} onChange={e => set(`${prefix}_hommes`, e.target.value)} className={nCls} />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+                <span className="text-slate-600">Femmes :</span>
+                <input type="number" min="0" value={data[`${prefix}_femmes`]} onChange={e => set(`${prefix}_femmes`, e.target.value)} className={nCls} />
+            </label>
+        </>
+    );
 
     const postes = data.postes_comite ?? [];
 
@@ -489,12 +504,7 @@ export default function RapportDemarrageCep() {
                                 {data.seance_sensibilisation && (
                                     <div className="pl-4 border-l-2 border-teal-200 space-y-3">
                                         <div className="flex flex-wrap items-center gap-4">
-                                            {[['sensibilisation_total','Total'],['sensibilisation_hommes','Hommes'],['sensibilisation_femmes','Femmes']].map(([f,l]) => (
-                                                <label key={f} className="flex items-center gap-2 text-sm">
-                                                    <span className="text-slate-600">{l} :</span>
-                                                    <input type="number" min="0" value={data[f]} onChange={e => set(f, e.target.value)} className={nCls} />
-                                                </label>
-                                            ))}
+                                            {renderTotalHF('sensibilisation')}
                                         </div>
                                         <div>
                                             <label className="block text-sm text-slate-600 mb-1">
@@ -521,12 +531,7 @@ export default function RapportDemarrageCep() {
                                         </FieldRow>
                                         <div className="flex flex-wrap items-center gap-4">
                                             <span className="text-sm text-slate-600">Nb. personnes en moyenne :</span>
-                                            {[['enquete_total','Total'],['enquete_hommes','Hommes'],['enquete_femmes','Femmes']].map(([f,l]) => (
-                                                <label key={f} className="flex items-center gap-2 text-sm">
-                                                    <span className="text-slate-600">{l} :</span>
-                                                    <input type="number" min="0" value={data[f]} onChange={e => set(f, e.target.value)} className={nCls} />
-                                                </label>
-                                            ))}
+                                            {renderTotalHF('enquete')}
                                         </div>
                                         <FieldRow label="Avez-vous restitué les résultats à la communauté ?">
                                             <OuiNon value={data.enquete_resultats_restitues} onChange={v => set('enquete_resultats_restitues', v)} name="restitue" />
@@ -540,12 +545,7 @@ export default function RapportDemarrageCep() {
                             {/* Apprenants */}
                             <div className="flex flex-wrap items-center gap-4">
                                 <span className="text-sm font-semibold text-slate-700">Apprenants inscrits pour le CEP :</span>
-                                {[['apprenants_total','Total'],['apprenants_hommes','Hommes'],['apprenants_femmes','Femmes']].map(([f,l]) => (
-                                    <label key={f} className="flex items-center gap-2 text-sm">
-                                        <span className="text-slate-600">{l} :</span>
-                                        <input type="number" min="0" value={data[f]} onChange={e => set(f, e.target.value)} className={nCls} />
-                                    </label>
-                                ))}
+                                {renderTotalHF('apprenants')}
                             </div>
 
                             <FieldRow label="Qui a choisi les participants au CEP :">

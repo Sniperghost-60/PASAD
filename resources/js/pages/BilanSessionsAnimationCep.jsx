@@ -9,7 +9,6 @@ import api from '../services/api';
 const emptyRow = () => ({
     _id: Math.random().toString(36).slice(2),
     date_session:           '',
-    participation_total:    '',
     participation_h:        '',
     participation_f:        '',
     participation_jeunes:   '',
@@ -38,7 +37,7 @@ function ApercuModal({ rows, onClose }) {
         win.print();
     };
 
-    const filled = rows.filter(r => r.date_session || r.participation_total);
+    const filled = rows.filter(r => r.date_session || r.participation_h || r.participation_f);
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
@@ -90,7 +89,7 @@ function ApercuModal({ rows, onClose }) {
                             {(filled.length > 0 ? filled : Array.from({length: 5}).map(() => ({}))).map((r, i) => (
                                 <tr key={r._id ?? i}>
                                     <td className="border border-black px-2 py-2 text-center">{r.date_session ?? ''}</td>
-                                    <td className="border border-black px-2 py-2 text-center">{r.participation_total ?? ''}</td>
+                                    <td className="border border-black px-2 py-2 text-center">{(Number(r.participation_h) || 0) + (Number(r.participation_f) || 0) || ''}</td>
                                     <td className="border border-black px-2 py-2 text-center">{r.participation_h ?? ''}</td>
                                     <td className="border border-black px-2 py-2 text-center">{r.participation_f ?? ''}</td>
                                     <td className="border border-black px-2 py-2 text-center">{r.participation_jeunes ?? ''}</td>
@@ -134,7 +133,6 @@ export default function BilanSessionsAnimationCep() {
                 setRows(data.map(r => ({
                     _id:                    String(r.id),
                     date_session:           r.date_session           ?? '',
-                    participation_total:    r.participation_total    != null ? String(r.participation_total)    : '',
                     participation_h:        r.participation_h        != null ? String(r.participation_h)        : '',
                     participation_f:        r.participation_f        != null ? String(r.participation_f)        : '',
                     participation_jeunes:   r.participation_jeunes   != null ? String(r.participation_jeunes)   : '',
@@ -156,7 +154,7 @@ export default function BilanSessionsAnimationCep() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const lignes = rows.filter(r =>
-            r.date_session || r.participation_total || r.participation_h ||
+            r.date_session || r.participation_h || r.participation_f ||
             r.nb_aaes || r.sujets_speciaux || r.visiteur_nom
         );
         if (lignes.length === 0) {
@@ -169,7 +167,6 @@ export default function BilanSessionsAnimationCep() {
                 cep_id: selectedCep ? Number(selectedCep) : null,
                 lignes: lignes.map(r => ({
                     date_session:           r.date_session           || null,
-                    participation_total:    r.participation_total    !== '' ? Number(r.participation_total)    : null,
                     participation_h:        r.participation_h      !== '' ? Number(r.participation_h)      : null,
                     participation_f:        r.participation_f      !== '' ? Number(r.participation_f)      : null,
                     participation_jeunes:   r.participation_jeunes !== '' ? Number(r.participation_jeunes) : null,
@@ -221,7 +218,7 @@ export default function BilanSessionsAnimationCep() {
                                     </svg>
                                     <div>
                                         <h2 className="text-base font-bold text-white">Bilan mensuel des sessions d'animation du CEP</h2>
-                                        <p className="text-xs text-cyan-200/70 mt-0.5">{rows.filter(r => r.date_session || r.participation_total).length} session(s)</p>
+                                        <p className="text-xs text-cyan-200/70 mt-0.5">{rows.filter(r => r.date_session || r.participation_h || r.participation_f).length} session(s)</p>
                                     </div>
                                 </div>
                             </div>
@@ -260,11 +257,9 @@ export default function BilanSessionsAnimationCep() {
                                                         onChange={e => update(idx, 'date_session', e.target.value)}
                                                         className={iCls} style={{minWidth: 120}} />
                                                 </td>
-                                                {/* Participation */}
-                                                <td className="px-0.5">
-                                                    <input type="number" min="0" value={row.participation_total}
-                                                        onChange={e => update(idx, 'participation_total', e.target.value)}
-                                                        placeholder="0" className={nCls} style={{minWidth: 55}} />
+                                                {/* Participation totale (calculée) */}
+                                                <td className="px-0.5 pt-2 text-center text-xs font-bold text-slate-600" style={{minWidth: 55}}>
+                                                    {(Number(row.participation_h) || 0) + (Number(row.participation_f) || 0) || '—'}
                                                 </td>
                                                 <td className="px-0.5">
                                                     <input type="number" min="0" value={row.participation_h}

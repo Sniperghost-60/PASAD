@@ -740,6 +740,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('liste-presence-sensibilisation', App\Http\Controllers\ListePresenceSensibilisationController::class)->only(['index', 'store']);
     Route::get('/resume-protocoles-experimentations/problemes', [App\Http\Controllers\ResumeProtocoleExperimentationController::class, 'problemesDisponibles']);
     Route::get('/resume-protocoles-experimentations/sujets-speciaux', [App\Http\Controllers\ResumeProtocoleExperimentationController::class, 'sujetsSpeciaux']);
+    Route::get('/resume-protocoles-experimentations/titres-experimentation', [App\Http\Controllers\ResumeProtocoleExperimentationController::class, 'titresExperimentation']);
     Route::resource('resume-protocoles-experimentations', App\Http\Controllers\ResumeProtocoleExperimentationController::class)->only(['index', 'store']);
     Route::get('/identification-participants-cep/from-sensibilisation', [App\Http\Controllers\IdentificationParticipantCepController::class, 'fromSensibilisation']);
     Route::resource('identification-participants-cep', App\Http\Controllers\IdentificationParticipantCepController::class)->only(['index', 'store']);

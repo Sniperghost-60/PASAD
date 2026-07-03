@@ -39,18 +39,15 @@ class RapportDemarrageCepController extends Controller
             'beneficiaires_villages'       => ['nullable', 'string'],
             'raison_installation'          => ['nullable', 'string'],
             'seance_sensibilisation'       => ['nullable', 'boolean'],
-            'sensibilisation_total'        => ['nullable', 'integer', 'min:0'],
             'sensibilisation_hommes'       => ['nullable', 'integer', 'min:0'],
             'sensibilisation_femmes'       => ['nullable', 'integer', 'min:0'],
             'sensibilisation_autorites'    => ['nullable', 'string'],
             'enquete_base'                 => ['nullable', 'boolean'],
             'enquete_nb_seances'           => ['nullable', 'integer', 'min:0'],
-            'enquete_total'                => ['nullable', 'integer', 'min:0'],
             'enquete_hommes'               => ['nullable', 'integer', 'min:0'],
             'enquete_femmes'               => ['nullable', 'integer', 'min:0'],
             'enquete_resultats_restitues'  => ['nullable', 'boolean'],
             'enquete_details'              => ['nullable', 'string'],
-            'apprenants_total'             => ['nullable', 'integer', 'min:0'],
             'apprenants_hommes'            => ['nullable', 'integer', 'min:0'],
             'apprenants_femmes'            => ['nullable', 'integer', 'min:0'],
             'choix_participants'           => ['nullable', 'string'],
@@ -67,6 +64,14 @@ class RapportDemarrageCepController extends Controller
             'site_identifie'               => ['nullable', 'boolean'],
             'statut_site'                  => ['nullable', 'string', 'in:accord_cession,communautaire,location'],
         ]);
+
+        $sumHF = function (?int $h, ?int $f) {
+            return ($h !== null || $f !== null) ? ($h ?? 0) + ($f ?? 0) : null;
+        };
+
+        $validated['sensibilisation_total'] = $sumHF($validated['sensibilisation_hommes'] ?? null, $validated['sensibilisation_femmes'] ?? null);
+        $validated['enquete_total']         = $sumHF($validated['enquete_hommes']         ?? null, $validated['enquete_femmes']         ?? null);
+        $validated['apprenants_total']      = $sumHF($validated['apprenants_hommes']      ?? null, $validated['apprenants_femmes']      ?? null);
 
         $cepId   = $validated['cep_id'] ?? null;
         $rapport = RapportDemarrageCep::updateOrCreate(

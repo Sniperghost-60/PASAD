@@ -11,6 +11,7 @@ class OrganisationVisiteEchange extends Model
     protected $fillable = [
         'user_id', 'cep_id', 'date',
         'lieu_visite', 'nb_participants',
+        'participants_hommes', 'participants_femmes', 'participants_jeunes',
         'objectifs_visite',
         'ce_qui_a_marche',
         'ce_qui_doit_etre_ameliore',

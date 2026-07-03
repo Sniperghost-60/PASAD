@@ -38,6 +38,12 @@ function ApercuModal({ rows, onClose }) {
 
     const filled = rows.filter(r => r.difficulte?.some(v=>v) || r.solution_utilisee?.some(v=>v) || r.suggestion?.some(v=>v));
 
+    const renderList = (arr) => {
+        const items = (Array.isArray(arr) ? arr : []).filter(Boolean);
+        if (!items.length) return '';
+        return items.map((v, i) => <div key={i} className="mb-0.5 last:mb-0">– {v}</div>);
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
             <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden my-6">
@@ -74,9 +80,9 @@ function ApercuModal({ rows, onClose }) {
                         <tbody>
                             {(filled.length > 0 ? filled : Array.from({length: 5}).map(() => ({}))).map((r, i) => (
                                 <tr key={r._id ?? i}>
-                                                    <td className="border border-black px-3 py-4">{(r.difficulte ?? []).filter(Boolean).join(' • ') || ''}</td>
-                                    <td className="border border-black px-3 py-4">{(r.solution_utilisee ?? []).filter(Boolean).join(' • ') || ''}</td>
-                                    <td className="border border-black px-3 py-4">{(r.suggestion ?? []).filter(Boolean).join(' • ') || ''}</td>
+                                    <td className="border border-black px-3 py-4">{renderList(r.difficulte)}</td>
+                                    <td className="border border-black px-3 py-4">{renderList(r.solution_utilisee)}</td>
+                                    <td className="border border-black px-3 py-4">{renderList(r.suggestion)}</td>
                                 </tr>
                             ))}
                         </tbody>

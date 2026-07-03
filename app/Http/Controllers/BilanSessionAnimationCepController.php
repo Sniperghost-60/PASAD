@@ -33,7 +33,6 @@ class BilanSessionAnimationCepController extends Controller
             'cep_id'                           => ['nullable', 'integer', 'exists:cep,id'],
             'lignes'                           => ['required', 'array', 'min:1'],
             'lignes.*.date_session'            => ['nullable', 'date'],
-            'lignes.*.participation_total'     => ['nullable', 'integer', 'min:0'],
             'lignes.*.participation_h'         => ['nullable', 'integer', 'min:0'],
             'lignes.*.participation_f'         => ['nullable', 'integer', 'min:0'],
             'lignes.*.participation_jeunes'    => ['nullable', 'integer', 'min:0'],
@@ -52,22 +51,25 @@ class BilanSessionAnimationCepController extends Controller
             $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
             $q->delete();
 
-            return collect($validated['lignes'])->map(fn ($l) =>
-                BilanSessionAnimationCep::create([
+            return collect($validated['lignes'])->map(function ($l) use ($userId, $cepId) {
+                $h = $l['participation_h'] ?? null;
+                $f = $l['participation_f'] ?? null;
+
+                return BilanSessionAnimationCep::create([
                     'user_id'                 => $userId,
                     'cep_id'                  => $cepId,
                     'date_session'            => $l['date_session']           ?? null,
-                    'participation_total'     => $l['participation_total']    ?? null,
-                    'participation_h'         => $l['participation_h']     ?? null,
-                    'participation_f'         => $l['participation_f']     ?? null,
+                    'participation_h'         => $h,
+                    'participation_f'         => $f,
+                    'participation_total'     => ($h !== null || $f !== null) ? ($h ?? 0) + ($f ?? 0) : null,
                     'participation_jeunes'    => $l['participation_jeunes'] ?? null,
                     'nb_aaes'                 => $l['nb_aaes']                ?? null,
                     'nb_test_urne'            => $l['nb_test_urne']           ?? null,
                     'sujets_speciaux'         => $l['sujets_speciaux']        ?? null,
                     'visiteur_nom'            => $l['visiteur_nom']           ?? null,
                     'visiteur_structure'      => $l['visiteur_structure']     ?? null,
-                ])
-            )->all();
+                ]);
+            })->all();
         });
 
         return response()->json([

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
+import MultiSelectWithOther from '../components/MultiSelectWithOther';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
 
@@ -42,9 +43,9 @@ const emptyRow = () => ({
     _id:                        Math.random().toString(36).slice(2),
     date:                       '',
     experimentations_tests:     [''],
-    visiteurs_total:            '',
     visiteurs_hommes:           '',
     visiteurs_femmes:           '',
+    visiteurs_jeunes:           '',
     qui_sont_visiteurs:         [''],
     ce_qui_a_marche:            [''],
     ce_qui_doit_etre_ameliore:  [''],
@@ -66,8 +67,8 @@ function ApercuModal({ rows, onClose }) {
                 td.left { text-align: left; }
                 .title td { background: #f4b942; font-weight: bold; font-size: 12px; padding: 6px; }
                 thead th { background: #f1f5f9; font-weight: bold; font-size: 8px; text-transform: uppercase; }
-                ul { margin: 2px 0; padding-left: 12px; text-align: left; }
-                li { margin-bottom: 1px; }
+                .dash-line { margin-bottom: 2px; }
+                .dash-line:last-child { margin-bottom: 0; }
             </style></head><body>${printRef.current.innerHTML}</body></html>`);
         win.document.close();
         win.print();
@@ -78,9 +79,7 @@ function ApercuModal({ rows, onClose }) {
     const renderList = (arr) => {
         const items = (Array.isArray(arr) ? arr : []).filter(v => v?.trim());
         if (!items.length) return '';
-        return items.length === 1
-            ? items[0]
-            : `<ul>${items.map(v => `<li>${v}</li>`).join('')}</ul>`;
+        return items.map(v => `<div class="dash-line">– ${v}</div>`).join('');
     };
 
     return (
@@ -109,11 +108,11 @@ function ApercuModal({ rows, onClose }) {
                 <div className="p-4 overflow-x-auto" ref={printRef}>
                     <table className="w-full border-collapse text-[10px]">
                         <thead>
-                            <tr className="title"><td colSpan={9}>Organisation de visites d'échanges commentées</td></tr>
+                            <tr className="title"><td colSpan={10}>Organisation de visites d'échanges commentées</td></tr>
                             <tr>
                                 <th rowSpan={2} className="border border-black px-2 py-1" style={{minWidth:75}}>Date</th>
                                 <th rowSpan={2} className="border border-black px-2 py-1" style={{minWidth:130}}>Expérimentations (tests)</th>
-                                <th colSpan={3} className="border border-black px-2 py-1">Visiteurs</th>
+                                <th colSpan={4} className="border border-black px-2 py-1">Visiteurs</th>
                                 <th rowSpan={2} className="border border-black px-2 py-1" style={{minWidth:120}}>Qui sont les visiteurs</th>
                                 <th rowSpan={2} className="border border-black px-2 py-1" style={{minWidth:120}}>Ce qui a marché</th>
                                 <th rowSpan={2} className="border border-black px-2 py-1" style={{minWidth:130}}>Ce qui doit être amélioré</th>
@@ -122,6 +121,7 @@ function ApercuModal({ rows, onClose }) {
                                 <th className="border border-black px-2 py-1">Total</th>
                                 <th className="border border-black px-2 py-1">Hommes</th>
                                 <th className="border border-black px-2 py-1">Femmes</th>
+                                <th className="border border-black px-2 py-1">Jeunes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -130,9 +130,10 @@ function ApercuModal({ rows, onClose }) {
                                     <td className="border border-black px-2 py-3">{r.date ?? ''}</td>
                                     <td className="border border-black px-2 py-3 left"
                                         dangerouslySetInnerHTML={{__html: renderList(r.experimentations_tests)}} />
-                                    <td className="border border-black px-2 py-3">{r.visiteurs_total ?? ''}</td>
+                                    <td className="border border-black px-2 py-3 font-bold">{(Number(r.visiteurs_hommes) || 0) + (Number(r.visiteurs_femmes) || 0) || ''}</td>
                                     <td className="border border-black px-2 py-3">{r.visiteurs_hommes ?? ''}</td>
                                     <td className="border border-black px-2 py-3">{r.visiteurs_femmes ?? ''}</td>
+                                    <td className="border border-black px-2 py-3">{r.visiteurs_jeunes ?? ''}</td>
                                     <td className="border border-black px-2 py-3 left"
                                         dangerouslySetInnerHTML={{__html: renderList(r.qui_sont_visiteurs)}} />
                                     <td className="border border-black px-2 py-3 left"
@@ -157,6 +158,13 @@ export default function VisitesEchangesCommentees() {
     const [saving, setSaving]           = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
+    const [experimentationsOptions, setExperimentationsOptions] = useState([]);
+
+    useEffect(() => {
+        api.get('/api/resume-protocoles-experimentations/titres-experimentation')
+            .then(res => setExperimentationsOptions(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setExperimentationsOptions([]));
+    }, []);
 
     useEffect(() => {
         const params = selectedCep ? { cep_id: selectedCep } : {};
@@ -168,9 +176,9 @@ export default function VisitesEchangesCommentees() {
                     _id:                       String(r.id),
                     date:                      r.date              ?? '',
                     experimentations_tests:    toArr(r.experimentations_tests),
-                    visiteurs_total:            r.visiteurs_total   != null ? String(r.visiteurs_total)  : '',
                     visiteurs_hommes:           r.visiteurs_hommes  != null ? String(r.visiteurs_hommes) : '',
                     visiteurs_femmes:           r.visiteurs_femmes  != null ? String(r.visiteurs_femmes) : '',
+                    visiteurs_jeunes:           r.visiteurs_jeunes  != null ? String(r.visiteurs_jeunes) : '',
                     qui_sont_visiteurs:         toArr(r.qui_sont_visiteurs),
                     ce_qui_a_marche:            toArr(r.ce_qui_a_marche),
                     ce_qui_doit_etre_ameliore:  toArr(r.ce_qui_doit_etre_ameliore),
@@ -186,7 +194,7 @@ export default function VisitesEchangesCommentees() {
 
     const hasContent = (r) =>
         r.date || r.experimentations_tests.some(v => v.trim()) ||
-        r.visiteurs_total || r.qui_sont_visiteurs.some(v => v.trim()) ||
+        r.visiteurs_hommes || r.visiteurs_femmes || r.visiteurs_jeunes || r.qui_sont_visiteurs.some(v => v.trim()) ||
         r.ce_qui_a_marche.some(v => v.trim());
 
     const handleSubmit = async (e) => {
@@ -203,9 +211,9 @@ export default function VisitesEchangesCommentees() {
                 lignes: lignes.map(r => ({
                     date:                      r.date || null,
                     experimentations_tests:    r.experimentations_tests.map(v => v.trim()).filter(Boolean),
-                    visiteurs_total:            r.visiteurs_total   !== '' ? Number(r.visiteurs_total)  : null,
                     visiteurs_hommes:           r.visiteurs_hommes  !== '' ? Number(r.visiteurs_hommes) : null,
                     visiteurs_femmes:           r.visiteurs_femmes  !== '' ? Number(r.visiteurs_femmes) : null,
+                    visiteurs_jeunes:           r.visiteurs_jeunes  !== '' ? Number(r.visiteurs_jeunes) : null,
                     qui_sont_visiteurs:         r.qui_sont_visiteurs.map(v => v.trim()).filter(Boolean),
                     ce_qui_a_marche:            r.ce_qui_a_marche.map(v => v.trim()).filter(Boolean),
                     ce_qui_doit_etre_ameliore:  r.ce_qui_doit_etre_ameliore.map(v => v.trim()).filter(Boolean),
@@ -256,7 +264,7 @@ export default function VisitesEchangesCommentees() {
                                             <th className="w-7"></th>
                                             <th className="px-1.5 pb-0.5 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:120}}></th>
                                             <th className="px-1.5 pb-0.5 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:190}}></th>
-                                            <th colSpan={3} className="px-1.5 pb-0.5 text-center text-[10px] font-semibold text-blue-500 uppercase tracking-wide bg-blue-50/60 rounded-t-lg border-b border-blue-100">
+                                            <th colSpan={4} className="px-1.5 pb-0.5 text-center text-[10px] font-semibold text-blue-500 uppercase tracking-wide bg-blue-50/60 rounded-t-lg border-b border-blue-100">
                                                 Visiteurs
                                             </th>
                                             <th className="px-1.5 pb-0.5" style={{minWidth:190}}></th>
@@ -272,6 +280,7 @@ export default function VisitesEchangesCommentees() {
                                             <th className="px-1.5 pb-2 text-center text-[10px] font-semibold text-blue-400 uppercase tracking-wide bg-blue-50/60" style={{minWidth:60}}>Total</th>
                                             <th className="px-1.5 pb-2 text-center text-[10px] font-semibold text-blue-400 uppercase tracking-wide bg-blue-50/60" style={{minWidth:55}}>H</th>
                                             <th className="px-1.5 pb-2 text-center text-[10px] font-semibold text-pink-400 uppercase tracking-wide bg-blue-50/60" style={{minWidth:55}}>F</th>
+                                            <th className="px-1.5 pb-2 text-center text-[10px] font-semibold text-emerald-500 uppercase tracking-wide bg-blue-50/60" style={{minWidth:55}}>J</th>
                                             <th className="px-1.5 pb-2 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:190}}>Qui sont les visiteurs</th>
                                             <th className="px-1.5 pb-2 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:190}}>Ce qui a marché</th>
                                             <th className="px-1.5 pb-2 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:190}}>Ce qui doit être amélioré</th>
@@ -292,19 +301,18 @@ export default function VisitesEchangesCommentees() {
                                                         className={iCls} />
                                                 </td>
 
-                                                {/* Expérimentations — multiple */}
+                                                {/* Expérimentations — multiple, sélection depuis le Résumé des protocoles */}
                                                 <td className="px-0.5">
-                                                    <MultiInput
+                                                    <MultiSelectWithOther
                                                         values={row.experimentations_tests}
                                                         onChange={v => update(idx, 'experimentations_tests', v)}
-                                                        placeholder="Expérimentation / test…" />
+                                                        options={experimentationsOptions}
+                                                        placeholder="— Expérimentation —" />
                                                 </td>
 
-                                                {/* Visiteurs */}
-                                                <td className="px-0.5">
-                                                    <input type="number" min="0" value={row.visiteurs_total}
-                                                        onChange={e => update(idx, 'visiteurs_total', e.target.value)}
-                                                        placeholder="0" className={nCls} />
+                                                {/* Visiteurs total (calculé) */}
+                                                <td className="px-0.5 pt-2 text-center text-xs font-bold text-slate-600">
+                                                    {(Number(row.visiteurs_hommes) || 0) + (Number(row.visiteurs_femmes) || 0) || '—'}
                                                 </td>
                                                 <td className="px-0.5">
                                                     <input type="number" min="0" value={row.visiteurs_hommes}
@@ -314,6 +322,11 @@ export default function VisitesEchangesCommentees() {
                                                 <td className="px-0.5">
                                                     <input type="number" min="0" value={row.visiteurs_femmes}
                                                         onChange={e => update(idx, 'visiteurs_femmes', e.target.value)}
+                                                        placeholder="0" className={nCls} />
+                                                </td>
+                                                <td className="px-0.5">
+                                                    <input type="number" min="0" value={row.visiteurs_jeunes}
+                                                        onChange={e => update(idx, 'visiteurs_jeunes', e.target.value)}
                                                         placeholder="0" className={nCls} />
                                                 </td>
 

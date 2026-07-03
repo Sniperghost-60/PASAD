@@ -34,7 +34,9 @@ class OrganisationVisiteEchangeController extends Controller
             'lignes'                              => ['required', 'array', 'min:1'],
             'lignes.*.date'                       => ['nullable', 'date'],
             'lignes.*.lieu_visite'                => ['nullable', 'string', 'max:255'],
-            'lignes.*.nb_participants'            => ['nullable', 'integer', 'min:0'],
+            'lignes.*.participants_hommes'        => ['nullable', 'integer', 'min:0'],
+            'lignes.*.participants_femmes'        => ['nullable', 'integer', 'min:0'],
+            'lignes.*.participants_jeunes'        => ['nullable', 'integer', 'min:0'],
             'lignes.*.objectifs_visite'             => ['nullable', 'array'],
             'lignes.*.objectifs_visite.*'           => ['string', 'max:500'],
             'lignes.*.ce_qui_a_marche'              => ['nullable', 'array'],
@@ -51,18 +53,24 @@ class OrganisationVisiteEchangeController extends Controller
             $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
             $q->delete();
 
-            return collect($validated['lignes'])->map(fn ($l) =>
-                OrganisationVisiteEchange::create([
+            return collect($validated['lignes'])->map(function ($l) use ($userId, $cepId) {
+                $hommes = $l['participants_hommes'] ?? null;
+                $femmes = $l['participants_femmes'] ?? null;
+
+                return OrganisationVisiteEchange::create([
                     'user_id'                    => $userId,
                     'cep_id'                     => $cepId,
                     'date'                       => $l['date']                      ?? null,
                     'lieu_visite'                => $l['lieu_visite']               ?? null,
-                    'nb_participants'             => $l['nb_participants']           ?? null,
+                    'participants_hommes'        => $hommes,
+                    'participants_femmes'        => $femmes,
+                    'participants_jeunes'        => $l['participants_jeunes']       ?? null,
+                    'nb_participants'            => ($hommes !== null || $femmes !== null) ? ($hommes ?? 0) + ($femmes ?? 0) : null,
                     'objectifs_visite'           => $l['objectifs_visite']          ?? [],
                     'ce_qui_a_marche'            => $l['ce_qui_a_marche']           ?? [],
                     'ce_qui_doit_etre_ameliore'  => $l['ce_qui_doit_etre_ameliore'] ?? [],
-                ])
-            )->all();
+                ]);
+            })->all();
         });
 
         return response()->json([

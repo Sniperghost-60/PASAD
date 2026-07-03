@@ -11,7 +11,7 @@ class VisiteEchangeCommentee extends Model
     protected $fillable = [
         'user_id', 'cep_id', 'date',
         'experimentations_tests',
-        'visiteurs_total', 'visiteurs_hommes', 'visiteurs_femmes',
+        'visiteurs_total', 'visiteurs_hommes', 'visiteurs_femmes', 'visiteurs_jeunes',
         'qui_sont_visiteurs',
         'ce_qui_a_marche',
         'ce_qui_doit_etre_ameliore',
