@@ -10,14 +10,8 @@ class RendementDispositifController extends Controller
 {
     public function index(Request $request)
     {
-        $query = RendementDispositif::with(['commune', 'arrondissement'])
+        $query = RendementDispositif::with(['beneficiaire', 'commune', 'arrondissement'])
             ->where('user_id', $request->user()->id);
-        if ($request->filled('cep_id')) {
-            $cepId = $request->input('cep_id');
-            $query->where(function ($q) use ($cepId) {
-                $q->where('cep_id', $cepId)->orWhereNull('cep_id');
-            });
-        }
         if ($request->filled('commune_id')) {
             $query->where('commune_id', $request->integer('commune_id'));
         }
@@ -27,8 +21,8 @@ class RendementDispositifController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'cep_id'                                  => ['nullable', 'integer', 'exists:cep,id'],
             'lignes'                                  => ['required', 'array', 'min:1'],
+            'lignes.*.beneficiaire_id'                => ['nullable', 'integer', 'exists:base_beneficiaires_intervention,id'],
             'lignes.*.commune_id'                     => ['nullable', 'integer', 'exists:communes,id'],
             'lignes.*.arrondissement_id'              => ['nullable', 'integer', 'exists:arrondissements,id'],
             'lignes.*.village'                        => ['nullable', 'string', 'max:255'],
@@ -40,17 +34,14 @@ class RendementDispositifController extends Controller
         ]);
 
         $userId = $request->user()->id;
-        $cepId  = $validated['cep_id'] ?? null;
 
-        $saved = DB::transaction(function () use ($validated, $userId, $cepId) {
-            $q = RendementDispositif::where('user_id', $userId);
-            $cepId ? $q->where('cep_id', $cepId) : $q->whereNull('cep_id');
-            $q->delete();
+        $saved = DB::transaction(function () use ($validated, $userId) {
+            RendementDispositif::where('user_id', $userId)->delete();
 
             return collect($validated['lignes'])->map(fn ($l) =>
                 RendementDispositif::create([
                     'user_id'                        => $userId,
-                    'cep_id'                         => $cepId,
+                    'beneficiaire_id'                => $l['beneficiaire_id']              ?? null,
                     'commune_id'                     => $l['commune_id']                    ?? null,
                     'arrondissement_id'              => $l['arrondissement_id']             ?? null,
                     'village'                        => $l['village']                       ?? null,

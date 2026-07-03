@@ -1,29 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CepSelector from '../components/CepSelector';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
 
 const emptyRow = () => ({
     _id:                           Math.random().toString(36).slice(2),
-    commune_id:                    '',
-    arrondissement_id:             '',
-    village:                       '',
-    nom_producteur:                '',
+    beneficiaire_id:                '',
     culture_technologie:           '',
     rendement_annee_n1:            '',
     rendement_annee_n_technologie: '',
     rendement_annee_n_temoin:      '',
 });
 
+const nomBeneficiaire = (b) => b ? `${b.nom_producteur} ${b.prenoms_producteur ?? ''}`.trim() : '';
+const localisationBeneficiaire = (b) => b
+    ? [b.village, b.arrondissement?.nom, b.commune?.nom].filter(Boolean).join(', ')
+    : '';
+
 /* ── Modal aperçu ────────────────────────────────────────────────────── */
-function ApercuModal({ rows, communes, arrCache, onClose }) {
+function ApercuModal({ rows, beneficiaires, onClose }) {
     const printRef = useRef(null);
 
     const handlePrint = () => {
         const win = window.open('', '_blank');
-        win.document.write(`<html><head><title>Rendement Dispositif</title>
+        win.document.write(`<html><head><title>Rendement UD</title>
             <style>
                 body{font-family:Arial,sans-serif;font-size:8px;margin:8px}
                 table{border-collapse:collapse;width:100%}
@@ -36,10 +37,9 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
         win.print();
     };
 
-    const getCommuneName = (id) => communes.find(c => String(c.id) === String(id))?.nom ?? '';
-    const getArrName     = (cId, aId) => (arrCache[cId] ?? []).find(a => String(a.id) === String(aId))?.nom ?? '';
+    const getBeneficiaire = (id) => beneficiaires.find(b => String(b.id) === String(id));
 
-    const filled = rows.filter(r => r.commune_id || r.nom_producteur || r.culture_technologie);
+    const filled = rows.filter(r => r.beneficiaire_id || r.culture_technologie);
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
@@ -49,7 +49,7 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
                         <svg className="size-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <h2 className="text-base font-bold text-white">Aperçu — Rendement Dispositif</h2>
+                        <h2 className="text-base font-bold text-white">Aperçu — Rendement UD</h2>
                     </div>
                     <div className="flex items-center gap-2">
                         <button type="button" onClick={handlePrint}
@@ -67,14 +67,14 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
                 <div className="p-4 overflow-x-auto" ref={printRef}>
                     <table className="w-full border-collapse text-[9px]">
                         <thead>
-                            <tr className="title"><td colSpan={8}>Rendement Dispositif</td></tr>
+                            <tr className="title"><td colSpan={8}>Rendement UD</td></tr>
                             <tr>
                                 <th rowSpan={2} className="border border-black px-1 py-1" style={{minWidth:70}}>Commune</th>
                                 <th rowSpan={2} className="border border-black px-1 py-1" style={{minWidth:80}}>Arrondissement</th>
                                 <th rowSpan={2} className="border border-black px-1 py-1" style={{minWidth:60}}>Village</th>
                                 <th rowSpan={2} className="border border-black px-1 py-1" style={{minWidth:120}}>Nom et prénoms du Producteur porteur de l'UD</th>
                                 <th rowSpan={2} className="border border-black px-1 py-1" style={{minWidth:90}}>Culture / Technologie</th>
-                                <th colSpan={3} className="border border-black px-1 py-1 grph">Rendement Dispositif</th>
+                                <th colSpan={3} className="border border-black px-1 py-1 grph">Rendement UD</th>
                             </tr>
                             <tr>
                                 <th className="border border-black px-1 py-1 grph" style={{minWidth:70}}>Année n-1</th>
@@ -83,18 +83,21 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {(filled.length > 0 ? filled : Array.from({length: 5}).map(() => ({}))).map((r, i) => (
-                                <tr key={r._id ?? i}>
-                                    <td className="border border-black px-1 py-4 text-left">{r.commune_id ? getCommuneName(r.commune_id) : ''}</td>
-                                    <td className="border border-black px-1 py-4 text-left">{r.arrondissement_id ? getArrName(r.commune_id, r.arrondissement_id) : ''}</td>
-                                    <td className="border border-black px-1 py-4 text-left">{r.village ?? ''}</td>
-                                    <td className="border border-black px-1 py-4 text-left">{r.nom_producteur ?? ''}</td>
-                                    <td className="border border-black px-1 py-4 text-left">{r.culture_technologie ?? ''}</td>
-                                    <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n1 ?? ''}</td>
-                                    <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n_technologie ?? ''}</td>
-                                    <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n_temoin ?? ''}</td>
-                                </tr>
-                            ))}
+                            {(filled.length > 0 ? filled : Array.from({length: 5}).map(() => ({}))).map((r, i) => {
+                                const b = getBeneficiaire(r.beneficiaire_id);
+                                return (
+                                    <tr key={r._id ?? i}>
+                                        <td className="border border-black px-1 py-4 text-left">{b?.commune?.nom ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-left">{b?.arrondissement?.nom ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-left">{b?.village ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-left">{nomBeneficiaire(b)}</td>
+                                        <td className="border border-black px-1 py-4 text-left">{r.culture_technologie ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n1 ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n_technologie ?? ''}</td>
+                                        <td className="border border-black px-1 py-4 text-center">{r.rendement_annee_n_temoin ?? ''}</td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -106,57 +109,43 @@ function ApercuModal({ rows, communes, arrCache, onClose }) {
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function RendementDispositifPage() {
     const navigate = useNavigate();
-    const [selectedCep, setSelectedCep] = useState('');
     const [rows, setRows]           = useState([emptyRow()]);
-    const [communes, setCommunes]   = useState([]);
-    const [arrCache, setArrCache]   = useState({});
+    const [beneficiaires, setBeneficiaires] = useState([]);
     const [saving, setSaving]       = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]         = useState({ show: false, message: '', type: 'success' });
 
     useEffect(() => {
-        api.get('/api/user/communes')
-            .then(res => setCommunes(Array.isArray(res.data) ? res.data : []))
-            .catch(() => {});
+        api.get('/api/base-beneficiaires-intervention')
+            .then(res => setBeneficiaires(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setBeneficiaires([]));
     }, []);
 
     useEffect(() => {
-        const params = selectedCep ? { cep_id: selectedCep } : {};
-        api.get('/api/rendement-dispositif', { params })
+        api.get('/api/rendement-dispositif')
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
                 if (data.length === 0) { setRows([emptyRow()]); return; }
-                const loaded = data.map(r => ({
+                setRows(data.map(r => ({
                         _id:                           String(r.id),
-                        commune_id:                    r.commune_id        ? String(r.commune_id)        : '',
-                        arrondissement_id:             r.arrondissement_id ? String(r.arrondissement_id) : '',
-                        village:                       r.village           ?? '',
-                        nom_producteur:                r.nom_producteur    ?? '',
+                        beneficiaire_id:               r.beneficiaire_id   ? String(r.beneficiaire_id)   : '',
                         culture_technologie:           r.culture_technologie ?? '',
                         rendement_annee_n1:            r.rendement_annee_n1            != null ? String(r.rendement_annee_n1)            : '',
                         rendement_annee_n_technologie: r.rendement_annee_n_technologie != null ? String(r.rendement_annee_n_technologie) : '',
                         rendement_annee_n_temoin:      r.rendement_annee_n_temoin      != null ? String(r.rendement_annee_n_temoin)      : '',
-                    }));
-                setRows(loaded);
-                loaded.forEach(r => { if (r.commune_id) loadArr(r.commune_id); });
+                    })));
             })
             .catch(() => {});
-    }, [selectedCep]);
+    }, []);
 
-    const loadArr = useCallback(async (cId) => {
-        if (!cId || arrCache[cId]) return;
-        try {
-            const res = await api.get(`/api/communes/${cId}/arrondissements`);
-            setArrCache(p => ({ ...p, [cId]: Array.isArray(res.data) ? res.data : [] }));
-        } catch {}
-    }, [arrCache]);
+    const getBeneficiaire = (id) => beneficiaires.find(b => String(b.id) === String(id));
 
     const update    = (idx, field, val) =>
         setRows(cur => cur.map((r, i) => i === idx ? { ...r, [field]: val } : r));
     const addRow    = () => setRows(c => [...c, emptyRow()]);
     const removeRow = (idx) => setRows(c => c.length > 1 ? c.filter((_, i) => i !== idx) : [emptyRow()]);
 
-    const hasContent = (r) => r.commune_id || r.nom_producteur || r.culture_technologie || r.rendement_annee_n1;
+    const hasContent = (r) => r.beneficiaire_id || r.culture_technologie || r.rendement_annee_n1;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -168,17 +157,20 @@ export default function RendementDispositifPage() {
         setSaving(true);
         try {
             const res = await api.post('/api/rendement-dispositif', {
-                cep_id: selectedCep ? Number(selectedCep) : null,
-                lignes: lignes.map(r => ({
-                    commune_id:                    r.commune_id        ? Number(r.commune_id)        : null,
-                    arrondissement_id:             r.arrondissement_id ? Number(r.arrondissement_id) : null,
-                    village:                       r.village.trim()    || null,
-                    nom_producteur:                r.nom_producteur.trim()      || null,
-                    culture_technologie:           r.culture_technologie.trim() || null,
-                    rendement_annee_n1:            r.rendement_annee_n1            !== '' ? Number(r.rendement_annee_n1)            : null,
-                    rendement_annee_n_technologie: r.rendement_annee_n_technologie !== '' ? Number(r.rendement_annee_n_technologie) : null,
-                    rendement_annee_n_temoin:      r.rendement_annee_n_temoin      !== '' ? Number(r.rendement_annee_n_temoin)      : null,
-                })),
+                lignes: lignes.map(r => {
+                    const b = getBeneficiaire(r.beneficiaire_id);
+                    return {
+                        beneficiaire_id:                b ? Number(b.id) : null,
+                        commune_id:                     b?.commune_id        ?? null,
+                        arrondissement_id:              b?.arrondissement_id ?? null,
+                        village:                        b?.village           ?? null,
+                        nom_producteur:                 nomBeneficiaire(b)   || null,
+                        culture_technologie:            r.culture_technologie.trim() || null,
+                        rendement_annee_n1:             r.rendement_annee_n1            !== '' ? Number(r.rendement_annee_n1)            : null,
+                        rendement_annee_n_technologie:  r.rendement_annee_n_technologie !== '' ? Number(r.rendement_annee_n_technologie) : null,
+                        rendement_annee_n_temoin:       r.rendement_annee_n_temoin      !== '' ? Number(r.rendement_annee_n_temoin)      : null,
+                    };
+                }),
             });
             setToast({ show: true, message: res.data.message, type: 'success' });
         } catch (err) {
@@ -194,15 +186,10 @@ export default function RendementDispositifPage() {
         <div className="flex min-h-screen bg-slate-50">
             <Sidebar />
             <main className="flex-1 ml-60">
-                <Header title="Rendement Dispositif" />
+                <Header title="Rendement UD" />
 
                 <div className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
-
-                        {/* Sélecteur CEP */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-                            <CepSelector value={selectedCep} onChange={setSelectedCep} required />
-                        </div>
 
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
@@ -212,7 +199,7 @@ export default function RendementDispositifPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                                 <div>
-                                    <h2 className="text-base font-bold text-white">Rendement Dispositif</h2>
+                                    <h2 className="text-base font-bold text-white">Rendement UD</h2>
                                     <p className="text-xs text-cyan-200/70 mt-0.5">{rows.filter(hasContent).length} ligne(s)</p>
                                 </div>
                             </div>
@@ -224,9 +211,9 @@ export default function RendementDispositifPage() {
                                         {/* Ligne 1 : groupe */}
                                         <tr>
                                             <th className="w-7"></th>
-                                            <th colSpan={5} className="pb-0.5"></th>
+                                            <th colSpan={3} className="pb-0.5"></th>
                                             <th colSpan={3} className="px-2 pb-0.5 text-center text-[10px] font-bold text-amber-600 uppercase tracking-wide bg-amber-50/70 rounded-t-lg border-b border-amber-200">
-                                                Rendement Dispositif
+                                                Rendement UD
                                             </th>
                                             <th className="w-8"></th>
                                         </tr>
@@ -234,10 +221,8 @@ export default function RendementDispositifPage() {
                                         <tr>
                                             <th className="w-7"></th>
                                             {[
-                                                {label:'Commune',               w:100},
-                                                {label:'Arrondissement',        w:110},
-                                                {label:'Village',               w:80},
-                                                {label:"Nom & prénoms producteur (UD)", w:160},
+                                                {label:'Bénéficiaire (UD)',     w:200},
+                                                {label:'Localisation',          w:150},
                                                 {label:'Culture / Technologie', w:120},
                                             ].map(({label, w}, i) => (
                                                 <th key={i} className="px-1.5 pb-2 text-left text-[10px] font-semibold text-slate-400 uppercase tracking-wide" style={{minWidth:w}}>{label}</th>
@@ -255,39 +240,23 @@ export default function RendementDispositifPage() {
                                                     <span className="inline-flex size-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-500">{idx + 1}</span>
                                                 </td>
 
-                                                {/* Commune */}
+                                                {/* Bénéficiaire (depuis la base globale des bénéficiaires) */}
                                                 <td className="px-0.5">
-                                                    <select value={row.commune_id}
-                                                        onChange={e => {
-                                                            update(idx, 'commune_id', e.target.value);
-                                                            update(idx, 'arrondissement_id', '');
-                                                            if (e.target.value) loadArr(e.target.value);
-                                                        }}
-                                                        className={sCls} style={{minWidth:100}}>
-                                                        <option value="">—</option>
-                                                        {communes.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                                                    <select value={row.beneficiaire_id}
+                                                        onChange={e => update(idx, 'beneficiaire_id', e.target.value)}
+                                                        className={sCls} style={{minWidth:200}}>
+                                                        <option value="">— Sélectionner un bénéficiaire —</option>
+                                                        {beneficiaires.map(b => (
+                                                            <option key={b.id} value={b.id}>
+                                                                {nomBeneficiaire(b)}{b.village ? ` — ${b.village}` : b.commune?.nom ? ` — ${b.commune.nom}` : ''}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                 </td>
 
-                                                {/* Arrondissement */}
-                                                <td className="px-0.5">
-                                                    <select value={row.arrondissement_id}
-                                                        onChange={e => update(idx, 'arrondissement_id', e.target.value)}
-                                                        disabled={!row.commune_id}
-                                                        className={sCls} style={{minWidth:110}}>
-                                                        <option value="">—</option>
-                                                        {(arrCache[row.commune_id] ?? []).map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                                                    </select>
-                                                </td>
-
-                                                {/* Village */}
-                                                <td className="px-0.5">
-                                                    <input value={row.village} onChange={e => update(idx,'village',e.target.value.toUpperCase())} placeholder="Village…" className={iCls} style={{minWidth:80}} />
-                                                </td>
-
-                                                {/* Nom producteur UD */}
-                                                <td className="px-0.5">
-                                                    <input value={row.nom_producteur} onChange={e => update(idx,'nom_producteur',e.target.value)} placeholder="Nom et prénoms…" className={iCls} style={{minWidth:160}} />
+                                                {/* Localisation (dérivée du bénéficiaire) */}
+                                                <td className="px-0.5 pt-2 text-xs text-slate-500" style={{minWidth:150}}>
+                                                    {localisationBeneficiaire(getBeneficiaire(row.beneficiaire_id)) || '—'}
                                                 </td>
 
                                                 {/* Culture/Technologie */}
@@ -367,7 +336,7 @@ export default function RendementDispositifPage() {
             </main>
 
             {showPreview && (
-                <ApercuModal rows={rows} communes={communes} arrCache={arrCache}
+                <ApercuModal rows={rows} beneficiaires={beneficiaires}
                     onClose={() => setShowPreview(false)} />
             )}
         </div>

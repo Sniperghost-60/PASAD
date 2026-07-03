@@ -59,6 +59,20 @@ class ResumeProtocoleExperimentationController extends Controller
         return response()->json($titres->values());
     }
 
+    public function dispositifsExperimentaux(Request $request)
+    {
+        $accessibleIds = $this->profilsAccessibles($request)->pluck('id');
+
+        $dispositifs = ResumeProtocoleExperimentation::whereIn('profil_historique_id', $accessibleIds)
+            ->whereNotNull('dispositif_experimental')
+            ->where('dispositif_experimental', '!=', '')
+            ->distinct()
+            ->orderBy('dispositif_experimental')
+            ->pluck('dispositif_experimental');
+
+        return response()->json($dispositifs->values());
+    }
+
     public function index(Request $request)
     {
         $query = ResumeProtocoleExperimentation::with(['probleme', 'profilHistorique', 'user']);

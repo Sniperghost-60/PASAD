@@ -271,7 +271,7 @@ const ACTIVITES = [
     { key:'visites_echanges_commentees',   label:'Visites commentées',      path:'/visites-echanges-commentees',    color:'bg-violet-400' },
     { key:'difficultes_suggestions',       label:'Difficultés & suggestions',path:'/difficultes-suggestions',       color:'bg-rose-400'   },
     { key:'evolution_rendements_cep',      label:'Rendements CEP',          path:'/evolution-rendements-cep',       color:'bg-amber-500'  },
-    { key:'rendement_dispositif',          label:'Rendement dispositif',    path:'/rendement-dispositif',           color:'bg-orange-500' },
+    { key:'rendement_dispositif',          label:'Rendement UD',            path:'/rendement-dispositif',           color:'bg-orange-500' },
     { key:'rapport_demarrage_cep',         label:'Rapport démarrage',       path:'/rapport-demarrage-cep',          color:'bg-emerald-600'},
 ];
 const ALL_MODULES = [...FICHES, ...SENSIB, ...ACTIVITES];

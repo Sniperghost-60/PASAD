@@ -4,6 +4,7 @@ import CepSelector from '../components/CepSelector';
 import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import SelectWithOther from '../components/SelectWithOther';
 import api from '../services/api';
 
 const emptyRow = () => ({
@@ -116,6 +117,13 @@ export default function EvolutionRendementsCep() {
     const [saving, setSaving]           = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
+    const [dispositifsOptions, setDispositifsOptions] = useState([]);
+
+    useEffect(() => {
+        api.get('/api/resume-protocoles-experimentations/dispositifs-experimentaux')
+            .then(res => setDispositifsOptions(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setDispositifsOptions([]));
+    }, []);
 
     /* Charger les communes de l'utilisateur */
     useEffect(() => {
@@ -330,9 +338,12 @@ export default function EvolutionRendementsCep() {
                                                 {/* Technologies dispositif 1-4 */}
                                                 {[1,2,3,4].map(n => (
                                                     <td key={n} className="px-0.5">
-                                                        <input value={row[`technologies_dispositif_${n}`]}
-                                                            onChange={e => update(idx, `technologies_dispositif_${n}`, e.target.value)}
-                                                            placeholder={`Tech. D${n}…`}
+                                                        <SelectWithOther
+                                                            value={row[`technologies_dispositif_${n}`]}
+                                                            onChange={v => update(idx, `technologies_dispositif_${n}`, v)}
+                                                            options={dispositifsOptions}
+                                                            placeholder={`— Tech. D${n} —`}
+                                                            customPlaceholder={`Préciser la technologie D${n}`}
                                                             className={`${iCls} bg-emerald-50/30 focus:bg-emerald-50`}
                                                             style={{minWidth:100}} />
                                                     </td>

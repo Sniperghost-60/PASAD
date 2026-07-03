@@ -9,7 +9,7 @@ class RendementDispositif extends Model
     protected $table = 'rendement_dispositif';
 
     protected $fillable = [
-        'user_id', 'cep_id',
+        'user_id', 'beneficiaire_id',
         'commune_id', 'arrondissement_id', 'village',
         'nom_producteur', 'culture_technologie',
         'rendement_annee_n1',
@@ -24,6 +24,7 @@ class RendementDispositif extends Model
     ];
 
     public function user()           { return $this->belongsTo(User::class); }
+    public function beneficiaire()   { return $this->belongsTo(BaseBeneficiaireIntervention::class, 'beneficiaire_id'); }
     public function commune()        { return $this->belongsTo(Commune::class); }
     public function arrondissement() { return $this->belongsTo(Arrondissement::class); }
 }

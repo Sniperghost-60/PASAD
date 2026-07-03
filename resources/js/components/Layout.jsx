@@ -106,7 +106,7 @@ const CEP_ACTIVITES_NAV = [
     { label: 'Visites commentées',        path: '/visites-echanges-commentees',     icon: 'map'      },
     { label: 'Difficultés & suggestions', path: '/difficultes-suggestions',         icon: 'suivis'   },
     { label: 'Rendements CEP',            path: '/evolution-rendements-cep',        icon: 'stats'    },
-    { label: 'Rendement dispositif',      path: '/rendement-dispositif',            icon: 'stats'    },
+    { label: 'Rendement UD',              path: '/rendement-dispositif',            icon: 'stats'    },
     { label: 'Rapport démarrage CEP',     path: '/rapport-demarrage-cep',           icon: 'rapports' },
 ];
 
