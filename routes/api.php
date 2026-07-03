@@ -1014,6 +1014,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Phase 1 / Étape 2 — Négociation de l'accord CAI (CTS-PV/AE et CAM)
     Route::get('/cai/negociation-accord',  [App\Http\Controllers\CaiNegociationAccordController::class, 'index']);
     Route::post('/cai/negociation-accord', [App\Http\Controllers\CaiNegociationAccordController::class, 'store']);
+    Route::put('/cai/negociation-accord/{ligne}', [App\Http\Controllers\CaiNegociationAccordController::class, 'update']);
 
     // Phase 2 / Étape 3 — Caractérisation des marchés de produits agroécologiques
     Route::get('/cai/marches-caracterisation',  [App\Http\Controllers\CaiMarcheCaracterisationController::class, 'index']);

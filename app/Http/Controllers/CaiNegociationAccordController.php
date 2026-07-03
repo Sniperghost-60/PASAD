@@ -10,59 +10,83 @@ class CaiNegociationAccordController extends Controller
 {
     public function index(Request $request)
     {
-        $query = CaiNegociationAccord::where('user_id', $request->user()->id);
-
-        if ($request->filled('commune_id')) {
-            $query->where('commune_id', $request->commune_id);
-        }
-        if ($request->filled('date_session')) {
-            $query->where('date_session', $request->date_session);
-        }
+        $query = CaiNegociationAccord::where('user_id', $request->user()->id)
+            ->when($request->filled('commune_id'), fn ($q) => $q->where('commune_id', $request->integer('commune_id')));
 
         return response()->json($query->orderBy('numero')->orderBy('id')->get());
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'date_session'              => 'nullable|date',
-            'commune_id'                => 'nullable|exists:communes,id',
-            'lignes'                    => 'required|array|min:1',
-            'lignes.*.numero'           => 'nullable|integer|min:1',
-            'lignes.*.contraintes_a_lever'     => 'nullable|string',
-            'lignes.*.activites'               => 'nullable|string',
-            'lignes.*.responsables'            => 'nullable|string|max:255',
-            'lignes.*.periode_execution'       => 'nullable|string|max:255',
-            'lignes.*.moyens_conseiller'       => 'nullable|string|max:255',
-            'lignes.*.moyens_op_exploitation'  => 'nullable|string|max:255',
+        $validated = $request->validate([
+            'lignes'                            => ['required', 'array', 'min:1'],
+            'lignes.*.commune_id'                => ['nullable', 'integer', 'exists:communes,id'],
+            'lignes.*.numero'                    => ['nullable', 'integer', 'min:1'],
+            'lignes.*.contraintes_a_lever'        => ['nullable', 'string'],
+            'lignes.*.activites'                  => ['nullable', 'string'],
+            'lignes.*.responsables'               => ['nullable', 'array'],
+            'lignes.*.responsables.*'             => ['string', 'max:255'],
+            'lignes.*.periode_debut'              => ['nullable', 'date'],
+            'lignes.*.periode_fin'                => ['nullable', 'date'],
+            'lignes.*.moyens_conseiller'          => ['nullable', 'string', 'max:255'],
+            'lignes.*.moyens_op_exploitation'     => ['nullable', 'string', 'max:255'],
         ]);
 
-        $userId    = $request->user()->id;
-        $communeId = $request->input('commune_id');
-        $date      = $request->input('date_session');
+        $userId = $request->user()->id;
 
-        DB::transaction(function () use ($request, $userId, $communeId, $date) {
-            CaiNegociationAccord::where('user_id', $userId)
-                ->where('commune_id', $communeId)
-                ->where('date_session', $date)
-                ->delete();
-
-            foreach ($request->lignes as $ligne) {
+        $saved = DB::transaction(fn () =>
+            collect($validated['lignes'])->map(fn ($ligne) =>
                 CaiNegociationAccord::create([
-                    'user_id'                 => $userId,
-                    'commune_id'              => $communeId,
-                    'date_session'            => $date,
-                    'numero'                  => $ligne['numero']                 ?? null,
-                    'contraintes_a_lever'     => $ligne['contraintes_a_lever']    ?? null,
-                    'activites'               => $ligne['activites']              ?? null,
-                    'responsables'            => $ligne['responsables']           ?? null,
-                    'periode_execution'       => $ligne['periode_execution']      ?? null,
-                    'moyens_conseiller'       => $ligne['moyens_conseiller']      ?? null,
-                    'moyens_op_exploitation'  => $ligne['moyens_op_exploitation'] ?? null,
-                ]);
-            }
-        });
+                    'user_id'                => $userId,
+                    'commune_id'             => $ligne['commune_id']             ?? null,
+                    'numero'                 => $ligne['numero']                 ?? null,
+                    'contraintes_a_lever'    => $ligne['contraintes_a_lever']    ?? null,
+                    'activites'              => $ligne['activites']              ?? null,
+                    'responsables'           => $ligne['responsables']           ?? [],
+                    'periode_debut'          => $ligne['periode_debut']          ?? null,
+                    'periode_fin'            => $ligne['periode_fin']            ?? null,
+                    'moyens_conseiller'      => $ligne['moyens_conseiller']      ?? null,
+                    'moyens_op_exploitation' => $ligne['moyens_op_exploitation'] ?? null,
+                ])
+            )->all()
+        );
 
-        return response()->json(['message' => 'Enregistré avec succès'], 201);
+        return response()->json([
+            'message' => 'Enregistré avec succès',
+            'data'    => $saved,
+        ], 201);
+    }
+
+    public function update(Request $request, CaiNegociationAccord $ligne)
+    {
+        abort_unless($ligne->user_id === $request->user()->id, 403);
+
+        $validated = $request->validate([
+            'numero'                 => ['nullable', 'integer', 'min:1'],
+            'contraintes_a_lever'    => ['nullable', 'string'],
+            'activites'              => ['nullable', 'string'],
+            'responsables'           => ['nullable', 'array'],
+            'responsables.*'         => ['string', 'max:255'],
+            'periode_debut'          => ['nullable', 'date'],
+            'periode_fin'            => ['nullable', 'date'],
+            'moyens_conseiller'      => ['nullable', 'string', 'max:255'],
+            'moyens_op_exploitation' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $ligne->update([
+            'numero'                 => $validated['numero']                 ?? null,
+            'contraintes_a_lever'    => $validated['contraintes_a_lever']    ?? null,
+            'activites'              => $validated['activites']              ?? null,
+            'responsables'           => $validated['responsables']           ?? [],
+            'periode_debut'          => $validated['periode_debut']          ?? null,
+            'periode_fin'            => $validated['periode_fin']            ?? null,
+            'moyens_conseiller'      => $validated['moyens_conseiller']      ?? null,
+            'moyens_op_exploitation' => $validated['moyens_op_exploitation'] ?? null,
+        ]);
+
+        return response()->json([
+            'message' => 'Ligne mise à jour avec succès !',
+            'data'    => $ligne,
+        ]);
     }
 }

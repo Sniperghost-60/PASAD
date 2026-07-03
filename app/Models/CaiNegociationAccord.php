@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class CaiNegociationAccord extends Model
 {
     protected $fillable = [
-        'user_id', 'commune_id', 'date_session', 'numero',
+        'user_id', 'commune_id', 'numero',
         'contraintes_a_lever', 'activites', 'responsables',
-        'periode_execution', 'moyens_conseiller', 'moyens_op_exploitation',
+        'periode_debut', 'periode_fin', 'moyens_conseiller', 'moyens_op_exploitation',
     ];
 
     protected $casts = [
-        'date_session' => 'date:Y-m-d',
+        'responsables'  => 'array',
+        'periode_debut' => 'date:Y-m-d',
+        'periode_fin'   => 'date:Y-m-d',
     ];
 }
