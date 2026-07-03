@@ -10,12 +10,10 @@ class CaiEtudeMarcheController extends Controller
 {
     public function index(Request $request)
     {
-        $communeId   = $request->query('commune_id');
-        $dateSession = $request->query('date_session');
+        $communeId = $request->query('commune_id');
 
         $rows = CaiEtudeMarche::where('user_id', Auth::id())
-            ->when($communeId,   fn($q) => $q->where('commune_id',   $communeId))
-            ->when($dateSession, fn($q) => $q->where('date_session', $dateSession))
+            ->when($communeId, fn($q) => $q->where('commune_id', $communeId))
             ->get();
 
         return response()->json($rows);
@@ -23,23 +21,40 @@ class CaiEtudeMarcheController extends Controller
 
     public function store(Request $request)
     {
-        $communeId   = $request->input('commune_id');
-        $dateSession = $request->input('date_session');
-        $rows        = $request->input('rows', []);
+        $request->validate([
+            'commune_id'                       => 'nullable|exists:communes,id',
+            'rows'                             => 'required|array',
+            'rows.*.categorie'                 => 'required|string',
+            'rows.*.parametre'                 => 'required|string',
+            'rows.*.tendances_marches'         => 'nullable|array',
+            'rows.*.tendances_marches.*'       => 'string',
+            'rows.*.situation_exploitation'    => 'nullable|array',
+            'rows.*.situation_exploitation.*'  => 'string',
+            'rows.*.ecarts_combler'            => 'nullable|array',
+            'rows.*.ecarts_combler.*'          => 'string',
+        ]);
+
+        $communeId = $request->input('commune_id');
+        $rows      = $request->input('rows', []);
+
+        $normalize = fn (?array $values) => collect($values ?? [])
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->values()
+            ->all();
 
         foreach ($rows as $row) {
             CaiEtudeMarche::updateOrCreate(
                 [
-                    'user_id'      => Auth::id(),
-                    'commune_id'   => $communeId,
-                    'date_session' => $dateSession,
-                    'parametre'    => $row['parametre'],
+                    'user_id'    => Auth::id(),
+                    'commune_id' => $communeId,
+                    'parametre'  => $row['parametre'],
                 ],
                 [
                     'categorie'              => $row['categorie'],
-                    'tendances_marches'      => $row['tendances_marches']      ?? null,
-                    'situation_exploitation' => $row['situation_exploitation'] ?? null,
-                    'ecarts_combler'         => $row['ecarts_combler']         ?? null,
+                    'tendances_marches'      => $normalize($row['tendances_marches']      ?? []),
+                    'situation_exploitation' => $normalize($row['situation_exploitation'] ?? []),
+                    'ecarts_combler'         => $normalize($row['ecarts_combler']         ?? []),
                 ]
             );
         }

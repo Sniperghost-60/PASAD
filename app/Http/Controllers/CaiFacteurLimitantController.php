@@ -15,9 +15,6 @@ class CaiFacteurLimitantController extends Controller
         if ($request->filled('commune_id')) {
             $query->where('commune_id', $request->commune_id);
         }
-        if ($request->filled('date_session')) {
-            $query->where('date_session', $request->date_session);
-        }
 
         return response()->json($query->first());
     }
@@ -26,7 +23,6 @@ class CaiFacteurLimitantController extends Controller
     {
         $request->validate([
             'commune_id'   => 'nullable|exists:communes,id',
-            'date_session' => 'nullable|date',
             'forces'       => 'nullable|string',
             'faiblesses'   => 'nullable|string',
             'opportunites' => 'nullable|string',
@@ -37,7 +33,6 @@ class CaiFacteurLimitantController extends Controller
             [
                 'user_id'      => Auth::id(),
                 'commune_id'   => $request->commune_id,
-                'date_session' => $request->date_session,
             ],
             [
                 'forces'       => $request->forces,

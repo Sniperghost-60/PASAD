@@ -56,7 +56,7 @@
     "name": "typeof"
   },
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-CmpMuSDi.js",
+    "file": "assets/index.es-D4wAIdbg.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
@@ -65,14 +65,8 @@
       "_typeof-B5XbjTb1.js"
     ]
   },
-  "node_modules/dompurify/dist/purify.es.mjs": {
-    "file": "assets/purify.es-Bu4Grnl0.js",
-    "name": "purify.es",
-    "src": "node_modules/dompurify/dist/purify.es.mjs",
-    "isDynamicEntry": true
-  },
   "node_modules/html2canvas/dist/html2canvas.js": {
-    "file": "assets/html2canvas-DiWBPEkQ.js",
+    "file": "assets/html2canvas-nVbhYC3T.js",
     "name": "html2canvas",
     "src": "node_modules/html2canvas/dist/html2canvas.js",
     "isDynamicEntry": true,
@@ -81,7 +75,7 @@
     ]
   },
   "node_modules/jspdf/dist/jspdf.es.min.js": {
-    "file": "assets/jspdf.es.min-mET7oUN5.js",
+    "file": "assets/jspdf.es.min-BvG0Jf5l.js",
     "name": "jspdf.es.min",
     "src": "node_modules/jspdf/dist/jspdf.es.min.js",
     "isDynamicEntry": true,
@@ -91,12 +85,12 @@
     ],
     "dynamicImports": [
       "node_modules/html2canvas/dist/html2canvas.js",
-      "node_modules/dompurify/dist/purify.es.mjs",
+      "resources/js/app.jsx",
       "node_modules/canvg/lib/index.es.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DkXA27uY.css",
+    "file": "assets/app-xAI5_eEY.css",
     "name": "app",
     "names": [
       "app.css"
@@ -105,7 +99,7 @@
     "isEntry": true
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-zW15Mp9-.js",
+    "file": "assets/app-xxXv06cN.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -114,7 +108,7 @@
       "node_modules/jspdf/dist/jspdf.es.min.js"
     ],
     "css": [
-      "assets/app-DkXA27uY.css"
+      "assets/app-xAI5_eEY.css"
     ]
   }
 }

@@ -47,8 +47,48 @@ const CATEGORIES = [
 const ALL_SLUGS = CATEGORIES.flatMap(c => c.params.map(p => ({ ...p, categorie: c.key })));
 
 const emptyData = () => Object.fromEntries(
-    ALL_SLUGS.map(p => [p.slug, { tendances_marches: '', situation_exploitation: '', ecarts_combler: '' }])
+    ALL_SLUGS.map(p => [p.slug, { tendances_marches: [''], situation_exploitation: [''], ecarts_combler: [''] }])
 );
+
+/* ── Champ à entrées multiples (compact, pour cellule de tableau) ─────── */
+function CellMultiInput({ values, onChange }) {
+    const list = values.length ? values : [''];
+
+    const update = (i, val) => onChange(list.map((v, idx) => idx === i ? val : v));
+    const add = () => onChange([...list, '']);
+    const remove = (i) => onChange(list.length > 1 ? list.filter((_, idx) => idx !== i) : ['']);
+
+    return (
+        <div className="space-y-1">
+            {list.map((val, i) => (
+                <div key={i} className="flex items-center gap-1">
+                    <input
+                        type="text"
+                        value={val}
+                        onChange={e => update(i, e.target.value)}
+                        placeholder="…"
+                        className="w-full rounded border-0 bg-transparent px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-300 focus:bg-amber-50/50 transition"
+                    />
+                    {list.length > 1 && (
+                        <button type="button" onClick={() => remove(i)}
+                            className="shrink-0 rounded p-0.5 text-red-300 hover:text-red-600 transition-colors">
+                            <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            ))}
+            <button type="button" onClick={add}
+                className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-50 transition-colors">
+                <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+                Ajouter
+            </button>
+        </div>
+    );
+}
 
 // ── Styles impression ────────────────────────────────────────────────────
 
@@ -64,13 +104,22 @@ const PRINT_STYLES = [
     '.param-label{font-weight:600;font-size:11px}',
 ].join('');
 
+function renderList(values) {
+    const filled = (values ?? []).map(v => v.trim()).filter(Boolean);
+    if (filled.length === 0) return null;
+    return (
+        <ul className="space-y-0.5 list-none pl-0 text-xs text-gray-800">
+            {filled.map((v, i) => <li key={i}>– {v}</li>)}
+        </ul>
+    );
+}
+
 /* ── Page principale ────────────────────────────────────────────────── */
 
 export default function CaiEtudeMarche() {
     const navigate = useNavigate();
     const { user, communeId } = useAuth();
 
-    const [dateSession, setDateSession] = useState('');
     const [data, setData]               = useState(emptyData);
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
@@ -84,10 +133,9 @@ export default function CaiEtudeMarche() {
     };
 
     const load = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            const params = new URLSearchParams({ date_session: dateSession });
+            const params = new URLSearchParams();
             if (communeId) params.set('commune_id', communeId);
             const res = await fetch('/api/cai/etude-marche?' + params, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -99,9 +147,9 @@ export default function CaiEtudeMarche() {
             (rows || []).forEach(r => {
                 if (next[r.parametre]) {
                     next[r.parametre] = {
-                        tendances_marches:      r.tendances_marches      ?? '',
-                        situation_exploitation: r.situation_exploitation ?? '',
-                        ecarts_combler:         r.ecarts_combler         ?? '',
+                        tendances_marches:      r.tendances_marches?.length      ? r.tendances_marches      : [''],
+                        situation_exploitation: r.situation_exploitation?.length ? r.situation_exploitation : [''],
+                        ecarts_combler:         r.ecarts_combler?.length        ? r.ecarts_combler         : [''],
                     };
                 }
             });
@@ -111,25 +159,26 @@ export default function CaiEtudeMarche() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { load(); }, [load]);
 
-    const setCell = (slug, field, value) =>
-        setData(d => ({ ...d, [slug]: { ...d[slug], [field]: value } }));
+    const setCell = (slug, field, values) =>
+        setData(d => ({ ...d, [slug]: { ...d[slug], [field]: values } }));
+
+    const filledValues = (values) => values.map(v => v.trim()).filter(Boolean);
 
     const handleSave = async () => {
-        if (!dateSession) { showToast('error', 'Veuillez saisir une date de session'); return; }
         setSaving(true);
         try {
             const rows = ALL_SLUGS.map(p => ({
                 categorie:              p.categorie,
                 parametre:              p.slug,
-                tendances_marches:      data[p.slug].tendances_marches,
-                situation_exploitation: data[p.slug].situation_exploitation,
-                ecarts_combler:         data[p.slug].ecarts_combler,
+                tendances_marches:      filledValues(data[p.slug].tendances_marches),
+                situation_exploitation: filledValues(data[p.slug].situation_exploitation),
+                ecarts_combler:         filledValues(data[p.slug].ecarts_combler),
             }));
-            const payload = { date_session: dateSession, rows };
+            const payload = { rows };
             if (communeId) payload.commune_id = communeId;
 
             const res = await fetch('/api/cai/etude-marche', {
@@ -171,12 +220,6 @@ export default function CaiEtudeMarche() {
                             <h1 className="text-lg font-bold text-amber-900">Fiche de synthèse d'une étude de marché</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                value={dateSession}
-                                onChange={e => setDateSession(e.target.value)}
-                                className="border border-amber-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-                            />
                             <button
                                 onClick={() => setShowApercu(true)}
                                 className="flex items-center gap-1.5 bg-white border border-amber-300 text-amber-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-amber-50 transition"
@@ -246,13 +289,10 @@ export default function CaiEtudeMarche() {
                                                         {param.label}
                                                     </td>
                                                     {['tendances_marches', 'situation_exploitation', 'ecarts_combler'].map(field => (
-                                                        <td key={field} className="border border-gray-200 p-1">
-                                                            <textarea
-                                                                rows={2}
-                                                                value={data[param.slug][field]}
-                                                                onChange={e => setCell(param.slug, field, e.target.value)}
-                                                                className="w-full resize-none rounded border-0 bg-transparent px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-amber-300 focus:bg-amber-50/50 transition min-h-[52px]"
-                                                                placeholder="…"
+                                                        <td key={field} className="border border-gray-200 p-1 align-top min-w-[180px]">
+                                                            <CellMultiInput
+                                                                values={data[param.slug][field]}
+                                                                onChange={values => setCell(param.slug, field, values)}
                                                             />
                                                         </td>
                                                     ))}
@@ -282,20 +322,19 @@ export default function CaiEtudeMarche() {
                                 </div>
                             </div>
                             <div className="overflow-auto flex-1 p-6" ref={printRef}>
-                                <h2>Fiche de synthèse — Étude de marché</h2>
-                                <p className="meta">
-                                    {commune && ('Commune : ' + commune + ' · ')}
-                                    {dateSession && ('Session : ' + dateSession)}
+                                <h2 className="text-base font-bold text-amber-900 mb-1">Fiche de synthèse — Étude de marché</h2>
+                                <p className="meta text-xs text-gray-500 mb-4">
+                                    {commune && ('Commune : ' + commune)}
                                     {user && (' · Agent : ' + user.name)}
                                 </p>
-                                <table>
+                                <table className="w-full border-collapse text-sm">
                                     <thead>
-                                        <tr>
-                                            <th>Catégorie</th>
-                                            <th>Facteurs et paramètres</th>
-                                            <th>Tendances des marchés</th>
-                                            <th>Situation de l'exploitation</th>
-                                            <th>Écarts à combler</th>
+                                        <tr className="bg-amber-800 text-white">
+                                            <th className="border border-amber-700 px-3 py-2 text-left text-xs font-semibold w-24">Catégorie</th>
+                                            <th className="border border-amber-700 px-3 py-2 text-left text-xs font-semibold w-44">Facteurs et paramètres</th>
+                                            <th className="border border-amber-700 px-3 py-2 text-left text-xs font-semibold">Tendances des marchés</th>
+                                            <th className="border border-amber-700 px-3 py-2 text-left text-xs font-semibold">Situation de l'exploitation</th>
+                                            <th className="border border-amber-700 px-3 py-2 text-left text-xs font-semibold">Écarts à combler</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -305,15 +344,17 @@ export default function CaiEtudeMarche() {
                                                     {pi === 0 && (
                                                         <td
                                                             rowSpan={cat.params.length}
-                                                            className={'cat-cell cat-' + (cat.key === 'produit' ? 'produit' : cat.key === 'promotion_commercialisation' ? 'promotion' : 'liens')}
+                                                            className={'cat-cell cat-' + (cat.key === 'produit' ? 'produit' : cat.key === 'promotion_commercialisation' ? 'promotion' : 'liens') + ' border border-gray-200 px-2 py-2 text-center text-white text-xs font-bold align-middle ' + cat.color}
                                                         >
                                                             {cat.label}
                                                         </td>
                                                     )}
-                                                    <td className="param-label">{param.label}</td>
-                                                    <td>{data[param.slug].tendances_marches}</td>
-                                                    <td>{data[param.slug].situation_exploitation}</td>
-                                                    <td>{data[param.slug].ecarts_combler}</td>
+                                                    <td className="param-label border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50">
+                                                        {param.label}
+                                                    </td>
+                                                    <td className="border border-gray-200 px-3 py-2 align-top">{renderList(data[param.slug].tendances_marches)}</td>
+                                                    <td className="border border-gray-200 px-3 py-2 align-top">{renderList(data[param.slug].situation_exploitation)}</td>
+                                                    <td className="border border-gray-200 px-3 py-2 align-top">{renderList(data[param.slug].ecarts_combler)}</td>
                                                 </tr>
                                             ))
                                         )}

@@ -15,9 +15,6 @@ class CaiMarcheCaracterisationController extends Controller
         if ($request->filled('commune_id')) {
             $query->where('commune_id', $request->commune_id);
         }
-        if ($request->filled('date_session')) {
-            $query->where('date_session', $request->date_session);
-        }
 
         return response()->json($query->orderBy('id')->get());
     }
@@ -25,7 +22,6 @@ class CaiMarcheCaracterisationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'date_session'              => 'nullable|date',
             'commune_id'                => 'nullable|exists:communes,id',
             'marches'                   => 'required|array|min:1',
             'marches.*.nom_marche'      => 'required|string|max:255',
@@ -42,19 +38,12 @@ class CaiMarcheCaracterisationController extends Controller
 
         $userId    = $request->user()->id;
         $communeId = $request->input('commune_id');
-        $date      = $request->input('date_session');
 
-        DB::transaction(function () use ($request, $userId, $communeId, $date) {
-            CaiMarcheCaracterisation::where('user_id', $userId)
-                ->where('commune_id', $communeId)
-                ->where('date_session', $date)
-                ->delete();
-
-            foreach ($request->marches as $m) {
+        $saved = DB::transaction(fn () =>
+            collect($request->marches)->map(fn ($m) =>
                 CaiMarcheCaracterisation::create([
                     'user_id'              => $userId,
                     'commune_id'           => $communeId,
-                    'date_session'         => $date,
                     'nom_marche'           => $m['nom_marche'],
                     'distance'             => $m['distance']             ?? null,
                     'type_marche'          => $m['type_marche']          ?? null,
@@ -65,10 +54,10 @@ class CaiMarcheCaracterisationController extends Controller
                     'cout_transport'       => $m['cout_transport']       ?? null,
                     'securite'             => $m['securite']             ?? null,
                     'produits'             => $m['produits']             ?? null,
-                ]);
-            }
-        });
+                ])
+            )->all()
+        );
 
-        return response()->json(['message' => 'Enregistré avec succès'], 201);
+        return response()->json(['message' => 'Enregistré avec succès', 'data' => $saved], 201);
     }
 }

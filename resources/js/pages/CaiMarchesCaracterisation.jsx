@@ -48,22 +48,8 @@ function emptyMarche() {
     };
 }
 
-function marcheFromApi(r) {
-    return {
-        _id: String(r.id),
-        nom_marche: r.nom_marche ?? '',
-        ...Object.fromEntries(VARS_MARCHE.map(v => [v.key, r[v.key] ?? ''])),
-        produits: r.produits?.length
-            ? r.produits.map(p => ({
-                nom_produit: p.nom_produit ?? '',
-                ...Object.fromEntries(VARS_PRODUIT.map(v => [v.key, p[v.key] ?? ''])),
-            }))
-            : [emptyProduit()],
-    };
-}
-
 /* ── Modal aperçu / impression ───────────────────────────────────────── */
-function ApercuModal({ marches, dateSession, onClose }) {
+function ApercuModal({ marches, onClose }) {
     const printRef = useRef(null);
 
     const handlePrint = () => {
@@ -93,11 +79,6 @@ function ApercuModal({ marches, dateSession, onClose }) {
                 <div className="flex items-center justify-between bg-gradient-to-r from-amber-900 to-amber-700 px-6 py-4">
                     <div>
                         <h2 className="text-base font-bold text-white">Aperçu — Caractérisation des marchés</h2>
-                        {dateSession && (
-                            <p className="text-xs text-amber-200/70 mt-0.5">
-                                Session du {new Date(dateSession).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                            </p>
-                        )}
                     </div>
                     <div className="flex gap-2">
                         <button type="button" onClick={handlePrint}
@@ -348,34 +329,163 @@ function MarcheCard({ marche, index, total, onChange, onRemove }) {
     );
 }
 
+/* ── Panneau des marchés déjà enregistrés ─────────────────────────────── */
+function InfoPill({ label, value }) {
+    return (
+        <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-gray-200 px-2.5 py-1 text-xs text-gray-600 shadow-sm">
+            <span className="font-semibold text-gray-500">{label}</span>
+            <span className="text-gray-800">{value}</span>
+        </span>
+    );
+}
+
+function SavedProduitCard({ produit, index }) {
+    const attrs = VARS_PRODUIT
+        .map(v => ({ ...v, val: produit[v.key] }))
+        .filter(v => v.val);
+
+    return (
+        <div className="rounded-xl border border-amber-100 bg-amber-50/40 px-4 py-3">
+            <p className="mb-2 text-xs font-bold text-amber-900">
+                {produit.nom_produit || `Produit ${index + 1}`}
+            </p>
+            {attrs.length === 0 ? (
+                <span className="text-xs italic text-gray-400">Aucun attribut renseigné</span>
+            ) : (
+                <div className="flex flex-wrap gap-1.5">
+                    {attrs.map(v => (
+                        <InfoPill key={v.key} label={`${v.label.split(' (')[0]} :`} value={v.val} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function SavedMarcheCard({ marche, index }) {
+    const [expanded, setExpanded] = useState(true);
+    const details = VARS_MARCHE.map(v => ({ ...v, val: marche[v.key] })).filter(v => v.val);
+    const produits = Array.isArray(marche.produits) ? marche.produits : [];
+
+    return (
+        <div className="rounded-2xl border border-amber-100 bg-white shadow-sm overflow-hidden">
+            <button
+                type="button"
+                onClick={() => setExpanded(v => !v)}
+                className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-amber-50/50 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-full bg-amber-100">
+                        <svg className="size-4 text-amber-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-900">{marche.nom_marche || `Marché ${index + 1}`}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            {produits.length} produit{produits.length > 1 ? 's' : ''} renseigné{produits.length > 1 ? 's' : ''}
+                        </p>
+                    </div>
+                </div>
+                <svg className={`size-5 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {expanded && (
+                <div className="border-t border-gray-100 px-5 pb-5 pt-4 space-y-4">
+                    <div>
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-800">Variables marché</p>
+                        {details.length === 0 ? (
+                            <span className="text-xs italic text-gray-400">Aucune variable renseignée</span>
+                        ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                                {details.map(v => (
+                                    <InfoPill key={v.key} label={`${v.label.split(' (')[0]} :`} value={v.val} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-800">
+                            Produits végétaux agroécologiques
+                        </p>
+                        {produits.length === 0 ? (
+                            <span className="text-xs italic text-gray-400">Aucun produit renseigné</span>
+                        ) : (
+                            <div className="space-y-2">
+                                {produits.map((p, pi) => (
+                                    <SavedProduitCard key={pi} produit={p} index={pi} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function SavedMarchesPanel({ marches, loading }) {
+    return (
+        <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-900 to-amber-700 px-6 py-4">
+                <svg className="size-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 className="text-sm font-bold text-white">Marchés déjà enregistrés</h2>
+                <span className="ml-auto rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-white">
+                    {marches.length}
+                </span>
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-400">
+                    <svg className="size-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                    Chargement…
+                </div>
+            ) : marches.length === 0 ? (
+                <p className="py-10 text-center text-sm italic text-gray-400">Aucun marché enregistré pour le moment.</p>
+            ) : (
+                <div className="space-y-3 bg-amber-50/30 p-4">
+                    {marches.map((m, i) => (
+                        <SavedMarcheCard key={m.id} marche={m} index={i} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiMarchesCaracterisation() {
     const navigate = useNavigate();
-    const [dateSession, setDateSession] = useState('');
     const [marches, setMarches]         = useState([emptyMarche()]);
-    const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
     const [showApercu, setShowApercu]   = useState(false);
     const [toast, setToast]             = useState({ show: false, message: '', type: 'success' });
+    const [savedMarches, setSavedMarches] = useState([]);
+    const [loadingSaved, setLoadingSaved] = useState(false);
 
     const notify = (message, type = 'success') => setToast({ show: true, message, type });
 
-    const loadSession = useCallback(async (date) => {
-        setLoading(true);
+    const loadSaved = useCallback(async () => {
+        setLoadingSaved(true);
         try {
-            const res = await api.get(`/cai/marches-caracterisation?date_session=${date}`);
-            setMarches(res.data.length ? res.data.map(marcheFromApi) : [emptyMarche()]);
+            const res = await api.get('/api/cai/marches-caracterisation');
+            setSavedMarches(res.data ?? []);
         } catch {
-            setMarches([emptyMarche()]);
+            // silencieux : la liste des marchés déjà enregistrés est secondaire
         } finally {
-            setLoading(false);
+            setLoadingSaved(false);
         }
     }, []);
 
-    useEffect(() => {
-        if (dateSession) loadSession(dateSession);
-        else setMarches([emptyMarche()]);
-    }, [dateSession, loadSession]);
+    useEffect(() => { loadSaved(); }, [loadSaved]);
 
     const updateMarche = (id, updated) =>
         setMarches(prev => prev.map(m => m._id === id ? updated : m));
@@ -394,7 +504,6 @@ export default function CaiMarchesCaracterisation() {
         setSaving(true);
         try {
             const payload = {
-                date_session: dateSession || null,
                 marches: filled.map(m => ({
                     nom_marche:           m.nom_marche.trim(),
                     distance:             m.distance.trim()             || null,
@@ -413,8 +522,10 @@ export default function CaiMarchesCaracterisation() {
                         })),
                 })),
             };
-            await api.post('/cai/marches-caracterisation', payload);
+            await api.post('/api/cai/marches-caracterisation', payload);
             notify(`${payload.marches.length} marché(s) enregistré(s) avec succès.`);
+            setMarches([emptyMarche()]);
+            loadSaved();
         } catch (err) {
             notify(err.response?.data?.message ?? err.message ?? 'Erreur inconnue', 'error');
         } finally {
@@ -442,16 +553,6 @@ export default function CaiMarchesCaracterisation() {
                         </p>
                     </div>
 
-                    {/* Date */}
-                    <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                            Date de la session
-                        </label>
-                        <input type="date" value={dateSession}
-                            onChange={e => setDateSession(e.target.value)}
-                            className="w-full max-w-xs rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-800 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100" />
-                    </div>
-
                     {/* Badge */}
                     <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5">
                         <svg className="size-4 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -463,36 +564,26 @@ export default function CaiMarchesCaracterisation() {
                     </div>
 
                     {/* Contenu */}
-                    {loading ? (
-                        <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2">
-                            <svg className="size-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                            </svg>
-                            Chargement…
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {marches.map((m, i) => (
-                                <MarcheCard
-                                    key={m._id}
-                                    marche={m}
-                                    index={i}
-                                    total={marches.length}
-                                    onChange={updated => updateMarche(m._id, updated)}
-                                    onRemove={() => removeMarche(m._id)}
-                                />
-                            ))}
+                    <div className="space-y-4">
+                        {marches.map((m, i) => (
+                            <MarcheCard
+                                key={m._id}
+                                marche={m}
+                                index={i}
+                                total={marches.length}
+                                onChange={updated => updateMarche(m._id, updated)}
+                                onRemove={() => removeMarche(m._id)}
+                            />
+                        ))}
 
-                            <button type="button" onClick={addMarche}
-                                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-200 py-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors">
-                                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-                                </svg>
-                                Ajouter un marché
-                            </button>
-                        </div>
-                    )}
+                        <button type="button" onClick={addMarche}
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-200 py-4 text-sm font-semibold text-amber-700 hover:bg-amber-50 transition-colors">
+                            <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                            </svg>
+                            Ajouter un marché
+                        </button>
+                    </div>
 
                     {/* Boutons */}
                     <div className="flex justify-end gap-3">
@@ -522,11 +613,13 @@ export default function CaiMarchesCaracterisation() {
                             Suivant →
                         </button>
                     </div>
+
+                    <SavedMarchesPanel marches={savedMarches} loading={loadingSaved} />
                 </main>
             </div>
 
             {showApercu && (
-                <ApercuModal marches={marches} dateSession={dateSession} onClose={() => setShowApercu(false)} />
+                <ApercuModal marches={marches} onClose={() => setShowApercu(false)} />
             )}
             <ModernNotification
                 show={toast.show}

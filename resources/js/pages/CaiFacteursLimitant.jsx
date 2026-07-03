@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { useAuth } from '../contexts/AuthContext';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import RichTextEditor from '../components/RichTextEditor';
+
+const RTE_ALLOWED_TAGS = ['b', 'strong', 'i', 'em', 'u', 'ul', 'li', 'br', 'div', 'p'];
+const cleanHtml = (html) => DOMPurify.sanitize(html ?? '', { ALLOWED_TAGS: RTE_ALLOWED_TAGS, ALLOWED_ATTR: [] });
+const isHtmlEmpty = (html) => !html || cleanHtml(html).replace(/<[^>]*>/g, '').trim() === '';
 
 const AMBER_DARK = '#78350F';
 
@@ -22,6 +28,9 @@ const PRINT_STYLES = [
     '.q-card{border-radius:6px;overflow:hidden;border:2px solid #ccc;}',
     '.q-header{padding:8px 12px;font-weight:bold;color:white;font-size:13px;}',
     '.q-body{padding:10px 12px;min-height:100px;white-space:pre-wrap;font-size:11px;}',
+    '.q-body ul{list-style:none;margin:0.25em 0;padding-left:1.1em;}',
+    '.q-body ul li{position:relative;}',
+    ".q-body ul li::before{content:'\\2013';position:absolute;left:-1.1em;}",
     '.forces .q-header{background:#16a34a;}',
     '.faiblesses .q-header{background:#dc2626;}',
     '.opportunites .q-header{background:#2563eb;}',
@@ -29,7 +38,7 @@ const PRINT_STYLES = [
 ].join('');
 
 /* ── Aperçu ──────────────────────────────────────────────────────────── */
-function ApercuModal({ data, commune, dateSession, onClose }) {
+function ApercuModal({ data, commune, onClose }) {
     const printRef = useRef();
 
     const handlePrint = () => {
@@ -66,8 +75,7 @@ function ApercuModal({ data, commune, dateSession, onClose }) {
                     <h2 style={{ color: AMBER_DARK, fontSize: 14, fontWeight: 'bold', marginBottom: 8 }}>
                         Étape 4 — Facteurs limitant l'accès aux marchés
                     </h2>
-                    {commune && <p className="meta" style={{ color: '#666', marginBottom: 4, fontSize: 12 }}>Commune : <strong>{commune}</strong></p>}
-                    {dateSession && <p className="meta" style={{ color: '#666', marginBottom: 12, fontSize: 12 }}>Date : <strong>{dateSession}</strong></p>}
+                    {commune && <p className="meta" style={{ color: '#666', marginBottom: 12, fontSize: 12 }}>Commune : <strong>{commune}</strong></p>}
 
                     <div className="ffom-grid" style={{ display: 'grid', gridTemplateColumns: '60px 1fr 1fr', gap: 8 }}>
                         <div />
@@ -82,7 +90,7 @@ function ApercuModal({ data, commune, dateSession, onClose }) {
                                 <div key={k} className={'q-card ' + k} style={{ border: '2px solid ' + c.border, borderRadius: 8, overflow: 'hidden' }}>
                                     <div className="q-header" style={{ background: c.header, color: '#fff', padding: '8px 12px', fontWeight: 700, fontSize: 13 }}>{q.label}</div>
                                     <div className="q-body" style={{ background: c.bg, padding: '10px 12px', minHeight: 80, whiteSpace: 'pre-wrap', fontSize: 12, color: '#1c1917' }}>
-                                        {data[k] || '—'}
+                                        {isHtmlEmpty(data[k]) ? '—' : <div dangerouslySetInnerHTML={{ __html: cleanHtml(data[k]) }} />}
                                     </div>
                                 </div>
                             );
@@ -96,7 +104,7 @@ function ApercuModal({ data, commune, dateSession, onClose }) {
                                 <div key={k} className={'q-card ' + k} style={{ border: '2px solid ' + c.border, borderRadius: 8, overflow: 'hidden' }}>
                                     <div className="q-header" style={{ background: c.header, color: '#fff', padding: '8px 12px', fontWeight: 700, fontSize: 13 }}>{q.label}</div>
                                     <div className="q-body" style={{ background: c.bg, padding: '10px 12px', minHeight: 80, whiteSpace: 'pre-wrap', fontSize: 12, color: '#1c1917' }}>
-                                        {data[k] || '—'}
+                                        {isHtmlEmpty(data[k]) ? '—' : <div dangerouslySetInnerHTML={{ __html: cleanHtml(data[k]) }} />}
                                     </div>
                                 </div>
                             );
@@ -113,7 +121,6 @@ export default function CaiFacteursLimitant() {
     const navigate = useNavigate();
     const { user, communeId } = useAuth();
 
-    const [dateSession, setDateSession]   = useState('');
     const [data, setData]                 = useState({ forces: '', faiblesses: '', opportunites: '', menaces: '' });
     const [loading, setLoading]           = useState(false);
     const [saving, setSaving]             = useState(false);
@@ -126,10 +133,9 @@ export default function CaiFacteursLimitant() {
     };
 
     const load = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            const params = new URLSearchParams({ date_session: dateSession });
+            const params = new URLSearchParams();
             if (communeId) params.set('commune_id', communeId);
             const res = await fetch(`/api/cai/facteurs-limitant?${params}`, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -152,14 +158,14 @@ export default function CaiFacteursLimitant() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { load(); }, [load]);
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            const payload = { ...data, date_session: dateSession || null };
+            const payload = { ...data };
             if (communeId) payload.commune_id = communeId;
 
             const res = await fetch('/api/cai/facteurs-limitant', {
@@ -213,19 +219,14 @@ export default function CaiFacteursLimitant() {
                     <ModernNotification show={notif.show} type={notif.type} message={notif.message} />
 
                     {/* Contexte */}
-                    <div className="bg-white rounded-xl border border-amber-200 p-5 flex flex-wrap gap-4">
-                        {commune && (
+                    {commune && (
+                        <div className="bg-white rounded-xl border border-amber-200 p-5 flex flex-wrap gap-4">
                             <div>
                                 <label className="block text-xs font-semibold text-amber-700 mb-1 uppercase tracking-wide">Commune</label>
                                 <p className="text-sm font-medium text-gray-800">{commune}</p>
                             </div>
-                        )}
-                        <div>
-                            <label className="block text-xs font-semibold text-amber-700 mb-1 uppercase tracking-wide">Date de session</label>
-                            <input type="date" value={dateSession} onChange={e => setDateSession(e.target.value)}
-                                className="border border-amber-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                         </div>
-                    </div>
+                    )}
 
                     {loading ? (
                         <div className="text-center py-10 text-amber-600 font-medium">Chargement…</div>
@@ -250,13 +251,11 @@ export default function CaiFacteursLimitant() {
                                                 <p className="font-bold text-sm">{q.label}</p>
                                                 <p className="text-xs opacity-80 mt-0.5">{q.hint}</p>
                                             </div>
-                                            <div className={`${q.bg} p-1`}>
-                                                <textarea
-                                                    rows={6}
-                                                    placeholder={`Lister les ${q.label.toLowerCase()}…`}
+                                            <div className={`${q.bg}`}>
+                                                <RichTextEditor
                                                     value={data[k]}
-                                                    onChange={e => setData(d => ({ ...d, [k]: e.target.value }))}
-                                                    className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none p-3"
+                                                    onChange={html => setData(d => ({ ...d, [k]: html }))}
+                                                    placeholder={`Lister les ${q.label.toLowerCase()}…`}
                                                 />
                                             </div>
                                         </div>
@@ -276,13 +275,11 @@ export default function CaiFacteursLimitant() {
                                                 <p className="font-bold text-sm">{q.label}</p>
                                                 <p className="text-xs opacity-80 mt-0.5">{q.hint}</p>
                                             </div>
-                                            <div className={`${q.bg} p-1`}>
-                                                <textarea
-                                                    rows={6}
-                                                    placeholder={`Lister les ${q.label.toLowerCase()}…`}
+                                            <div className={`${q.bg}`}>
+                                                <RichTextEditor
                                                     value={data[k]}
-                                                    onChange={e => setData(d => ({ ...d, [k]: e.target.value }))}
-                                                    className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none p-3"
+                                                    onChange={html => setData(d => ({ ...d, [k]: html }))}
+                                                    placeholder={`Lister les ${q.label.toLowerCase()}…`}
                                                 />
                                             </div>
                                         </div>
@@ -298,7 +295,6 @@ export default function CaiFacteursLimitant() {
                 <ApercuModal
                     data={data}
                     commune={commune}
-                    dateSession={dateSession}
                     onClose={() => setShowApercu(false)}
                 />
             )}
