@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
 import api from '../services/api';
@@ -215,6 +216,110 @@ function MultiInput({ values, onChange, placeholder }) {
     );
 }
 
+/* ── Modal édition producteur enregistré ──────────────────────────────── */
+function EditProducteurModal({ row, onChange, onSave, onClose, saving }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden my-6">
+                <div className="flex items-center justify-between bg-gradient-to-r from-emerald-800 to-emerald-600 px-6 py-4">
+                    <h2 className="text-base font-bold text-white">Modifier le producteur</h2>
+                    <button type="button" onClick={onClose}
+                        className="flex size-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all">
+                        <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Nom et prénom *</label>
+                        <input type="text" value={row.nom_prenom} onChange={e => onChange('nom_prenom', e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Sexe</label>
+                            <div className="flex gap-1">
+                                {['M', 'F'].map(s => (
+                                    <button key={s} type="button" onClick={() => onChange('sexe', s)}
+                                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${
+                                            row.sexe === s
+                                                ? s === 'M' ? 'border-blue-300 bg-blue-100 text-blue-700' : 'border-pink-300 bg-pink-100 text-pink-700'
+                                                : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300'
+                                        }`}>
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Âge</label>
+                            <input type="number" min="1" max="120" value={row.age} onChange={e => onChange('age', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Village</label>
+                            <input type="text" value={row.village} onChange={e => onChange('village', e.target.value.toUpperCase())}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                        </div>
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Contact</label>
+                            <input type="tel" value={row.contact} onChange={e => onChange('contact', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">OP d'appartenance</label>
+                        <input type="text" value={row.op_appartenance} onChange={e => onChange('op_appartenance', e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Produits agricoles</label>
+                        <ProduitsCell produits={row.produits_agricoles} onChange={val => onChange('produits_agricoles', val)} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Mode de commercialisation</label>
+                            <input type="text" value={row.mode_commercialisation} onChange={e => onChange('mode_commercialisation', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                        </div>
+                        <div>
+                            <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Marché actuel</label>
+                            <input type="text" value={row.marche_actuel} onChange={e => onChange('marche_actuel', e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-100 focus:bg-white transition-all" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-500 uppercase tracking-wide">Attentes</label>
+                        <MultiInput values={row.attentes} onChange={val => onChange('attentes', val)} placeholder="Attentes vis-à-vis du CAI…" />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
+                    <button type="button" onClick={onClose}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                        Annuler
+                    </button>
+                    <button type="button" onClick={onSave} disabled={saving}
+                        className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60 transition-all shadow">
+                        {saving && <svg className="size-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>}
+                        {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ── Ligne vide ──────────────────────────────────────────────────────── */
 const emptyRow = () => ({
     _id: Math.random().toString(36).slice(2),
@@ -243,11 +348,9 @@ function ProduitsCell({ produits, onChange }) {
         <div className="space-y-1">
             {produits.map((p, i) => (
                 <div key={i} className="flex items-center gap-1">
-                    <input
-                        type="text"
-                        placeholder="Type de produit"
+                    <CultureSelect
                         value={p.type_produit}
-                        onChange={e => updateProduit(i, 'type_produit', e.target.value)}
+                        onChange={v => updateProduit(i, 'type_produit', v)}
                         className="flex-[2] rounded border border-slate-200 bg-amber-50/30 px-2 py-1 text-xs outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100"
                     />
                     <input
@@ -282,15 +385,83 @@ function ProduitsCell({ produits, onChange }) {
 export default function CaiListeProducteurs() {
     const navigate = useNavigate();
     const [rows, setRows]                 = useState([emptyRow()]);
+    const [savedRows, setSavedRows]       = useState([]);
+    const [loadingSaved, setLoadingSaved] = useState(true);
     const [saving, setSaving]             = useState(false);
     const [errors, setErrors]             = useState({});
     const [showPreview, setShowPreview]   = useState(false);
     const [toast, setToast]               = useState({ show: false, message: '', type: 'success' });
+    const [editingRow, setEditingRow]     = useState(null);
+    const [savingEdit, setSavingEdit]     = useState(false);
 
     const showToast = useCallback((message, type = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast(t => ({ ...t, show: false })), 3500);
     }, []);
+
+    const loadSaved = useCallback(async () => {
+        try {
+            const res = await api.get('/api/cai/liste-producteurs');
+            setSavedRows(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            setSavedRows([]);
+        } finally {
+            setLoadingSaved(false);
+        }
+    }, []);
+
+    useEffect(() => { loadSaved(); }, [loadSaved]);
+
+    /* Édition d'un producteur déjà enregistré */
+    const startEdit = (row) => setEditingRow({
+        id:                     row.id,
+        nom_prenom:             row.nom_prenom ?? '',
+        sexe:                   row.sexe ?? 'M',
+        age:                    row.age ?? '',
+        village:                row.village ?? '',
+        contact:                row.contact ?? '',
+        op_appartenance:        row.op_appartenance ?? '',
+        produits_agricoles:     row.produits_agricoles?.length ? row.produits_agricoles : [{ type_produit: '', quantite: '' }],
+        mode_commercialisation: row.mode_commercialisation ?? '',
+        marche_actuel:          row.marche_actuel ?? '',
+        attentes:               row.attentes?.length ? row.attentes : [''],
+    });
+
+    const updateEditingRow = (field, value) => setEditingRow(r => ({ ...r, [field]: value }));
+
+    const handleUpdate = async () => {
+        if (!editingRow.nom_prenom?.trim()) {
+            showToast('Le nom et prénom est obligatoire.', 'error');
+            return;
+        }
+        setSavingEdit(true);
+        try {
+            const payload = {
+                nom_prenom:             editingRow.nom_prenom.trim(),
+                sexe:                   editingRow.sexe,
+                age:                    editingRow.age ? Number(editingRow.age) : null,
+                village:                editingRow.village?.trim() || null,
+                contact:                editingRow.contact?.trim() || null,
+                op_appartenance:        editingRow.op_appartenance?.trim() || null,
+                produits_agricoles:     editingRow.produits_agricoles.filter(p => p.type_produit?.trim()).map(p => ({
+                                            type_produit: p.type_produit.trim(),
+                                            quantite:     p.quantite?.trim() || null,
+                                        })),
+                mode_commercialisation: editingRow.mode_commercialisation?.trim() || null,
+                marche_actuel:          editingRow.marche_actuel?.trim() || null,
+                attentes:               editingRow.attentes.map(v => v.trim()).filter(Boolean),
+            };
+            const res = await api.put(`/api/cai/liste-producteurs/${editingRow.id}`, payload);
+            setSavedRows(prev => prev.map(r => r.id === editingRow.id ? res.data.data : r));
+            showToast('Producteur mis à jour avec succès !');
+            setEditingRow(null);
+        } catch (err) {
+            const msg = err?.response?.data?.message ?? 'Erreur lors de la mise à jour.';
+            showToast(msg, 'error');
+        } finally {
+            setSavingEdit(false);
+        }
+    };
 
     /* Helpers pour mettre à jour les lignes */
     const updateRow = (id, field, value) =>
@@ -335,6 +506,7 @@ export default function CaiListeProducteurs() {
             await api.post('/api/cai/liste-producteurs', payload);
             showToast(`${payload.producteurs.length} producteur(s) enregistré(s) avec succès !`);
             setRows([emptyRow()]);
+            loadSaved();
         } catch (err) {
             const msg = err?.response?.data?.message ?? 'Erreur lors de l\'enregistrement.';
             showToast(msg, 'error');
@@ -572,13 +744,127 @@ export default function CaiListeProducteurs() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Producteurs déjà enregistrés */}
+                    {loadingSaved ? (
+                        <div className="mt-6 flex items-center gap-2 text-xs text-slate-400">
+                            <svg className="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                            Chargement des producteurs déjà enregistrés…
+                        </div>
+                    ) : savedRows.length > 0 && (
+                        <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-white px-5 py-3.5 border-b border-slate-100">
+                                <div className="flex size-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                                    <svg className="size-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-800">Producteurs déjà enregistrés</h2>
+                                    <p className="text-xs text-slate-400">{savedRows.length} enregistrement{savedRows.length > 1 ? 's' : ''} au total</p>
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse text-sm">
+                                    <thead>
+                                        <tr className="bg-slate-50/80">
+                                            <th className="px-4 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider w-10">N°</th>
+                                            <th className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Producteur</th>
+                                            <th className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Localisation</th>
+                                            <th className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Produits agricoles</th>
+                                            <th className="px-4 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attentes</th>
+                                            <th className="px-4 py-2.5 w-10" />
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {savedRows.map((row, i) => {
+                                            const initials = (row.nom_prenom ?? '')
+                                                .split(/\s+/).filter(Boolean).slice(0, 2)
+                                                .map(w => w[0]?.toUpperCase()).join('') || '?';
+                                            const produits = (row.produits_agricoles ?? []).filter(p => p?.type_produit?.trim());
+                                            const attentes = Array.isArray(row.attentes) ? row.attentes.filter(Boolean) : [];
+                                            return (
+                                                <tr key={row.id ?? i} className="odd:bg-white even:bg-slate-50/40 hover:bg-emerald-50/40 transition-colors">
+                                                    <td className="px-4 py-3 text-center text-xs font-bold text-slate-300">{i + 1}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className={`flex size-8 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                                                                row.sexe === 'M' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                                                            }`}>
+                                                                {initials}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-semibold text-slate-700">{row.nom_prenom}</div>
+                                                                <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                                                                    <span className={`rounded-full px-1.5 py-0.5 font-bold ${
+                                                                        row.sexe === 'M' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'
+                                                                    }`}>{row.sexe === 'M' ? 'Homme' : 'Femme'}</span>
+                                                                    {row.age && <span>{row.age} ans</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-slate-600">
+                                                        <div>{row.village || '—'}</div>
+                                                        {row.contact && <div className="text-xs text-slate-400">{row.contact}</div>}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {produits.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {produits.map((p, pi) => (
+                                                                    <span key={pi} className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                                                                        {p.type_produit}{p.quantite ? ` · ${p.quantite}` : ''}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        ) : <span className="text-slate-300">—</span>}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {attentes.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {attentes.map((a, ai) => (
+                                                                    <span key={ai} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                                                                        {a}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                        ) : <span className="text-slate-300">—</span>}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <button type="button" onClick={() => startEdit(row)}
+                                                            title="Modifier"
+                                                            className="flex size-7 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                                                            <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </main>
             </div>
 
             {showPreview && (
                 <ApercuModal
-                    rows={rows}
+                    rows={[...savedRows, ...rows]}
                     onClose={() => setShowPreview(false)}
+                />
+            )}
+
+            {editingRow && (
+                <EditProducteurModal
+                    row={editingRow}
+                    onChange={updateEditingRow}
+                    onSave={handleUpdate}
+                    onClose={() => setEditingRow(null)}
+                    saving={savingEdit}
                 />
             )}
         </div>

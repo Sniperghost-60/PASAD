@@ -63,4 +63,43 @@ class CaiListeProducteurController extends Controller
             'data'    => $saved,
         ], 201);
     }
+
+    public function update(Request $request, CaiListeProducteur $producteur)
+    {
+        abort_unless($producteur->user_id === $request->user()->id, 403);
+
+        $validated = $request->validate([
+            'nom_prenom'                          => ['required', 'string', 'max:255'],
+            'sexe'                                 => ['required', 'in:M,F'],
+            'age'                                  => ['nullable', 'integer', 'min:1', 'max:120'],
+            'village'                              => ['nullable', 'string', 'max:255'],
+            'contact'                              => ['nullable', 'string', 'max:50'],
+            'op_appartenance'                      => ['nullable', 'string', 'max:255'],
+            'produits_agricoles'                   => ['nullable', 'array'],
+            'produits_agricoles.*.type_produit'    => ['nullable', 'string', 'max:255'],
+            'produits_agricoles.*.quantite'        => ['nullable', 'string', 'max:100'],
+            'mode_commercialisation'               => ['nullable', 'string', 'max:255'],
+            'marche_actuel'                        => ['nullable', 'string', 'max:255'],
+            'attentes'                             => ['nullable', 'array'],
+            'attentes.*'                           => ['string', 'max:500'],
+        ]);
+
+        $producteur->update([
+            'nom_prenom'             => $validated['nom_prenom'],
+            'sexe'                   => $validated['sexe'],
+            'age'                    => $validated['age']                    ?? null,
+            'village'                => $validated['village']                ?? null,
+            'contact'                => $validated['contact']                ?? null,
+            'op_appartenance'        => $validated['op_appartenance']        ?? null,
+            'produits_agricoles'     => $validated['produits_agricoles']     ?? [],
+            'mode_commercialisation' => $validated['mode_commercialisation'] ?? null,
+            'marche_actuel'          => $validated['marche_actuel']          ?? null,
+            'attentes'               => $validated['attentes']               ?? [],
+        ]);
+
+        return response()->json([
+            'message' => 'Producteur mis à jour avec succès !',
+            'data'    => $producteur,
+        ]);
+    }
 }

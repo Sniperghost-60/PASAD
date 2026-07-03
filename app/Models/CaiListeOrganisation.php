@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CaiListeOrganisation extends Model
 {
     protected $fillable = [
-        'user_id', 'commune_id', 'date_session',
+        'user_id', 'commune_id',
         'nom_op', 'siege_contact', 'numero_groupement',
         'effectif_h', 'effectif_f', 'produits_agricoles',
         'mode_commercialisation', 'marche_actuel', 'attente',
@@ -15,7 +15,7 @@ class CaiListeOrganisation extends Model
 
     protected $casts = [
         'produits_agricoles' => 'array',
-        'date_session'       => 'date:Y-m-d',
+        'attente'            => 'array',
     ];
 
     public function user()
