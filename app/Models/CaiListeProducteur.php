@@ -11,7 +11,6 @@ class CaiListeProducteur extends Model
     protected $fillable = [
         'user_id',
         'commune_id',
-        'date_session',
         'nom_prenom',
         'sexe',
         'age',
@@ -26,6 +25,7 @@ class CaiListeProducteur extends Model
 
     protected $casts = [
         'produits_agricoles' => 'array',
+        'attentes'           => 'array',
     ];
 
     public function user()    { return $this->belongsTo(User::class); }

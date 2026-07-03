@@ -56,7 +56,7 @@
     "name": "typeof"
   },
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-BKl2NP-y.js",
+    "file": "assets/index.es-BcMwg9T0.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
@@ -72,7 +72,7 @@
     "isDynamicEntry": true
   },
   "node_modules/html2canvas/dist/html2canvas.js": {
-    "file": "assets/html2canvas-DkDWaEw7.js",
+    "file": "assets/html2canvas-CN8ESdAT.js",
     "name": "html2canvas",
     "src": "node_modules/html2canvas/dist/html2canvas.js",
     "isDynamicEntry": true,
@@ -81,7 +81,7 @@
     ]
   },
   "node_modules/jspdf/dist/jspdf.es.min.js": {
-    "file": "assets/jspdf.es.min-BwIuIXIj.js",
+    "file": "assets/jspdf.es.min-DDJ0UVzy.js",
     "name": "jspdf.es.min",
     "src": "node_modules/jspdf/dist/jspdf.es.min.js",
     "isDynamicEntry": true,
@@ -105,7 +105,7 @@
     "isEntry": true
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-BN8ZVQCa.js",
+    "file": "assets/app-CQ2m9AJ1.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
