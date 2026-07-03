@@ -51,8 +51,6 @@ export default function CaiEvolutionProduitsOrganiques() {
     const { user, communeId } = useAuth();
     const navigate = useNavigate();
 
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [loading, setLoading]         = useState(false);
     const [saving,  setSaving]          = useState(false);
@@ -70,8 +68,8 @@ export default function CaiEvolutionProduitsOrganiques() {
         const load = async () => {
             setLoading(true);
             try {
-                let url = '/api/cai/evolution-produits-organiques?date_session=' + dateSession;
-                if (communeId) url += '&commune_id=' + communeId;
+                let url = '/api/cai/evolution-produits-organiques';
+                if (communeId) url += '?commune_id=' + communeId;
                 const res = await fetch(url, {
                     credentials: 'include',
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -91,7 +89,7 @@ export default function CaiEvolutionProduitsOrganiques() {
             }
         };
         load();
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     const setCell = (idx, key, val) =>
         setDonnees(prev => ({
@@ -108,13 +106,9 @@ export default function CaiEvolutionProduitsOrganiques() {
     };
 
     const handleSave = async () => {
-        if (!dateSession) {
-            setNotif({ show: true, type: 'error', message: 'Veuillez renseigner la date de session.' });
-            return;
-        }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees };
+            const payload = { donnees };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/evolution-produits-organiques', {
                 method: 'POST',
@@ -264,7 +258,7 @@ export default function CaiEvolutionProduitsOrganiques() {
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#f9fafb' }}>
             <Sidebar />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <Header />
                 <ModernNotification
                     show={notif.show}
@@ -287,17 +281,8 @@ export default function CaiEvolutionProduitsOrganiques() {
                         </p>
                     </div>
 
-                    {/* Date + Actions */}
+                    {/* Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Date de session :</label>
-                            <input
-                                type="date"
-                                value={dateSession}
-                                onChange={e => setDateSession(e.target.value)}
-                                style={{ border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontSize: 14, color: '#111827' }}
-                            />
-                        </div>
                         {loading && <span style={{ fontSize: 13, color: '#9ca3af' }}>Chargement...</span>}
                         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                             <button onClick={() => setApercu(true)} style={{

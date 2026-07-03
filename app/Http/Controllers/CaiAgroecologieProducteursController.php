@@ -10,13 +10,11 @@ class CaiAgroecologieProducteursController extends Controller
 {
     public function index(Request $request)
     {
-        $userId      = Auth::id();
-        $communeId   = $request->query('commune_id');
-        $dateSession = $request->query('date_session');
+        $userId    = Auth::id();
+        $communeId = $request->query('commune_id');
 
         return CaiAgroecologieProducteur::where('user_id', $userId)
-            ->when($communeId,   fn ($q) => $q->where('commune_id',   $communeId))
-            ->when($dateSession, fn ($q) => $q->where('date_session', $dateSession))
+            ->when($communeId, fn ($q) => $q->where('commune_id', $communeId))
             ->orderBy('id')
             ->get();
     }
@@ -25,20 +23,12 @@ class CaiAgroecologieProducteursController extends Controller
     {
         $userId      = Auth::id();
         $communeId   = $request->input('commune_id');
-        $dateSession = $request->input('date_session');
         $producteurs = $request->input('producteurs', []);
 
-        // Delete + reinsert (liste remplaçable intégralement)
-        CaiAgroecologieProducteur::where('user_id', $userId)
-            ->where('commune_id', $communeId)
-            ->where('date_session', $dateSession)
-            ->delete();
-
-        foreach ($producteurs as $p) {
+        $saved = collect($producteurs)->map(fn ($p) =>
             CaiAgroecologieProducteur::create([
                 'user_id'            => $userId,
                 'commune_id'         => $communeId,
-                'date_session'       => $dateSession,
                 'departement'        => $p['departement']        ?? null,
                 'commune_nom'        => $p['commune_nom']        ?? null,
                 'arrondissement'     => $p['arrondissement']     ?? null,
@@ -49,9 +39,9 @@ class CaiAgroecologieProducteursController extends Controller
                 'contact2'           => $p['contact2']           ?? null,
                 'sexe'               => $p['sexe']               ?? null,
                 'pratiques'          => $p['pratiques']          ?? [],
-            ]);
-        }
+            ])
+        );
 
-        return response()->json(['success' => true, 'count' => count($producteurs)]);
+        return response()->json(['success' => true, 'count' => $saved->count()]);
     }
 }

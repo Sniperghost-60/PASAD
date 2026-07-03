@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class CaiEvolutionRendementsUd extends Model
 {
     protected $table    = 'cai_evolution_rendements_ud';
-    protected $fillable = ['user_id', 'commune_id', 'date_session', 'donnees'];
-    protected $casts    = ['date_session' => 'date:Y-m-d', 'donnees' => 'array'];
+    protected $fillable = ['user_id', 'commune_id', 'donnees'];
+    protected $casts    = ['donnees' => 'array'];
 }

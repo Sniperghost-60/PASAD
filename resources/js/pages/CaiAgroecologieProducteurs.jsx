@@ -140,8 +140,8 @@ export default function CaiAgroecologieProducteurs() {
     const navigate = useNavigate();
     const { user, communeId } = useAuth();
 
-    const [dateSession, setDateSession] = useState('');
     const [rows, setRows]               = useState([]);
+    const [savedRows, setSavedRows]     = useState([]);
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
     const [showApercu, setShowApercu]   = useState(false);
@@ -154,18 +154,18 @@ export default function CaiAgroecologieProducteurs() {
     };
 
     const load = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            const params = new URLSearchParams({ date_session: dateSession });
+            const params = new URLSearchParams();
             if (communeId) params.set('commune_id', communeId);
-            const res = await fetch('/api/cai/agroecologie-producteurs?' + params, {
+            const qs = params.toString();
+            const res = await fetch('/api/cai/agroecologie-producteurs' + (qs ? '?' + qs : ''), {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'include',
             });
             if (!res.ok) throw new Error('Erreur serveur');
             const data = await res.json();
-            setRows((data || []).map(r => ({
+            setSavedRows((data || []).map(r => ({
                 _key:               String(r.id),
                 departement:        r.departement        ?? '',
                 commune_nom:        r.commune_nom        ?? '',
@@ -183,7 +183,7 @@ export default function CaiAgroecologieProducteurs() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -199,12 +199,11 @@ export default function CaiAgroecologieProducteurs() {
     const removeRow = (idx) => setRows(rs => rs.filter((_, i) => i !== idx));
 
     const handleSave = async () => {
-        if (!dateSession) { showToast('error', 'Veuillez saisir une date de session'); return; }
+        if (rows.length === 0) { showToast('error', 'Ajoutez au moins un producteur avant d\'enregistrer'); return; }
         setSaving(true);
         try {
             const payload = {
-                date_session: dateSession,
-                producteurs:  rows.map(({ _key, ...r }) => r),
+                producteurs: rows.map(({ _key, ...r }) => r),
             };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/agroecologie-producteurs', {
@@ -215,6 +214,8 @@ export default function CaiAgroecologieProducteurs() {
             });
             if (!res.ok) throw new Error("Erreur lors de l'enregistrement");
             showToast('success', rows.length + ' producteur(s) enregistré(s)');
+            setRows([]);
+            load();
         } catch (e) {
             showToast('error', e.message);
         } finally {
@@ -245,12 +246,6 @@ export default function CaiAgroecologieProducteurs() {
                             <h1 className="text-lg font-bold text-amber-900">Principes de production agroécologique</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <input
-                                type="date"
-                                value={dateSession}
-                                onChange={e => setDateSession(e.target.value)}
-                                className="border border-amber-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-                            />
                             <button
                                 onClick={() => setShowApercu(true)}
                                 className="flex items-center gap-1.5 bg-white border border-amber-300 text-amber-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-amber-50 transition"
@@ -342,7 +337,29 @@ export default function CaiAgroecologieProducteurs() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {rows.length === 0 ? (
+                                            {savedRows.map(row => (
+                                                <tr key={row._key} className="bg-emerald-50/40">
+                                                    {ID_COLS.map(c => (
+                                                        <td key={c.field} className="border border-gray-200 px-2 py-1.5 text-xs text-gray-700">
+                                                            {row[c.field] || '—'}
+                                                        </td>
+                                                    ))}
+                                                    <td className="border border-gray-200 px-1 py-1.5 text-center text-xs text-gray-700">
+                                                        {row.sexe || '—'}
+                                                    </td>
+                                                    {ALL_ITEMS.map(item => (
+                                                        <td key={item.slug} className="border border-gray-200 p-0 text-center">
+                                                            {row.pratiques[item.slug]
+                                                                ? <span className="text-green-600 font-bold text-xs">✓</span>
+                                                                : <span className="text-gray-300 text-xs">✗</span>}
+                                                        </td>
+                                                    ))}
+                                                    <td className="border border-gray-200 p-0 text-center text-[9px] text-emerald-600 font-semibold">
+                                                        Enregistré
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {savedRows.length === 0 && rows.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={ID_COLS.length + 1 + ALL_SLUGS.length + 1} className="text-center py-10 text-gray-400 text-xs italic">
                                                         Aucun producteur — cliquez sur «&nbsp;Ajouter un producteur&nbsp;»
@@ -435,9 +452,8 @@ export default function CaiAgroecologieProducteurs() {
                             <div className="overflow-auto flex-1 p-4 text-xs" ref={printRef}>
                                 <h2>Fiches de respect des principes de production agroécologique</h2>
                                 <p className="meta">
-                                    {dateSession && ('Session : ' + dateSession)}
-                                    {user && (' · Agent : ' + user.name)}
-                                    {' · ' + rows.length + ' producteur(s)'}
+                                    {user && ('Agent : ' + user.name)}
+                                    {' · ' + (savedRows.length + rows.length) + ' producteur(s)'}
                                 </p>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
                                     <thead>
@@ -472,7 +488,7 @@ export default function CaiAgroecologieProducteurs() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {rows.map((row, idx) => (
+                                        {[...savedRows, ...rows].map((row, idx) => (
                                             <tr key={idx}>
                                                 {ID_COLS.map(c => (
                                                     <td key={c.field} style={{ border: '1px solid #ccc', padding: '2px 4px' }}>{row[c.field]}</td>

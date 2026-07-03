@@ -79,8 +79,6 @@ export default function CaiCoutTransaction() {
     const navigate = useNavigate();
     const printRef = useRef(null);
 
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [marches, setMarches]         = useState(emptyData().marches);
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
@@ -96,8 +94,7 @@ export default function CaiCoutTransaction() {
         const load = async () => {
             setLoading(true);
             try {
-                let qs = '?date_session=' + dateSession;
-                if (communeId) qs += '&commune_id=' + communeId;
+                let qs = communeId ? '?commune_id=' + communeId : '';
                 const res = await fetch('/api/cai/cout-transaction' + qs, {
                     credentials: 'include',
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -120,16 +117,15 @@ export default function CaiCoutTransaction() {
             }
         };
         load();
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     const update = (mk, key, val) =>
         setMarches(prev => ({ ...prev, [mk]: { ...prev[mk], [key]: val } }));
 
     const handleSave = async () => {
-        if (!dateSession) { showNotif('error', 'Date de session requise'); return; }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees: { marches } };
+            const payload = { donnees: { marches } };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/cout-transaction', {
                 method: 'POST',
@@ -366,9 +362,6 @@ export default function CaiCoutTransaction() {
                     <h2 style={{ fontSize: 13, fontWeight: 700, color: INDIGO_DARK, margin: 0 }}>
                         Tableau 23 — Coût de transaction, Marge brute et Marge nette
                     </h2>
-                    <p style={{ fontSize: 10, margin: '2px 0 0', color: '#6b7280' }}>
-                        Date de session : {dateSession}
-                    </p>
                 </div>
             )}
             {renderTable(forPrint)}
@@ -379,7 +372,7 @@ export default function CaiCoutTransaction() {
     return (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
             <Sidebar />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <Header title="Coût de transaction · Marge brute et nette" subtitle="Phase 5 — Évaluation | Étape 22" />
 
                 <ModernNotification show={notif.show} type={notif.type} message={notif.message} />
@@ -395,17 +388,11 @@ export default function CaiCoutTransaction() {
                         </div>
                     </div>
 
-                    {/* Date */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Date de session :</label>
-                        <input
-                            type="date"
-                            value={dateSession}
-                            onChange={e => setDateSession(e.target.value)}
-                            style={{ border: '1px solid #c7d2fe', borderRadius: 6, padding: '5px 10px', fontSize: 13, color: '#111827' }}
-                        />
-                        {loading && <span style={{ fontSize: 12, color: '#9ca3af' }}>Chargement…</span>}
-                    </div>
+                    {loading && (
+                        <div style={{ marginBottom: 14 }}>
+                            <span style={{ fontSize: 12, color: '#9ca3af' }}>Chargement…</span>
+                        </div>
+                    )}
 
                     {/* Tableau */}
                     <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e5e7eb', padding: 16, marginBottom: 14 }}>

@@ -10,8 +10,7 @@ class CaiCoutTransactionController extends Controller
     public function index(Request $request)
     {
         $q = CaiCoutTransaction::where('user_id', auth()->id());
-        if ($request->commune_id)   $q->where('commune_id',   $request->commune_id);
-        if ($request->date_session) $q->where('date_session', $request->date_session);
+        if ($request->commune_id) $q->where('commune_id', $request->commune_id);
         return response()->json($q->first() ?? (object)[]);
     }
 
@@ -19,9 +18,8 @@ class CaiCoutTransactionController extends Controller
     {
         $row = CaiCoutTransaction::updateOrCreate(
             [
-                'user_id'      => auth()->id(),
-                'commune_id'   => $request->commune_id,
-                'date_session' => $request->date_session,
+                'user_id'    => auth()->id(),
+                'commune_id' => $request->commune_id,
             ],
             ['donnees' => $request->donnees]
         );

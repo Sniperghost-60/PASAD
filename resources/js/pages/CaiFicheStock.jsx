@@ -52,8 +52,6 @@ const PRINT_STYLES = [
 
 export default function CaiFicheStock() {
     const { user, communeId } = useAuth();
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
@@ -67,11 +65,10 @@ export default function CaiFicheStock() {
     };
 
     const loadData = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            let url = '/api/cai/fiche-stock?date_session=' + dateSession;
-            if (communeId) url += '&commune_id=' + communeId;
+            let url = '/api/cai/fiche-stock';
+            if (communeId) url += '?commune_id=' + communeId;
             const res = await fetch(url, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'include',
@@ -92,7 +89,7 @@ export default function CaiFicheStock() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -119,10 +116,9 @@ export default function CaiFicheStock() {
     };
 
     const handleSave = async () => {
-        if (!dateSession) { showNotif('error', 'Date de session requise'); return; }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees };
+            const payload = { donnees };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/fiche-stock', {
                 method: 'POST',
@@ -338,16 +334,9 @@ export default function CaiFicheStock() {
                         <p className="text-gray-600 text-sm">Modèle de fiche de stock — d'intrants et de produits agricoles</p>
                     </div>
 
-                    {/* Filtre date */}
+                    {/* Actions de chargement */}
                     <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-4 mb-6">
                         <div className="flex flex-wrap items-end gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Date de session</label>
-                                <input type="date"
-                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    value={dateSession}
-                                    onChange={e => setDateSession(e.target.value)} />
-                            </div>
                             <button onClick={loadData}
                                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
                                 style={{ background: AMBER_DARK }}>
@@ -413,7 +402,7 @@ export default function CaiFicheStock() {
                                 Étape 15 — Suivi des mouvements de stock d'intrants et de produits agricoles
                             </h3>
                             <p style={{ color: '#6b7280', fontSize: '11px', marginBottom: '10px' }}>
-                                Fiche de stock — Session : {dateSession}
+                                Fiche de stock
                             </p>
                             {renderTable(true)}
                         </div>

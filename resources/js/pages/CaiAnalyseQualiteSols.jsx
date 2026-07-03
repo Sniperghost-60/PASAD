@@ -90,8 +90,6 @@ export default function CaiAnalyseQualiteSols() {
     const { user, communeId } = useAuth();
     const navigate = useNavigate();
 
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [scores, setScores]           = useState(emptyScores());
     const [loading, setLoading]         = useState(false);
     const [saving,  setSaving]          = useState(false);
@@ -106,8 +104,8 @@ export default function CaiAnalyseQualiteSols() {
         const load = async () => {
             setLoading(true);
             try {
-                let url = '/api/cai/analyse-qualite-sols?date_session=' + dateSession;
-                if (communeId) url += '&commune_id=' + communeId;
+                let url = '/api/cai/analyse-qualite-sols';
+                if (communeId) url += '?commune_id=' + communeId;
                 const res = await fetch(url, {
                     credentials: 'include',
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -127,16 +125,12 @@ export default function CaiAnalyseQualiteSols() {
             }
         };
         load();
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     const handleSave = async () => {
-        if (!dateSession) {
-            setNotif({ show: true, type: 'error', message: 'Veuillez renseigner la date de session.' });
-            return;
-        }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees: { scores } };
+            const payload = { donnees: { scores } };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/analyse-qualite-sols', {
                 method: 'POST',
@@ -268,7 +262,7 @@ export default function CaiAnalyseQualiteSols() {
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#f9fafb' }}>
             <Sidebar />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <Header />
                 <ModernNotification
                     show={notif.show}
@@ -291,17 +285,8 @@ export default function CaiAnalyseQualiteSols() {
                         </p>
                     </div>
 
-                    {/* Date + Actions */}
+                    {/* Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Date de session :</label>
-                            <input
-                                type="date"
-                                value={dateSession}
-                                onChange={e => setDateSession(e.target.value)}
-                                style={{ border: '1px solid #d1d5db', borderRadius: 8, padding: '6px 10px', fontSize: 14, color: '#111827' }}
-                            />
-                        </div>
                         {loading && <span style={{ fontSize: 13, color: '#9ca3af' }}>Chargement...</span>}
                         {/* Score résumé */}
                         <div style={{

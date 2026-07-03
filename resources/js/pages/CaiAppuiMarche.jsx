@@ -70,8 +70,6 @@ const PRINT_STYLES = [
 export default function CaiAppuiMarche() {
     const navigate = useNavigate();
     const { user, communeId } = useAuth();
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
@@ -85,11 +83,10 @@ export default function CaiAppuiMarche() {
     };
 
     const loadData = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            let url = '/api/cai/appui-marche?date_session=' + dateSession;
-            if (communeId) url += '&commune_id=' + communeId;
+            let url = '/api/cai/appui-marche';
+            if (communeId) url += '?commune_id=' + communeId;
             const res = await fetch(url, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'include',
@@ -111,7 +108,7 @@ export default function CaiAppuiMarche() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -123,10 +120,9 @@ export default function CaiAppuiMarche() {
     const margeBrute   = mk => num(donnees[mk].produit_brut) - chargesTotal(mk);
 
     const handleSave = async () => {
-        if (!dateSession) { showNotif('error', 'Date de session requise'); return; }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees };
+            const payload = { donnees };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/appui-marche', {
                 method: 'POST',
@@ -180,18 +176,9 @@ export default function CaiAppuiMarche() {
                         <p className="text-gray-600 text-sm">Modèle de compte Prévisionnel de Mise en marché</p>
                     </div>
 
-                    {/* Filtre date */}
+                    {/* Actions de chargement */}
                     <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-4 mb-6">
                         <div className="flex flex-wrap items-end gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Date de session</label>
-                                <input
-                                    type="date"
-                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    value={dateSession}
-                                    onChange={e => setDateSession(e.target.value)}
-                                />
-                            </div>
                             <button
                                 onClick={loadData}
                                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
@@ -362,7 +349,7 @@ export default function CaiAppuiMarche() {
                                 Étape 9 — Appui au Choix des marchés
                             </h2>
                             <h3 style={{ color: '#92400E', marginBottom: '12px', fontSize: '13px', fontWeight: '600' }}>
-                                Compte Prévisionnel de Mise en marché — Session : {dateSession}
+                                Compte Prévisionnel de Mise en marché
                             </h3>
                             <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                                 <thead>

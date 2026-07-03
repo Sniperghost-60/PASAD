@@ -15,9 +15,6 @@ class CaiEvolutionRendementsUdController extends Controller
         if ($request->filled('commune_id')) {
             $query->where('commune_id', $request->commune_id);
         }
-        if ($request->filled('date_session')) {
-            $query->where('date_session', $request->date_session);
-        }
 
         $record = $query->first();
         return response()->json($record ?? (object)[]);
@@ -26,16 +23,14 @@ class CaiEvolutionRendementsUdController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'date_session' => 'nullable|date',
-            'commune_id'   => 'nullable|integer|exists:communes,id',
-            'donnees'      => 'nullable|array',
+            'commune_id' => 'nullable|integer|exists:communes,id',
+            'donnees'    => 'nullable|array',
         ]);
 
         $record = CaiEvolutionRendementsUd::updateOrCreate(
             [
-                'user_id'      => Auth::id(),
-                'commune_id'   => $validated['commune_id']   ?? null,
-                'date_session' => $validated['date_session'] ?? null,
+                'user_id'    => Auth::id(),
+                'commune_id' => $validated['commune_id']   ?? null,
             ],
             ['donnees' => $validated['donnees'] ?? []]
         );

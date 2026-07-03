@@ -38,7 +38,6 @@ export default function CaiEvaluationOrganisationnelle() {
     const { user, communeId } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [dateSession, setDateSession]  = useState('');
     const [items, setItems]              = useState(emptyData());
     const [loading, setLoading]          = useState(false);
     const [saving,  setSaving]           = useState(false);
@@ -49,29 +48,28 @@ export default function CaiEvaluationOrganisationnelle() {
     const notify = (message, type = 'success') => setNotif({ show: true, message, type });
 
     useEffect(() => {
-        if (!communeId || !dateSession) return;
+        if (!communeId) return;
         setLoading(true);
-        fetch(`/api/cai/evaluation-organisationnelle?commune_id=${communeId}&date_session=${dateSession}`, {
+        fetch(`/api/cai/evaluation-organisationnelle?commune_id=${communeId}`, {
             credentials: 'include',
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then(r => r.json())
             .then(d => { if (d?.donnees?.items) setItems({ ...emptyData(), ...d.donnees.items }); })
             .finally(() => setLoading(false));
-    }, [communeId, dateSession]);
+    }, [communeId]);
 
     const update = (key, field, val) =>
         setItems(prev => ({ ...prev, [key]: { ...prev[key], [field]: val } }));
 
     const handleSave = async () => {
-        if (!dateSession) { notify('Veuillez sélectionner une date de session.', 'error'); return; }
         setSaving(true);
         try {
             const r = await fetch('/api/cai/evaluation-organisationnelle', {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify({ commune_id: communeId, date_session: dateSession, donnees: { items } }),
+                body: JSON.stringify({ commune_id: communeId, donnees: { items } }),
             });
             if (!r.ok) throw new Error();
             notify('Données enregistrées avec succès.');
@@ -94,9 +92,9 @@ export default function CaiEvaluationOrganisationnelle() {
             <h2 style={{ textAlign: 'center', color: forPrint ? '#92400e' : AMBER_DARK, fontSize: forPrint ? 14 : 17, margin: '0 0 8px' }}>
                 Modèle de fiche d'évaluation organisationnelle
             </h2>
-            {forPrint && dateSession && (
+            {forPrint && (
                 <p className="meta" style={{ textAlign: 'center', fontSize: 9, color: '#555', margin: '0 0 6px' }}>
-                    Date de session : {dateSession} — Score : 1 mauvais à 5 : Très bon
+                    Score : 1 mauvais à 5 : Très bon
                 </p>
             )}
 
@@ -157,7 +155,7 @@ export default function CaiEvaluationOrganisationnelle() {
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9' }}>
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column' }}>
                 <Header onMenuClick={() => setSidebarOpen(true)} title="Évaluation organisationnelle" />
                 <main style={{ flex: 1, padding: 24, maxWidth: 960, margin: '0 auto', width: '100%' }}>
                     <ModernNotification
@@ -171,17 +169,6 @@ export default function CaiEvaluationOrganisationnelle() {
                     <div style={{ background: `linear-gradient(135deg, ${AMBER_DARK}, ${AMBER})`, borderRadius: 12, padding: '16px 22px', marginBottom: 20, color: '#fff' }}>
                         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Tableau 35 — Évaluation organisationnelle</h1>
                         <p style={{ margin: '4px 0 0', fontSize: 13, opacity: 0.85 }}>Score : 1 mauvais à 5 : Très bon</p>
-                    </div>
-
-                    {/* Date de session */}
-                    <div style={{ background: '#fff', borderRadius: 10, padding: '14px 18px', marginBottom: 18, boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Date de session</label>
-                        <input
-                            type="date"
-                            value={dateSession}
-                            onChange={e => setDateSession(e.target.value)}
-                            style={{ display: 'block', marginTop: 6, padding: '8px 12px', borderRadius: 7, border: '1px solid #d1d5db', fontSize: 13, outline: 'none' }}
-                        />
                     </div>
 
                     {/* Tableau */}

@@ -10,13 +10,11 @@ class CaiFicheStockController extends Controller
 {
     public function index(Request $request)
     {
-        $user        = Auth::user();
-        $communeId   = $request->query('commune_id');
-        $dateSession = $request->query('date_session');
+        $user      = Auth::user();
+        $communeId = $request->query('commune_id');
 
         $query = CaiFicheStock::where('user_id', $user->id);
-        if ($communeId)   $query->where('commune_id',   $communeId);
-        if ($dateSession) $query->where('date_session', $dateSession);
+        if ($communeId) $query->where('commune_id', $communeId);
 
         return response()->json($query->first() ?? (object)[]);
     }
@@ -25,16 +23,14 @@ class CaiFicheStockController extends Controller
     {
         $user      = Auth::user();
         $validated = $request->validate([
-            'commune_id'   => 'nullable|integer',
-            'date_session' => 'nullable|date',
-            'donnees'      => 'nullable|array',
+            'commune_id' => 'nullable|integer',
+            'donnees'    => 'nullable|array',
         ]);
 
         $record = CaiFicheStock::updateOrCreate(
             [
-                'user_id'      => $user->id,
-                'commune_id'   => $validated['commune_id']   ?? null,
-                'date_session' => $validated['date_session'] ?? null,
+                'user_id'    => $user->id,
+                'commune_id' => $validated['commune_id']   ?? null,
             ],
             ['donnees' => $validated['donnees'] ?? []]
         );

@@ -64,8 +64,6 @@ const PRINT_STYLES = [
 
 export default function CaiProgrammationMarche() {
     const { user, communeId } = useAuth();
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [loading, setLoading]         = useState(false);
     const [saving, setSaving]           = useState(false);
@@ -79,11 +77,10 @@ export default function CaiProgrammationMarche() {
     };
 
     const loadData = useCallback(async () => {
-        if (!dateSession) return;
         setLoading(true);
         try {
-            let url = '/api/cai/programmation-marche?date_session=' + dateSession;
-            if (communeId) url += '&commune_id=' + communeId;
+            let url = '/api/cai/programmation-marche';
+            if (communeId) url += '?commune_id=' + communeId;
             const res = await fetch(url, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'include',
@@ -101,17 +98,16 @@ export default function CaiProgrammationMarche() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
     const setValue = (key, val) => setDonnees(prev => ({ ...prev, [key]: val }));
 
     const handleSave = async () => {
-        if (!dateSession) { showNotif('error', 'Date de session requise'); return; }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees };
+            const payload = { donnees };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/programmation-marche', {
                 method: 'POST',
@@ -254,18 +250,9 @@ export default function CaiProgrammationMarche() {
                         <p className="text-gray-600 text-sm">Tableau de planification de la mise en marché des produits</p>
                     </div>
 
-                    {/* Filtre date */}
+                    {/* Actions de chargement */}
                     <div className="bg-white rounded-xl border border-amber-200 shadow-sm p-4 mb-6">
                         <div className="flex flex-wrap items-end gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-600 mb-1">Date de session</label>
-                                <input
-                                    type="date"
-                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    value={dateSession}
-                                    onChange={e => setDateSession(e.target.value)}
-                                />
-                            </div>
                             <button
                                 onClick={loadData}
                                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
@@ -331,7 +318,7 @@ export default function CaiProgrammationMarche() {
                                 Étape 10 — Appui à la programmation de la mise en marché
                             </h2>
                             <h3 style={{ color: '#92400E', marginBottom: '12px', fontSize: '12px', fontWeight: '600' }}>
-                                Tableau de planification — Session : {dateSession}
+                                Tableau de planification
                             </h3>
                             {renderTable(true)}
                         </div>

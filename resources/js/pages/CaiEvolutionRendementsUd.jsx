@@ -42,8 +42,6 @@ const PRINT_STYLES = [
 export default function CaiEvolutionRendementsUd() {
     const { user, communeId } = useAuth();
     const navigate = useNavigate();
-    const today = new Date().toISOString().slice(0, 10);
-    const [dateSession, setDateSession] = useState(today);
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [editMode, setEditMode]       = useState(true);
     const [saving, setSaving]           = useState(false);
@@ -57,8 +55,8 @@ export default function CaiEvolutionRendementsUd() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            let url = `/api/cai/evolution-rendements-ud?date_session=${dateSession}`;
-            if (communeId) url += `&commune_id=${communeId}`;
+            let url = `/api/cai/evolution-rendements-ud`;
+            if (communeId) url += `?commune_id=${communeId}`;
             const res  = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
             const data = await res.json();
             if (data?.donnees?.lignes) {
@@ -71,7 +69,7 @@ export default function CaiEvolutionRendementsUd() {
         } finally {
             setLoading(false);
         }
-    }, [dateSession, communeId]);
+    }, [communeId]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -90,10 +88,9 @@ export default function CaiEvolutionRendementsUd() {
     };
 
     const handleSave = async () => {
-        if (!dateSession) { notify('Date de session requise', 'error'); return; }
         setSaving(true);
         try {
-            const payload = { date_session: dateSession, donnees };
+            const payload = { donnees };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/evolution-rendements-ud', {
                 method: 'POST',
@@ -116,7 +113,7 @@ export default function CaiEvolutionRendementsUd() {
         w.document.write('<html><head><meta charset="utf-8"><title>Évolution des rendements des UD</title><style>' + PRINT_STYLES + '</style></head><body>');
         w.document.write('<div class="title-box">');
         w.document.write('<div class="main-title">Modèle de tableau d\'évolution des rendements des UD</div>');
-        w.document.write('<div class="sub-title">Phase 5 — Évaluation | Étape 17 | Session : ' + dateSession + '</div>');
+        w.document.write('<div class="sub-title">Phase 5 — Évaluation | Étape 17</div>');
         w.document.write('</div>');
         w.document.write(printRef.current.innerHTML);
         w.document.write('</body></html>');
@@ -186,7 +183,7 @@ export default function CaiEvolutionRendementsUd() {
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
             <Sidebar />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <div style={{ flex: 1, marginLeft: 240, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <Header />
                 <main style={{ flex: 1, padding: '24px', overflowX: 'auto' }}>
 
@@ -225,24 +222,15 @@ export default function CaiEvolutionRendementsUd() {
                         </div>
                     </div>
 
-                    {/* Date + actions */}
+                    {/* Actions */}
                     <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', padding: '16px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                        <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>Date de session</label>
-                            <input
-                                type="date"
-                                value={dateSession}
-                                onChange={e => setDateSession(e.target.value)}
-                                style={{ border: '1px solid #d1d5db', borderRadius: 8, padding: '7px 12px', fontSize: 14, color: '#111827', outline: 'none' }}
-                            />
-                        </div>
                         {loading && <span style={{ color: '#9ca3af', fontSize: 13 }}>Chargement...</span>}
                         {editMode && (
                             <>
-                                <button onClick={addLigne} style={{ background: AMBER_BG, color: AMBER_DARK, border: `1px solid ${AMBER_HDR}`, borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13, marginTop: 18 }}>
+                                <button onClick={addLigne} style={{ background: AMBER_BG, color: AMBER_DARK, border: `1px solid ${AMBER_HDR}`, borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
                                     + Ajouter une ligne
                                 </button>
-                                <button onClick={handleSave} disabled={saving} style={{ background: AMBER_DARK, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 20px', cursor: saving ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1, marginTop: 18 }}>
+                                <button onClick={handleSave} disabled={saving} style={{ background: AMBER_DARK, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 20px', cursor: saving ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1 }}>
                                     {saving ? 'Enregistrement...' : 'Enregistrer'}
                                 </button>
                             </>
@@ -261,7 +249,7 @@ export default function CaiEvolutionRendementsUd() {
                                 <button onClick={() => setShowApercu(false)} style={{ position: 'absolute', top: 12, right: 14, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>✕</button>
                                 <div style={{ textAlign: 'center', marginBottom: 12 }}>
                                     <div style={{ fontWeight: 700, fontSize: 16, color: AMBER_DARK }}>Modèle de tableau d'évolution des rendements des UD</div>
-                                    <div style={{ fontSize: 12, color: '#6b7280' }}>Phase 5 — Évaluation | Étape 17 | Session : {dateSession}</div>
+                                    <div style={{ fontSize: 12, color: '#6b7280' }}>Phase 5 — Évaluation | Étape 17</div>
                                 </div>
                                 <div ref={printRef}>
                                     {renderTable(true)}
