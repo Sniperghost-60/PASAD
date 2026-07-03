@@ -414,6 +414,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return response()->json($stats);
     });
 
+    // ── Export des données (CSV / XLSX / PDF) ───────────────────────────
+    Route::middleware('permission:rapports.exporter')->group(function () {
+        Route::get('/exports/datasets', [App\Http\Controllers\DataExportController::class, 'datasets']);
+        Route::get('/exports/download', [App\Http\Controllers\DataExportController::class, 'export']);
+    });
+
     // ── Gestion des utilisateurs (admin+) ────────────────────────────────
     Route::middleware('role:Administrateur|Super-Admin')->group(function () {
         Route::get('/users', function () {

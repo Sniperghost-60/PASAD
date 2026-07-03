@@ -57,6 +57,7 @@ import CaiCoutTransaction              from './pages/CaiCoutTransaction';
 import CaiEvaluationInstitutionnelle  from './pages/CaiEvaluationInstitutionnelle';
 import CaiEvaluationOrganisationnelle from './pages/CaiEvaluationOrganisationnelle';
 import CaiEvaluationSociale           from './pages/CaiEvaluationSociale';
+import ExportDonnees                  from './pages/ExportDonnees';
 
 export default function App() {
     return (
@@ -141,6 +142,7 @@ export default function App() {
                     <Route path="/caisse"             element={<ComingSoon title="Caisse & Stock" icon="caisse"   />} />
                     <Route path="/rapports"           element={<ComingSoon title="Rapports"       icon="rapports" />} />
                     <Route path="/stats"              element={<ComingSoon title="Statistiques"   icon="stats"    />} />
+                    <Route path="/exports"            element={<ExportDonnees />} />
                     <Route path="/roles"              element={<RolesManagement />} />
                     <Route path="/geographie"         element={<GeographyManagement />} />
                     <Route path="/app-version"        element={<AppVersionManagement />} />

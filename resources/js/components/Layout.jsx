@@ -31,6 +31,7 @@ export const ICONS = {
     check:     'M20 6 9 17l-5-5',
     x:         'M18 6 6 18M6 6l12 12',
     map:       'M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z',
+    download:  'M12 3v12m0 0 4-4m-4 4-4-4M4 21h16',
 };
 
 /* ── Badge rôle ─────────────────────────────────────────────────────── */
@@ -152,11 +153,12 @@ const buildNav = (hasPermission, hasRole) => {
 
     /* ── Administration */
     const adminItems = [
-        hasPermission('utilisateurs.voir') && { label: 'Utilisateurs',  path: '/dashboard/users', icon: 'users'    },
-        hasPermission('roles.gérer')       && { label: 'Rôles',         path: '/roles',           icon: 'shield'   },
-        hasPermission('config.gérer')      && { label: 'Géographie',    path: '/geographie',      icon: 'map'      },
-        hasRole('Super-Admin')             && { label: 'Versions app',  path: '/app-version',     icon: 'bell'     },
-        hasPermission('config.gérer')      && { label: 'Configuration', path: '/config',          icon: 'settings' },
+        hasPermission('utilisateurs.voir')  && { label: 'Utilisateurs',      path: '/dashboard/users', icon: 'users'    },
+        hasPermission('roles.gérer')        && { label: 'Rôles',             path: '/roles',           icon: 'shield'   },
+        hasPermission('config.gérer')       && { label: 'Géographie',        path: '/geographie',      icon: 'map'      },
+        hasPermission('rapports.exporter')  && { label: 'Exporter données',  path: '/exports',         icon: 'download' },
+        hasRole('Super-Admin')              && { label: 'Versions app',      path: '/app-version',     icon: 'bell'     },
+        hasPermission('config.gérer')       && { label: 'Configuration',     path: '/config',          icon: 'settings' },
     ].filter(Boolean);
 
     const sectionAdmin = adminItems.length > 0
