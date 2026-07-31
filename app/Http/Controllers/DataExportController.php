@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateDataExport;
 use App\Models\Arrondissement;
 use App\Models\Cep;
 use App\Models\Commune;
+use App\Models\DataExport;
 use App\Models\Departement;
 use App\Models\ProfilHistorique;
 use App\Models\User;
@@ -14,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use OpenSpout\Common\Entity\Row;
@@ -461,6 +464,76 @@ class DataExportController extends Controller
             ->groupBy('group');
 
         return response()->json($datasets);
+    }
+
+    /**
+     * Enregistre une demande et délègue la génération à un worker. La requête
+     * HTTP retourne immédiatement, même pour un PDF ou un classeur volumineux.
+     */
+    public function queueExport(Request $request)
+    {
+        $datasets = collect(config('exportable_datasets'));
+        $validated = $request->validate([
+            'scope' => ['required', 'string', 'in:dataset,group'],
+            'selection' => ['required', 'string'],
+            'format' => ['required', 'string', 'in:csv,xlsx,pdf'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+
+        $allowedSelections = $validated['scope'] === 'dataset'
+            ? $datasets->keys()->all()
+            : $datasets->pluck('group')->unique()->all();
+
+        abort_unless(in_array($validated['selection'], $allowedSelections, true), 422, 'Export demandé inconnu.');
+
+        $export = DataExport::create([
+            'user_id' => $request->user()->id,
+            ...$validated,
+            'status' => 'pending',
+            'disk' => 'local',
+        ]);
+
+        GenerateDataExport::dispatch($export->id);
+
+        return response()->json($this->exportStatusPayload($export), 202);
+    }
+
+    public function exportStatus(Request $request, DataExport $dataExport)
+    {
+        abort_unless($dataExport->user_id === $request->user()->id, 404);
+
+        return response()->json($this->exportStatusPayload($dataExport));
+    }
+
+    public function downloadQueuedExport(Request $request, DataExport $dataExport)
+    {
+        abort_unless($dataExport->user_id === $request->user()->id, 404);
+        abort_unless($dataExport->status === 'completed' && $dataExport->path, 409, "L'export n'est pas encore disponible.");
+
+        if ($dataExport->expires_at?->isPast()) {
+            Storage::disk($dataExport->disk)->delete($dataExport->path);
+            $dataExport->update(['status' => 'expired', 'path' => null]);
+            abort(410, 'Cet export a expiré. Veuillez le générer à nouveau.');
+        }
+
+        abort_unless(Storage::disk($dataExport->disk)->exists($dataExport->path), 404, 'Le fichier exporté est introuvable.');
+
+        return Storage::disk($dataExport->disk)->download($dataExport->path, $dataExport->filename);
+    }
+
+    private function exportStatusPayload(DataExport $export): array
+    {
+        return [
+            'id' => $export->id,
+            'status' => $export->status,
+            'filename' => $export->filename,
+            'error' => $export->status === 'failed' ? $export->error : null,
+            'download_url' => $export->status === 'completed'
+                ? route('data-exports.download', $export)
+                : null,
+            'expires_at' => $export->expires_at?->toIso8601String(),
+        ];
     }
 
     public function export(Request $request)
@@ -2105,7 +2178,7 @@ class DataExportController extends Controller
         // Un groupe complet peut cumuler plusieurs milliers de lignes tous formulaires
         // confondus ; le moteur de mise en page HTML de dompdf reste plus lent que les
         // writers XLSX/CSV sur ce volume, d'où une limite de temps dédiée plus large.
-        set_time_limit(180);
+        set_time_limit(600);
 
         $pdf = Pdf::loadView('exports.data-table', [
             'title'    => $groupLabel,

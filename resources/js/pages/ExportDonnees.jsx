@@ -30,6 +30,7 @@ export default function ExportDonnees() {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo]     = useState('');
     const [exporting, setExporting] = useState(false);
+    const [exportStatus, setExportStatus] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
     useEffect(() => {
@@ -77,20 +78,42 @@ export default function ExportDonnees() {
             return;
         }
         setExporting(true);
+        setExportStatus("Mise en file d'attente…");
         try {
-            const common = { format, date_from: dateFrom || undefined, date_to: dateTo || undefined };
-            const res = volet === 'fiche'
-                ? await api.get('/api/exports/download', { params: { type: selected.key, ...common }, responseType: 'blob' })
-                : await api.get('/api/exports/download-group', { params: { group: selectedGroup, ...common }, responseType: 'blob' });
+            const queued = await api.post('/api/exports', {
+                scope: volet === 'fiche' ? 'dataset' : 'group',
+                selection: volet === 'fiche' ? selected.key : selectedGroup,
+                format,
+                date_from: dateFrom || undefined,
+                date_to: dateTo || undefined,
+            });
 
+            let job = queued.data;
+            const deadline = Date.now() + 20 * 60 * 1000;
+            while (job.status === 'pending' || job.status === 'processing') {
+                setExportStatus(job.status === 'pending' ? "En attente du serveur…" : "Génération en cours…");
+                if (Date.now() >= deadline) {
+                    throw new Error("La génération continue en arrière-plan. Rechargez la page dans quelques minutes.");
+                }
+                await new Promise(resolve => window.setTimeout(resolve, 2000));
+                job = (await api.get(`/api/exports/${job.id}`)).data;
+            }
+
+            if (job.status !== 'completed' || !job.download_url) {
+                throw new Error(job.error || "La génération de l'export a échoué.");
+            }
+
+            setExportStatus('Téléchargement…');
+            const res = await api.get(job.download_url, { responseType: 'blob' });
             const ext = volet === 'module' && format === 'csv' ? 'zip' : format;
-            downloadBlob(res, `${volet === 'fiche' ? selected.key : 'export'}.${ext}`);
-
+            downloadBlob(res, job.filename || `${volet === 'fiche' ? selected.key : 'export'}.${ext}`);
             setToast({ show: true, message: `Export "${currentChoice}" généré avec succès.`, type: 'success' });
         } catch (err) {
-            setToast({ show: true, message: "Échec de l'export. Réessayez.", type: 'error' });
+            const message = err.response?.data?.message || err.message || "Échec de l'export. Réessayez.";
+            setToast({ show: true, message, type: 'error' });
         } finally {
             setExporting(false);
+            setExportStatus('');
         }
     };
 
@@ -239,7 +262,7 @@ export default function ExportDonnees() {
                                 <button type="button" onClick={handleExport} disabled={exporting || !canExport}
                                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-teal-700 active:scale-95 transition-all disabled:cursor-not-allowed disabled:opacity-50">
                                     <Icon d={ICONS.download} className="size-4" />
-                                    {exporting ? 'Génération…' : 'Exporter'}
+                                    {exporting ? (exportStatus || 'Génération…') : 'Exporter'}
                                 </button>
                             </div>
                         </div>

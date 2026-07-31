@@ -153,8 +153,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ── Export des données (CSV / XLSX / PDF) ───────────────────────────
     Route::middleware('permission:rapports.exporter')->group(function () {
         Route::get('/exports/datasets', [App\Http\Controllers\DataExportController::class, 'datasets']);
+        Route::post('/exports', [App\Http\Controllers\DataExportController::class, 'queueExport']);
         Route::get('/exports/download', [App\Http\Controllers\DataExportController::class, 'export']);
         Route::get('/exports/download-group', [App\Http\Controllers\DataExportController::class, 'exportGroup']);
+        Route::get('/exports/{dataExport}', [App\Http\Controllers\DataExportController::class, 'exportStatus']);
+        Route::get('/exports/{dataExport}/download', [App\Http\Controllers\DataExportController::class, 'downloadQueuedExport'])
+            ->name('data-exports.download');
     });
 
     // ── Gestion des utilisateurs (admin+) ────────────────────────────────
