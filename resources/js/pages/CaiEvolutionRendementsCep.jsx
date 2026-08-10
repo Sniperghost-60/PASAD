@@ -42,7 +42,7 @@ const PRINT_STYLES = [
 ].join('');
 
 export default function CaiEvolutionRendementsCep() {
-    const { user, communeId } = useAuth();
+    const { user, communeId, activeCommune } = useAuth();
     const navigate = useNavigate();
     const [donnees, setDonnees]         = useState(emptyDonnees());
     const [editMode, setEditMode]       = useState(true);
@@ -92,7 +92,7 @@ export default function CaiEvolutionRendementsCep() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const payload = { donnees };
+            const payload = { donnees: { ...donnees, lignes: donnees.lignes.map(l => ({ ...l, commune: activeCommune?.nom ?? '' })) } };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/evolution-rendements-cep', {
                 method: 'POST',
@@ -148,7 +148,7 @@ export default function CaiEvolutionRendementsCep() {
                             {COLS.map(c => (
                                 <td key={c.key} style={{ border: '1px solid #d1d5db', padding: forPrint ? '4px 6px' : '2px 4px' }}>
                                     {forPrint || !editMode ? (
-                                        <span>{l[c.key]}</span>
+                                        <span>{c.key === 'commune' ? (activeCommune?.nom ?? '') : l[c.key]}</span>
                                     ) : c.key === 'culture' ? (
                                         <CultureSelect
                                             value={l.culture}
@@ -161,7 +161,8 @@ export default function CaiEvolutionRendementsCep() {
                                     ) : (
                                         <input
                                             type="text"
-                                            value={l[c.key]}
+                                            value={c.key === 'commune' ? (activeCommune?.nom ?? '') : l[c.key]}
+                                            readOnly={c.key === 'commune'}
                                             onChange={e => setCell(idx, c.key, c.key === 'village' ? e.target.value.toUpperCase() : e.target.value)}
                                             style={{
                                                 width: '100%', border: 'none', background: 'transparent',

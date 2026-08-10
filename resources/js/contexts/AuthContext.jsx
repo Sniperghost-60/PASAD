@@ -130,9 +130,13 @@ export function AuthProvider({ children }) {
     };
 
     const isSuperAdmin = () => hasRole('Super-Admin');
+    // Identifiant pratique utilisé par les formulaires CAI. Il suit la même
+    // commune active que les formulaires CEP/PAD et reste nul pour les profils
+    // qui travaillent librement sans sélection de commune.
+    const communeId = activeCommune?.id ?? null;
 
     return (
-        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin, activeCommune, setActiveCommune, conseillerCommunes, fetchUser }}>
+        <AuthContext.Provider value={{ user, loading, errors, login, register, logout, hasRole, hasPermission, isSuperAdmin, activeCommune, communeId, setActiveCommune, conseillerCommunes, fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

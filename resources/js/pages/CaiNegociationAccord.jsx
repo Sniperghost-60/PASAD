@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Composant saisie multiple ──────────────────────────────────────── */
@@ -251,6 +252,7 @@ function EditLigneModal({ row, onChange, onSave, onClose, saving }) {
 
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiNegociationAccord() {
+    const { communeId } = useAuth();
     const [rows, setRows]                 = useState([emptyRow()]);
     const [savedRows, setSavedRows]       = useState([]);
     const [loadingSaved, setLoadingSaved] = useState(true);
@@ -264,14 +266,14 @@ export default function CaiNegociationAccord() {
 
     const loadSaved = useCallback(async () => {
         try {
-            const res = await api.get('/api/cai/negociation-accord');
+            const res = await api.get('/api/cai/negociation-accord', { params: communeId ? { commune_id: communeId } : {} });
             setSavedRows(Array.isArray(res.data) ? res.data : []);
         } catch {
             setSavedRows([]);
         } finally {
             setLoadingSaved(false);
         }
-    }, []);
+    }, [communeId]);
 
     useEffect(() => { loadSaved(); }, [loadSaved]);
 
@@ -344,7 +346,9 @@ export default function CaiNegociationAccord() {
                 return;
             }
 
-            await api.post('/api/cai/negociation-accord', { lignes });
+            await api.post('/api/cai/negociation-accord', {
+                lignes: lignes.map(ligne => ({ ...ligne, commune_id: communeId })),
+            });
             notify(`${lignes.length} ligne(s) enregistrée(s) avec succès.`);
             setRows([emptyRow()]);
             loadSaved();

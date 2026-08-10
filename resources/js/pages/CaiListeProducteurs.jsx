@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Modal aperçu / impression ───────────────────────────────────────── */
@@ -384,6 +385,7 @@ function ProduitsCell({ produits, onChange }) {
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiListeProducteurs() {
     const navigate = useNavigate();
+    const { communeId } = useAuth();
     const [rows, setRows]                 = useState([emptyRow()]);
     const [savedRows, setSavedRows]       = useState([]);
     const [loadingSaved, setLoadingSaved] = useState(true);
@@ -401,14 +403,14 @@ export default function CaiListeProducteurs() {
 
     const loadSaved = useCallback(async () => {
         try {
-            const res = await api.get('/api/cai/liste-producteurs');
+            const res = await api.get('/api/cai/liste-producteurs', { params: communeId ? { commune_id: communeId } : {} });
             setSavedRows(Array.isArray(res.data) ? res.data : []);
         } catch {
             setSavedRows([]);
         } finally {
             setLoadingSaved(false);
         }
-    }, []);
+    }, [communeId]);
 
     useEffect(() => { loadSaved(); }, [loadSaved]);
 
@@ -488,6 +490,7 @@ export default function CaiListeProducteurs() {
                 producteurs: rows
                     .filter(r => r.nom_prenom?.trim())
                     .map(r => ({
+                        commune_id:            communeId,
                         nom_prenom:             r.nom_prenom.trim(),
                         sexe:                   r.sexe,
                         age:                    r.age ? Number(r.age) : null,

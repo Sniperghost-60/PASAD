@@ -96,6 +96,9 @@ const emptyPratiques = () => Object.fromEntries(ALL_SLUGS.map(s => [s, false]));
 
 const emptyRow = () => ({
     _key:               String(Date.now() + Math.random()),
+    departement_id:     '',
+    commune_id:         '',
+    arrondissement_id:  '',
     departement:        '',
     commune_nom:        '',
     arrondissement:     '',
@@ -138,7 +141,7 @@ const PRINT_STYLES = [
 
 export default function CaiAgroecologieProducteurs() {
     const navigate = useNavigate();
-    const { user, communeId } = useAuth();
+    const { user, communeId, activeCommune } = useAuth();
 
     const [rows, setRows]               = useState([]);
     const [savedRows, setSavedRows]     = useState([]);
@@ -146,6 +149,9 @@ export default function CaiAgroecologieProducteurs() {
     const [saving, setSaving]           = useState(false);
     const [showApercu, setShowApercu]   = useState(false);
     const [notif, setNotif]             = useState({ show: false, type: 'success', message: '' });
+    const [departements, setDepartements] = useState([]);
+    const [communes, setCommunes]         = useState({});
+    const [arrondissements, setArrondissements] = useState({});
     const printRef                      = useRef(null);
 
     const showToast = (type, msg) => {
@@ -187,6 +193,30 @@ export default function CaiAgroecologieProducteurs() {
 
     useEffect(() => { load(); }, [load]);
 
+    useEffect(() => {
+        fetch('/api/departements', { credentials: 'include', headers: { Accept: 'application/json' } })
+            .then(r => r.ok ? r.json() : [])
+            .then(data => setDepartements(Array.isArray(data) ? data : []));
+    }, []);
+
+    const loadCommunes = async (departementId) => {
+        if (!departementId || communes[departementId]) return;
+        const res = await fetch(`/api/departements/${departementId}/communes`, { credentials: 'include', headers: { Accept: 'application/json' } });
+        if (res.ok) {
+            const data = await res.json();
+            setCommunes(c => ({ ...c, [departementId]: data }));
+        }
+    };
+
+    const loadArrondissements = async (selectedCommuneId) => {
+        if (!selectedCommuneId || arrondissements[selectedCommuneId]) return;
+        const res = await fetch(`/api/communes/${selectedCommuneId}/arrondissements`, { credentials: 'include', headers: { Accept: 'application/json' } });
+        if (res.ok) {
+            const data = await res.json();
+            setArrondissements(a => ({ ...a, [selectedCommuneId]: data }));
+        }
+    };
+
     const setField = (idx, field, val) =>
         setRows(rs => rs.map((r, i) => i === idx ? { ...r, [field]: val } : r));
 
@@ -195,7 +225,17 @@ export default function CaiAgroecologieProducteurs() {
             i === idx ? { ...r, pratiques: { ...r.pratiques, [slug]: val } } : r
         ));
 
-    const addRow    = ()    => setRows(rs => [...rs, emptyRow()]);
+    const addRow = () => {
+        const row = emptyRow();
+        if (activeCommune) {
+            row.departement_id = String(activeCommune.departement?.id ?? '');
+            row.departement = activeCommune.departement?.nom ?? '';
+            row.commune_id = String(activeCommune.id);
+            row.commune_nom = activeCommune.nom ?? '';
+            loadArrondissements(activeCommune.id);
+        }
+        setRows(rs => [...rs, row]);
+    };
     const removeRow = (idx) => setRows(rs => rs.filter((_, i) => i !== idx));
 
     const handleSave = async () => {
@@ -203,7 +243,10 @@ export default function CaiAgroecologieProducteurs() {
         setSaving(true);
         try {
             const payload = {
-                producteurs: rows.map(({ _key, ...r }) => r),
+                producteurs: rows.map(({ _key, departement_id, arrondissement_id, ...r }) => ({
+                    ...r,
+                    commune_id: r.commune_id ? Number(r.commune_id) : null,
+                })),
             };
             if (communeId) payload.commune_id = communeId;
             const res = await fetch('/api/cai/agroecologie-producteurs', {
@@ -369,13 +412,43 @@ export default function CaiAgroecologieProducteurs() {
                                                 <tr key={row._key} className="hover:bg-amber-50/30">
                                                     {ID_COLS.map(c => (
                                                         <td key={c.field} className="border border-gray-200 p-0.5">
-                                                            <input
-                                                                type="text"
-                                                                value={row[c.field]}
-                                                                onChange={e => setField(idx, c.field, e.target.value)}
-                                                                placeholder={c.placeholder}
-                                                                className="w-full px-1.5 py-1 text-xs bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-amber-300 rounded min-w-[72px]"
-                                                            />
+                                                            {c.field === 'departement' ? (
+                                                                <select value={row.departement_id} disabled={!!activeCommune}
+                                                                    onChange={e => {
+                                                                        const id = e.target.value;
+                                                                        const item = departements.find(d => String(d.id) === id);
+                                                                        setRows(rs => rs.map((r, i) => i === idx ? { ...r, departement_id: id, departement: item?.nom ?? '', commune_id: '', commune_nom: '', arrondissement_id: '', arrondissement: '' } : r));
+                                                                        loadCommunes(id);
+                                                                    }} className="w-full px-1 py-1 text-xs bg-transparent border-0 focus:outline-none disabled:text-gray-600">
+                                                                    <option value="">Département</option>
+                                                                    {departements.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
+                                                                </select>
+                                                            ) : c.field === 'commune_nom' ? (
+                                                                <select value={row.commune_id} disabled={!!activeCommune || !row.departement_id}
+                                                                    onChange={e => {
+                                                                        const id = e.target.value;
+                                                                        const item = (communes[row.departement_id] ?? []).find(v => String(v.id) === id);
+                                                                        setRows(rs => rs.map((r, i) => i === idx ? { ...r, commune_id: id, commune_nom: item?.nom ?? '', arrondissement_id: '', arrondissement: '' } : r));
+                                                                        loadArrondissements(id);
+                                                                    }} className="w-full px-1 py-1 text-xs bg-transparent border-0 focus:outline-none disabled:text-gray-600">
+                                                                    <option value="">Commune</option>
+                                                                    {(activeCommune ? [activeCommune] : (communes[row.departement_id] ?? [])).map(v => <option key={v.id} value={v.id}>{v.nom}</option>)}
+                                                                </select>
+                                                            ) : c.field === 'arrondissement' ? (
+                                                                <select value={row.arrondissement_id} disabled={!row.commune_id}
+                                                                    onChange={e => {
+                                                                        const id = e.target.value;
+                                                                        const item = (arrondissements[row.commune_id] ?? []).find(v => String(v.id) === id);
+                                                                        setRows(rs => rs.map((r, i) => i === idx ? { ...r, arrondissement_id: id, arrondissement: item?.nom ?? '' } : r));
+                                                                    }} className="w-full px-1 py-1 text-xs bg-transparent border-0 focus:outline-none disabled:text-gray-400">
+                                                                    <option value="">Arrondissement</option>
+                                                                    {(arrondissements[row.commune_id] ?? []).map(v => <option key={v.id} value={v.id}>{v.nom}</option>)}
+                                                                </select>
+                                                            ) : (
+                                                                <input type="text" value={row[c.field]}
+                                                                    onChange={e => setField(idx, c.field, e.target.value)} placeholder={c.placeholder}
+                                                                    className="w-full px-1.5 py-1 text-xs bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-amber-300 rounded min-w-[72px]" />
+                                                            )}
                                                         </td>
                                                     ))}
                                                     <td className="border border-gray-200 p-0.5">

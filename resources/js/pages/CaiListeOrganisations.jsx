@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CultureSelect from '../components/CultureSelect';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Modal aperçu / impression ───────────────────────────────────────── */
@@ -358,6 +359,7 @@ function EditOrganisationModal({ row, onChange, onSave, onClose, saving }) {
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiListeOrganisations() {
     const navigate = useNavigate();
+    const { communeId } = useAuth();
     const [rows, setRows]                 = useState([emptyRow()]);
     const [savedRows, setSavedRows]       = useState([]);
     const [loadingSaved, setLoadingSaved] = useState(true);
@@ -375,14 +377,14 @@ export default function CaiListeOrganisations() {
 
     const loadSaved = useCallback(async () => {
         try {
-            const res = await api.get('/api/cai/liste-organisations');
+            const res = await api.get('/api/cai/liste-organisations', { params: communeId ? { commune_id: communeId } : {} });
             setSavedRows(Array.isArray(res.data) ? res.data : []);
         } catch {
             setSavedRows([]);
         } finally {
             setLoadingSaved(false);
         }
-    }, []);
+    }, [communeId]);
 
     useEffect(() => { loadSaved(); }, [loadSaved]);
 
@@ -458,6 +460,7 @@ export default function CaiListeOrganisations() {
                 organisations: rows
                     .filter(r => r.nom_op?.trim())
                     .map(r => ({
+                        commune_id:             communeId,
                         nom_op:                 r.nom_op.trim(),
                         siege_contact:          r.siege_contact?.trim()          || null,
                         numero_groupement:      r.numero_groupement?.trim()      || null,

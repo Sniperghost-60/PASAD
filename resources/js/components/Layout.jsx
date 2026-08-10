@@ -394,8 +394,9 @@ export function Sidebar() {
 
 /* ── Header ──────────────────────────────────────────────────────────── */
 export function Header({ title = 'Tableau de bord', subtitle }) {
-    const { user, logout } = useAuth();
+    const { user, logout, activeCommune } = useAuth();
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
     const today = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
@@ -406,7 +407,9 @@ export function Header({ title = 'Tableau de bord', subtitle }) {
         return () => document.removeEventListener('mousedown', h);
     }, []);
 
-    return (
+    const isCai = pathname.startsWith('/cai/');
+
+    return <>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-slate-200 bg-white/95 backdrop-blur px-6">
             <div className="mr-auto">
                 <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
@@ -448,5 +451,15 @@ export function Header({ title = 'Tableau de bord', subtitle }) {
                 )}
             </div>
         </header>
-    );
+        {isCai && (
+            <div className={`flex items-center gap-3 border-b px-6 py-2 text-sm font-semibold ${activeCommune ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-red-200 bg-red-50 text-red-800'}`}>
+                <Icon d={ICONS.map} className="size-4 flex-shrink-0" />
+                {activeCommune ? (
+                    <span>Commune d’enregistrement : <strong>{activeCommune.nom}</strong></span>
+                ) : (
+                    <span>Aucune commune active : sélectionnez une commune avant tout enregistrement CAI.</span>
+                )}
+            </div>
+        )}
+    </>;
 }

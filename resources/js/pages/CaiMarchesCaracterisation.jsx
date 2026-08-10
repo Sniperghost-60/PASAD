@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar, Header } from '../components/Layout';
 import ModernNotification from '../components/ModernNotification';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 /* ── Constantes (variables fixes du tableau) ─────────────────────────── */
@@ -464,6 +465,7 @@ function SavedMarchesPanel({ marches, loading }) {
 /* ── Page principale ─────────────────────────────────────────────────── */
 export default function CaiMarchesCaracterisation() {
     const navigate = useNavigate();
+    const { communeId } = useAuth();
     const [marches, setMarches]         = useState([emptyMarche()]);
     const [saving, setSaving]           = useState(false);
     const [showApercu, setShowApercu]   = useState(false);
@@ -476,14 +478,14 @@ export default function CaiMarchesCaracterisation() {
     const loadSaved = useCallback(async () => {
         setLoadingSaved(true);
         try {
-            const res = await api.get('/api/cai/marches-caracterisation');
+            const res = await api.get('/api/cai/marches-caracterisation', { params: communeId ? { commune_id: communeId } : {} });
             setSavedMarches(res.data ?? []);
         } catch {
             // silencieux : la liste des marchés déjà enregistrés est secondaire
         } finally {
             setLoadingSaved(false);
         }
-    }, []);
+    }, [communeId]);
 
     useEffect(() => { loadSaved(); }, [loadSaved]);
 
@@ -504,6 +506,7 @@ export default function CaiMarchesCaracterisation() {
         setSaving(true);
         try {
             const payload = {
+                commune_id: communeId,
                 marches: filled.map(m => ({
                     nom_marche:           m.nom_marche.trim(),
                     distance:             m.distance.trim()             || null,

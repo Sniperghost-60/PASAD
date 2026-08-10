@@ -28,7 +28,7 @@ class CaiAgroecologieProducteursController extends Controller
         $saved = collect($producteurs)->map(fn ($p) =>
             CaiAgroecologieProducteur::create([
                 'user_id'            => $userId,
-                'commune_id'         => $communeId,
+                'commune_id'         => $p['commune_id'] ?? $communeId,
                 'departement'        => $p['departement']        ?? null,
                 'commune_nom'        => $p['commune_nom']        ?? null,
                 'arrondissement'     => $p['arrondissement']     ?? null,
