@@ -24,6 +24,7 @@ class CaiMarcheCaracterisationController extends Controller
         $request->validate([
             'commune_id'                => 'nullable|exists:communes,id',
             'marches'                   => 'required|array|min:1',
+            'marches.*.commune_id'      => 'nullable|exists:communes,id',
             'marches.*.nom_marche'      => 'required|string|max:255',
             'marches.*.distance'        => 'nullable|string|max:100',
             'marches.*.type_marche'     => 'nullable|string|max:255',
@@ -37,7 +38,10 @@ class CaiMarcheCaracterisationController extends Controller
         ]);
 
         $userId    = $request->user()->id;
-        $communeId = $request->input('commune_id');
+        // Compatibilité avec les premières versions mobiles, qui plaçaient
+        // commune_id dans chaque ligne au lieu de l'envoyer à la racine.
+        $communeId = $request->input('commune_id')
+            ?? $request->input('marches.0.commune_id');
 
         $saved = DB::transaction(fn () =>
             collect($request->marches)->map(fn ($m) =>
